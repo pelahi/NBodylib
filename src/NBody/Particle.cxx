@@ -208,7 +208,7 @@ namespace NBody
 
 #ifdef SWIFTINTERFACE
     // SWIFT interface constructor. Copies particle properties from SWIFT particle.
-    Particle::Particle(const struct gpart &p, double lscale, double vscale, double mscale, double uscale, bool icosmological, double a, double h)
+    Particle::Particle(const struct swift_vel_part &p)
     {
 #ifndef NOMASS
       mass = p.mass;
@@ -216,23 +216,17 @@ namespace NBody
       position[0] = p.x[0];
       position[1] = p.x[1];
       position[2] = p.x[2];
-      velocity[0] = p.v_full[0];
-      velocity[1] = p.v_full[1];
-      velocity[2] = p.v_full[2];
-      if (icosmological) {
-          lscale*=a;
-          vscale*=sqrt(a);
-      }
-      mass*=mscale;
-      for (auto i=0;i<3;i++) velocity[i]*=vscale;
-      for (auto i=0;i<3;i++) position[i]*=lscale;
+      velocity[0] = p.v[0];
+      velocity[1] = p.v[1];
+      velocity[2] = p.v[2];
       type=p.type;
       //rho=p.rho;
-#ifdef SWIFTINTERFACE
-        ///\todo does this need to be converted for cosmology as well ? and unit conversion
-      gravityphi=p.potential*uscale*mass;
+      ///\todo does this need to be converted for cosmology as well ? and unit conversion
+      gravityphi=p.potential;
+#ifdef GASON
+      u = p.u;
 #endif
-      pid=p.id_or_neg_offset;
+      pid=p.id;
     }
 #endif
 

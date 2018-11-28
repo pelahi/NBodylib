@@ -10,14 +10,42 @@
 
 namespace Swift
 {
-    /* Include some struct definitions from SWIFT. */
-    extern "C" {
-        #include "align.h"
-        #include "timeline.h"
-        #include "part_type.h"
-        #include "gravity_part.h"
-        #include "hydro_part.h"
-    }
+  
+  /* SWIFT enum of part types. Should match VELOCIraptor type values. */
+  enum part_type {
+    swift_type_gas = 0,
+    swift_type_dark_matter = 1,
+    swift_type_star = 4,
+    swift_type_black_hole = 5,
+    swift_type_count
+  } __attribute__((packed));
+
+  /* SWIFT/VELOCIraptor particle. */
+    struct swift_vel_part {
+
+      /*! Particle ID. */
+      long long id;
+
+      /*! Particle position. */
+      double x[3];
+
+      /*! Particle velocity. */
+      float v[3];
+
+      /*! Particle mass. */
+      float mass;
+
+      /*! Gravitational potential */
+      float potential;
+
+      /*! Internal energy of gas particle */
+      float u;
+
+      /*! Type of the #gpart (DM, gas, star, ...) */
+      enum part_type type;
+
+    };
+
 }
 
 #endif
