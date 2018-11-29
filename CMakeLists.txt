@@ -233,12 +233,18 @@ foreach(_subdir IN ITEMS ${_subdirs})
 	add_subdirectory(src/${_subdir})
 endforeach()
 
-# Build the final static libnbodylib.a library
-add_library(nbodylib STATIC
+# The nbodylib OBJECT library, which can then be used in the same fashion
+# to bring all objects together into a final executable/library
+add_library(nbodylib_iface INTERFACE)
+target_sources(nbodylib_iface INTERFACE
     $<TARGET_OBJECTS:Analysis> $<TARGET_OBJECTS:Cosmology>
     $<TARGET_OBJECTS:InitCond> $<TARGET_OBJECTS:KDTree>
     $<TARGET_OBJECTS:Math> $<TARGET_OBJECTS:NBody>
 )
+
+# The final static libnbodylib.a library, in case it's needed on its own
+add_library(nbodylib STATIC)
+target_link_libraries(nbodylib nbodylib_iface)
 
 # Export the include directories and definitions, if necessary
 # If building on our own, add the "doc" target
