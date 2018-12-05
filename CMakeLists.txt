@@ -67,7 +67,9 @@ endif()
 
 # Options users can give on the command line via -D
 macro(nbody_option optname optdesc status )
-	option(NBODY_${optname} "${optdesc}" "${status}")
+	if (NOT DEFINED NBODY_${optname})
+		option(NBODY_${optname} "${optdesc}" "${status}")
+	endif()
 endmacro()
 
 # Optional dependencies
@@ -84,9 +86,9 @@ nbody_option(UNSIGNED_PARTICLE_PIDS     "Use unsigned particle PIDs" OFF)
 nbody_option(UNSIGNED_PARTICLE_IDS      "Use unsigned particle IDs" OFF)
 nbody_option(USE_GAS                    "Particle class has gas" OFF)
 nbody_option(USE_STARS                  "Particle class has stars" OFF)
-nbody_option(USE_BARYONS                "VR_USE_GAS + VR_USE_STARS" OFF)
-nbody_option(USE_HYDRO                  "VR_USE_GAS + VR_USE_STARS+VR_USE_BH" OFF)
-
+nbody_option(USE_BARYONS                "Gas and Stars" OFF)
+nbody_option(USE_HYDRO                  "All particle types (gas, stars, black holes, etc)" OFF)
+nbody_option(USE_SWIFT_INTERACE		"SWIFT Interface" OFF)
 # Process high-level options
 if (NBODY_USE_BARYONS)
 	set(NBODY_USE_GAS ON)
@@ -128,6 +130,7 @@ nbody_option_defines(LARGEKDTREE               LARGETREE)
 nbody_option_defines(USE_GAS                   GASON)
 nbody_option_defines(USE_STARS                 STARON)
 nbody_option_defines(USE_BH                    BHON)
+nbody_option_defines(USE_SWIFT_INTERFACE       SWIFTINTERFACE)
 
 #
 # How we find GSL and set it up
