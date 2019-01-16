@@ -104,6 +104,8 @@ typedef Int_t PARTPIDTYPE;
         Double_t phi;
 #ifdef SWIFTINTERFACE
         Double_t gravityphi;
+        int swifttask;
+        int swiftindex;
 #endif
         ///For hydrodynamical quantities
         //@{
@@ -179,7 +181,9 @@ typedef Int_t PARTPIDTYPE;
                 (velocity[0]==p.velocity[0])&&(velocity[1]==p.velocity[1])&&(velocity[2]==p.velocity[2])&&
                 (id==p.id)&&(type==p.type)&&(rho==p.rho)&&(phi==p.phi)&&
                 (pid==p.pid));
-
+#ifdef SWIFTINTERFACE
+            ival*=((gravityphi==p.gravityphi)&&(swifttask==p.swifttask)&&(swiftindex==p.swiftindex));
+#endif
 #ifndef NOMASS
             ival*=((mass==p.mass));
 #endif
@@ -293,6 +297,10 @@ typedef Int_t PARTPIDTYPE;
 #ifdef SWIFTINTERFACE
         Double_t GetGravityPotential() {return gravityphi;}
         void SetGravityPotential(const Double_t &Phi){gravityphi=Phi;}
+        int GetSwiftIndex() {return swiftindex;}
+        void SetSwiftIndex(const int &index){swiftindex=index;}
+        int GetSwiftTask() {return swifttask;}
+        void SetSwiftTask(const int &task){swifttask=task;}
 #endif
 #ifdef GASON
         Double_t GetU() const {return u;}

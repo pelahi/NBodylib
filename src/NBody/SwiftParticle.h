@@ -10,7 +10,7 @@
 
 namespace Swift
 {
-  
+
   /* SWIFT enum of part types. Should match VELOCIraptor type values. */
   enum part_type {
     swift_type_gas = 0,
@@ -43,6 +43,11 @@ namespace Swift
 
       /*! Type of the #gpart (DM, gas, star, ...) */
       enum part_type type;
+
+      /*! swift index */
+      int index;
+      /*! swift task */
+      int task; 
 
     };
 

@@ -10,7 +10,7 @@ using namespace Math;
 
 namespace NBody
 {
-  
+
     int PIDCompare (const void *a, const void *b)
     {
         PARTPIDTYPE aa = ((Particle*)a)->GetPID();
@@ -183,6 +183,8 @@ namespace NBody
             pid=p.pid;
 #ifdef SWIFTINTERFACE
             gravityphi=p.gravityphi;
+            swifttask=p.swifttask;
+            swiftindex=p.swiftindex;
 #endif
 #ifdef GASON
             u=p.u;
@@ -227,6 +229,8 @@ namespace NBody
       u = p.u;
 #endif
       pid=p.id;
+      swifttask=p.task;
+      swiftindex=p.index;
     }
 #endif
 
@@ -252,6 +256,8 @@ namespace NBody
             pid=p.pid;
 #ifdef SWIFTINTERFACE
             gravityphi=p.gravityphi;
+            swifttask=p.swifttask;
+            swiftindex=p.swiftindex;
 #endif
 #ifdef GASON
             u=p.u;
