@@ -59,6 +59,24 @@ namespace NBody
         else if (aa < bb) return -1;
         else return 0;
     }
+#ifdef SWIFTINTERFACE
+    int SwiftTaskCompare (const void *a, const void *b)
+    {
+        int aa = ((Particle*)a)->GetSwiftTask();
+        int bb = ((Particle*)b)->GetSwiftTask();
+        if (aa > bb) return 1;
+        else if (aa < bb) return -1;
+        else return 0;
+    }
+    int SwiftIndexCompare (const void *a, const void *b)
+    {
+        int aa = ((Particle*)a)->GetSwiftIndex();
+        int bb = ((Particle*)b)->GetSwiftIndex();
+        if (aa > bb) return 1;
+        else if (aa < bb) return -1;
+        else return 0;
+    }
+#endif
     bool PIDCompareVec(const Particle&a, const Particle &b)
     {
         Int_t aa = a.GetPID();
