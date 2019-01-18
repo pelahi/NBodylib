@@ -127,9 +127,11 @@ typedef Int_t PARTPIDTYPE;
         ///star formation rate of gas
         DoublePos_t sfr;
 #endif
-#if defined(GASON)&&defined(GASEXTRA)
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
         ///store entropy, useful for searching for shocks and related entropy structures
         DoublePos_t entropy;
+        ///store temperature
+        DoublePos_t temperature;
 #endif
         //@}
 
@@ -197,8 +199,9 @@ typedef Int_t PARTPIDTYPE;
             ival*=((zmet==p.zmet)&&(sfr==p.sfr));
 #endif
 
-#if defined(GASON) && (GASEXTRA)
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
             ival*=((entropy==p.entropy));
+            ival*=((temperature==p.temperature));
 #endif
             return ival;
         }
@@ -321,9 +324,11 @@ typedef Int_t PARTPIDTYPE;
         void SetSFR(const Double_t &SFR){sfr=SFR;}
 #endif
 
-#if defined(GASON) && (GASEXTRA)
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
         Double_t GetEntropy() const {return entropy;}
         void SetEntropy(const Double_t &Entropy) {entropy=Entropy;}
+        Double_t GetTemperature() const {return temperature;}
+        void SetTemperature(const Double_t &Temperature) {temperature=Temperature;}
 #endif
 
 #ifdef EXTENDEDFOFINFO

@@ -147,6 +147,19 @@ namespace NBody
         zmet=0;
         sfr=0;
 #endif
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+        entropy = 0;
+        temperature = 0;
+#endif
+#ifdef EXTENDEDFOFINFO
+        oFile    = 0;
+        oIndex   = 0;
+        oTask    = 0;
+        idStruct = 0;
+        idFOFHost = 0;
+        idHost   = 0;
+#endif
+
     }
 
     Particle::Particle(Double_t Mass, Double_t *NewPos, Double_t *NewVel, PARTIDTYPE ID, int Type, Double_t Rho, Double_t Phi, PARTPIDTYPE PID)
@@ -177,6 +190,18 @@ namespace NBody
 #if defined (GASON) && (STARON)
         zmet=0;
         sfr=0;
+#endif
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+        entropy=0;
+        temperature=0;
+#endif
+#ifdef EXTENDEDFOFINFO
+        oFile    = 0;
+        oIndex   = 0;
+        oTask    = 0;
+        idStruct = 0;
+        idFOFHost = 0;
+        idHost   = 0;
 #endif
     }
 
@@ -215,6 +240,10 @@ namespace NBody
             zmet=p.zmet;
             sfr=p.sfr;
 #endif
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+            entropy=p.entropy;
+            temperature=p.temperature;
+#endif
 #ifdef EXTENDEDFOFINFO
 	        oFile    = p.oFile;
 	        oIndex   = p.oIndex;
@@ -245,6 +274,7 @@ namespace NBody
       gravityphi=p.potential;
 #ifdef GASON
       u = p.u;
+      temperature = p.T;
 #endif
       pid=p.id;
       swifttask=p.task;
@@ -287,6 +317,10 @@ namespace NBody
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
             sfr=p.sfr;
+#endif
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+            entropy=p.entropy;
+            temperature=p.temperature;
 #endif
 #ifdef EXTENDEDFOFINFO
 	        oFile    = p.oFile;

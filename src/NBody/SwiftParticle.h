@@ -41,13 +41,16 @@ namespace Swift
       /*! Internal energy of gas particle */
       float u;
 
+      /*! Temperature of a gas particle */
+      float T;
+
       /*! Type of the #gpart (DM, gas, star, ...) */
       enum part_type type;
 
       /*! swift index */
       int index;
       /*! swift task */
-      int task; 
+      int task;
 
     };
 
