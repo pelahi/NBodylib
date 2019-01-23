@@ -847,6 +847,18 @@ namespace NBody
 
     KDTree::KDTree(Particle *p, Int_t nparts, Int_t bucket_size, int ttype, int smfunctype, int smres, int criterion, int aniso, int scale, Double_t *Period, Double_t **m)
     {
+#ifdef USEOPENMP
+        //store the maximum number of threads available.
+        int maxnthreads;
+        #pragma omp parallel
+        {
+                if (omp_get_thread_num()==0) maxnthreads=omp_get_num_threads();
+        }
+        #pragma omp master
+        {
+                omp_set_num_threads(maxnthreads);
+        }
+#endif
         numparts = nparts;
         numleafnodes=numnodes=0;
         bucket = p;
@@ -876,12 +888,28 @@ namespace NBody
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
+#ifdef USEOPENMP
+        #pragma omp master
+        {
+            omp_set_num_threads(maxnthreads);
+        }
+#endif
     }
 
     KDTree::KDTree(System &s, Int_t bucket_size, int ttype, int smfunctype, int smres, int criterion, int aniso, int scale, Double_t **m)
     {
-//        KDTree(s.Parts(),s.GetNumParts(),bucket_size,ttype,smfunctype,smres,ecalc,aniso,scale,s.GetPeriod().GetCoord(),m);
-
+#ifdef USEOPENMP
+        //store the maximum number of threads available.
+        int maxnthreads;
+        #pragma omp parallel
+        {
+                if (omp_get_thread_num()==0) maxnthreads=omp_get_num_threads();
+        }
+        #pragma omp master
+        {
+                omp_set_num_threads(maxnthreads);
+        }
+#endif
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();
@@ -909,6 +937,12 @@ namespace NBody
             root=BuildNodes(0,numparts);
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
+#ifdef USEOPENMP
+        #pragma omp master
+        {
+            omp_set_num_threads(maxnthreads);
+        }
+#endif
     }
     KDTree::~KDTree()
     {
