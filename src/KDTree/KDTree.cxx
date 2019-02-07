@@ -859,6 +859,7 @@ namespace NBody
                 omp_set_num_threads(maxnthreads);
         }
 #endif
+        iresetorder=true;
         numparts = nparts;
         numleafnodes=numnodes=0;
         bucket = p;
@@ -910,6 +911,7 @@ namespace NBody
                 omp_set_num_threads(maxnthreads);
         }
 #endif
+        iresetorder=true;
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();
@@ -951,7 +953,7 @@ namespace NBody
             delete[] Kernel;
             delete[] derKernel;
             if (period!=NULL) delete[] period;
-            qsort(bucket, numparts, sizeof(Particle), IDCompare);
+            if (iresetorder) qsort(bucket, numparts, sizeof(Particle), IDCompare);
             if (scalespace) {
             for (Int_t i=0;i<numparts;i++)
                 for (int j=0;j<3;j++) {
@@ -961,4 +963,10 @@ namespace NBody
             }
         }
     }
+
+    void KDTree::OverWriteInputOrder() {
+        iresetorder=false;
+        for (Int_t i=0;i<numparts;i++) bucket[i].SetID(i);
+    }
+    void KDTree::SetResetOrder(bool a) {iresetorder=a;}
 }

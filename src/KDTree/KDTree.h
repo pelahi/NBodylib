@@ -127,6 +127,9 @@ namespace NBody
         ///this array is necessary for calculating the phase-space density corectly.
         Double_t **metric;
 
+        ///flag that tells the destructor whether the particle data should be reset to input order
+        bool iresetorder;
+
         /// \name Private function pointers used in building tree
         //@{
         Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *);
@@ -394,6 +397,17 @@ namespace NBody
         /// of comparison function where npc is number of parameters to be changed and npca is array containing indices of parameters to be altered.
         Int_t *FOFNNDistCriterion(FOFcompfunc p, Double_t *params, Int_t numNN, Int_t **nnIDs, Double_t **dist2,
                                   Double_t disfunc(Int_t , Double_t *), Int_t npc, Int_t *npca, Int_t &numgroups, Int_t minnum=8);
+        //@}
+
+        /// \name Ordering routines
+        //@{
+        /// As tree adjust order of particle array, it overwrites
+        /// particle ids to retain input order.
+        /// However, can ask the tree to overwrite input order and keep the ordering of the
+        /// tree
+        void OverWriteInputOrder();
+        /// set whether tree resets particle array to input order on delete
+        void SetResetOrder(bool);
         //@}
 
         private:
