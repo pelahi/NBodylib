@@ -46,12 +46,12 @@
 
 #ifdef USEOPENMP
 #include <omp.h>
-#define CRITPARALLELSIZE 1000000
+#define KDTREEOMPCRITPARALLELSIZE 1000000
 #endif
 
 #ifdef USEMPI
 #include <mpi.h>
-#define CRITPARALLELSIZE 1000000
+#define KDTREEMPICRITPARALLELSIZE 1000000
 #endif
 
 namespace NBody
