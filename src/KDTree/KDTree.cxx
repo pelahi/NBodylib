@@ -28,7 +28,7 @@ namespace NBody
         Double_t max = min;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -48,7 +48,7 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         Double_t max = min;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -91,7 +91,7 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         Double_t min=mean, max=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -113,7 +113,7 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         Double_t min=mean, max=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -135,7 +135,7 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         Double_t min=mean, max=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -175,7 +175,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t disp=0;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -191,7 +191,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t disp=0;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
