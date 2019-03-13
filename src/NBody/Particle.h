@@ -135,24 +135,25 @@ typedef Int_t PARTPIDTYPE;
 #endif
         //@}
 
-#ifdef EXTENDEDFOFINFO
-	    ///Variables to store extra info
+#ifdef EXTRAINPUTINFO
+        ///Variables to store extra info related to where particle read from some input data
         ///used by VELOCIraptor group finding
         //@{
         ///file id of input file containing particle
-    	Int_t oFile;
+        Int_t inputFileID;
         ///index of particle in input file
-	    Int_t oIndex;
-        ///mpi thread id of thread which originally read particle
-	    Int_t oTask;
-        ///group id (halo, subhalo, etc)
-	    Int_t idStruct;
-        ///3DFOF envelop id
-	    Int_t idFOFHost;
-        ///host id
-	    Int_t idHost;
-        //}
+        Int_t inputIndexInFile;
+        //@}
 #endif
+#ifdef EXTRAFOFINFO
+        ///Variables to store VELOCIraptor group finding info
+        //@{
+        Int_t GroupID;
+        Int_t ParentGroupID;
+        Int_t SOGroupID;
+        //@}
+#endif
+
 
 
         public:
@@ -202,6 +203,15 @@ typedef Int_t PARTPIDTYPE;
 #if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
             ival*=((entropy==p.entropy));
             ival*=((temperature==p.temperature));
+#endif
+#ifdef EXTRAINPUTINFO
+            ival*=((inputFileID==p.inputFileID));
+            ival*=((inputIndexInFile==p.inputIndexInFile));
+#endif
+#ifdef EXTRAFOFINFO
+            ival*=((GroupID==p.GroupID));
+            ival*=((ParentGroupID==p.ParentGroupID));
+            ival*=((SOGroupID==p.SOGroupID));
 #endif
             return ival;
         }
@@ -331,25 +341,21 @@ typedef Int_t PARTPIDTYPE;
         void SetTemperature(const Double_t &Temperature) {temperature=Temperature;}
 #endif
 
-#ifdef EXTENDEDFOFINFO
+#ifdef EXTRAINPUTINFO
         ///Sets and Gets for ExtendedOutput variables
-        void SetOFile(const Int_t &i) {oFile = i;}
-        Int_t GetOFile() const {return oFile;}
-
-        void SetOIndex(const Int_t &i) {oIndex = i;}
-        Int_t GetOIndex() const {return oIndex;}
-
-        void SetOTask(const Int_t &i) {oTask = i;}
-        Int_t GetOTask() const {return oTask;}
-
-        void SetIdStruct(const Int_t &i) {idStruct = i;}
-        Int_t GetIdStruct() const {return idStruct;}
-
-        void SetIdHost(const Int_t &i) {idHost = i;}
-        Int_t GetIdHost() const {return idHost;}
-
-        void SetIdFOFHost(const Int_t &i) {idFOFHost = i;}
-        Int_t GetIdFOFHost() const {return idFOFHost;}
+        void SetInputFileID(const Int_t &i) {inputFileID = i;}
+        Int_t GetInputFileID() const {return inputFileID;}
+        void SetInputIndexInFile(const Int_t &i) {inputIndexInFile = i;}
+        Int_t GetInputIndexInFile() const {return inputIndexInFile;}
+#endif
+#ifdef EXTRAFOFINFO
+        ///Sets and Gets for ExtendedOutput variables
+        void SetGroupID(const Int_t &i) {GroupID = i;}
+        Int_t GetGroupID() const {return GroupID;}
+        void SetParentGroupID(const Int_t &i) {ParentGroupID = i;}
+        Int_t GetParentGroupID() const {return ParentGroupID;}
+        void SetSOGroupID(const Int_t &i) {SOGroupID = i;}
+        Int_t GetSOGroupID() const {return SOGroupID;}
 #endif
 
         //@}

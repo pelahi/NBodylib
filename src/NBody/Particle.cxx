@@ -151,15 +151,15 @@ namespace NBody
         entropy = 0;
         temperature = 0;
 #endif
-#ifdef EXTENDEDFOFINFO
-        oFile    = 0;
-        oIndex   = 0;
-        oTask    = 0;
-        idStruct = 0;
-        idFOFHost = 0;
-        idHost   = 0;
+#ifdef EXTRAINPUTINFO
+        inputFileID    = 0;
+        inputIndexInFile   = 0;
 #endif
-
+#ifdef EXTRAFOFINFO
+        GroupID    = 0;
+        ParentGroupID    = 0;
+        SOGroupID    = 0;
+#endif
     }
 
     Particle::Particle(Double_t Mass, Double_t *NewPos, Double_t *NewVel, PARTIDTYPE ID, int Type, Double_t Rho, Double_t Phi, PARTPIDTYPE PID)
@@ -195,13 +195,14 @@ namespace NBody
         entropy=0;
         temperature=0;
 #endif
-#ifdef EXTENDEDFOFINFO
-        oFile    = 0;
-        oIndex   = 0;
-        oTask    = 0;
-        idStruct = 0;
-        idFOFHost = 0;
-        idHost   = 0;
+#ifdef EXTRAINPUTINFO
+        inputFileID    = 0;
+        inputIndexInFile   = 0;
+#endif
+#ifdef EXTRAFOFINFO
+        GroupID    = 0;
+        ParentGroupID    = 0;
+        SOGroupID    = 0;
 #endif
     }
 
@@ -244,13 +245,14 @@ namespace NBody
             entropy=p.entropy;
             temperature=p.temperature;
 #endif
-#ifdef EXTENDEDFOFINFO
-	        oFile    = p.oFile;
-	        oIndex   = p.oIndex;
-	        oTask    = p.oTask;
-	        idStruct = p.idStruct;
-	        idFOFHost    = p.idFOFHost;
-	        idHost   = p.idHost;
+#ifdef EXTRAINPUTINFO
+            inputFileID    = p.inputFileID;
+            inputIndexInFile   = p.inputIndexInFile;
+#endif
+#ifdef EXTRAFOFINFO
+            GroupID    = p.GroupID;
+            ParentGroupID    = p.ParentGroupID;
+            SOGroupID    = p.SOGroupID;
 #endif
         }
     }
@@ -322,13 +324,14 @@ namespace NBody
             entropy=p.entropy;
             temperature=p.temperature;
 #endif
-#ifdef EXTENDEDFOFINFO
-	        oFile    = p.oFile;
-	        oIndex   = p.oIndex;
-	        oTask    = p.oTask;
-	        idStruct = p.idStruct;
-	        idFOFHost    = p.idFOFHost;
-	        idHost   = p.idHost;
+#ifdef EXTRAINPUTINFO
+            inputFileID    = p.inputFileID;
+            inputIndexInFile   = p.inputIndexInFile;
+#endif
+#ifdef EXTRAFOFINFO
+            GroupID    = p.GroupID;
+            ParentGroupID    = p.ParentGroupID;
+            SOGroupID    = p.SOGroupID;
 #endif
         }
       return *this;
