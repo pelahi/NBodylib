@@ -90,8 +90,8 @@ nbody_option(USE_BARYONS                "Gas and Stars" OFF)
 nbody_option(USE_HYDRO                  "All particle types (gas, stars, black holes, etc)" OFF)
 nbody_option(USE_SWIFT_INTERFACE		"SWIFT Interface" OFF)
 nbody_option(USE_EXTRA_INPUT_INFO		"Extra Input Info" OFF)
-nbody_option(USE_EXTRA_FOF_INFO		"Extra FOF Info" OFF)
-nbody_option(USE_LARGE_KDTREE		"Require large mem KDTree as there are more than > max 32-bit integer entries" OFF)
+nbody_option(USE_EXTRA_FOF_INFO		    "Extra FOF Info" OFF)
+nbody_option(USE_LARGE_KDTREE		    "Require large mem KDTree as there are more than > max 32-bit integer entries" OFF)
 
 # Process high-level options
 if (NBODY_USE_BARYONS)
@@ -216,7 +216,9 @@ nbody_report("Particle data" "Do not store mass, all particles are the same mass
              "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH
 			 "Extra input info stored" USE_EXTRA_INPUT_INFO
 			 "Extra FOF info stored" USE_EXTRA_FOF_INFO
-			 "Large memory KDTree" USE_LARGE_KDTREE)
+			 "Large memory KDTree" USE_LARGE_KDTREE
+			 "Particle compiled for SWIFT" USE_SWIFT_INTERFACE
+		 )
 message("")
 message("Compilation")
 message("-----------")
