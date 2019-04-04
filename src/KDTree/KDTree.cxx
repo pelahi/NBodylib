@@ -333,11 +333,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         return bucket[k].GetPosition(d);
         }
-        //much quicker but does not guarantee a balanced tree
+        //requires that particle order is already balanced. Use with caution
         else
         {
-            printf("Note yet implemented\n");
-            exit(9);
+            return bucket[k].GetPosition(d);
+            //printf("Note yet implemented\n");
+            //exit(9);
         }
     }
     inline Double_t KDTree::MedianVel(int d, Int_t k, Int_t start, Int_t end, bool balanced)
@@ -373,11 +374,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         return bucket[k].GetVelocity(d);
         }
-        //much quicker but does not guarantee a balanced tree
+        //requires that particle order is already balanced. Use with caution
         else
         {
-            printf("Note yet implemented\n");
-            exit(9);
+            return bucket[k].GetVelocity(d);
+            //printf("Note yet implemented\n");
+            //exit(9);
         }
     }
     inline Double_t KDTree::MedianPhs(int d, Int_t k, Int_t start, Int_t end, bool balanced)
@@ -391,8 +393,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         if (balanced){
         while (left < right)
         {
-            //if (d<3) x = bucket[k].GetPosition(d);
-            //else x = bucket[k].GetVelocity(d);
             x=bucket[k].GetPhase(d);
             w = bucket[right];
             bucket[right] = bucket[k];
@@ -416,11 +416,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
         return bucket[k].GetPhase(d);
         }
-        //much quicker but does not guarantee a balanced tree
+        //requires that particle order is already balanced. Use with caution
         else
         {
-            printf("Note yet implemented\n");
-            exit(9);
+            return bucket[k].GetPhase(d);
+            //printf("Note yet implemented\n");
+            //exit(9);
         }
     }
     //@}
@@ -507,7 +508,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 }
             }
 
-            splitvalue= (this->*medianfunc)(splitdim, k, start, end,true);
+            splitvalue = (this->*medianfunc)(splitdim, k, start, end, ikeepinputorder);
 
             return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND, BuildNodes(start, k+1),BuildNodes(k+1, end));
         }
@@ -641,9 +642,14 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
     //-- Public constructors
 
-    KDTree::KDTree(Particle *p, Int_t nparts, Int_t bucket_size, int ttype, int smfunctype, int smres, int criterion, int aniso, int scale, Double_t *Period, Double_t **m)
+    KDTree::KDTree(Particle *p, Int_t nparts, Int_t bucket_size,
+      int ttype, int smfunctype, int smres,
+      int criterion, int aniso, int scale,
+      Double_t *Period, Double_t **m,
+      bool iKeepInputOrder)
     {
         iresetorder=true;
+        ikeepinputorder = iKeepInputOrder;
         numparts = nparts;
         numleafnodes=numnodes=0;
         bucket = p;
@@ -675,9 +681,14 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
 
-    KDTree::KDTree(System &s, Int_t bucket_size, int ttype, int smfunctype, int smres, int criterion, int aniso, int scale, Double_t **m)
+    KDTree::KDTree(System &s, Int_t bucket_size,
+      int ttype, int smfunctype, int smres, int criterion, int aniso, int scale,
+      Double_t **m,
+      bool iKeepInputOrder
+    )
     {
         iresetorder=true;
+        ikeepinputorder = iKeepInputOrder;
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();

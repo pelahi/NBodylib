@@ -130,6 +130,10 @@ namespace NBody
         ///flag that tells the destructor whether the particle data should be reset to input order
         bool iresetorder;
 
+        ///flag that says particles do not need to be sorted. this is a dangerous option
+        ///but can be used to significantly speed up tree construction.
+        bool ikeepinputorder;
+
         /// \name Private function pointers used in building tree
         //@{
         Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *);
@@ -165,9 +169,18 @@ namespace NBody
         /// \name Constructors/Destructors
         //@{
         ///Creates tree from an NBody::Particle array
-        KDTree(Particle *p, Int_t numparts, Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000, int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t *Period=NULL, Double_t **metric=NULL);
+        KDTree(Particle *p, Int_t numparts,
+            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
+            Double_t *Period=NULL, Double_t **metric=NULL,
+            bool iKeepInputOrder = false
+        );
         ///Creates tree from NBody::System
-        KDTree(System &s, Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000, int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL);
+        KDTree(System &s,
+            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
+            bool iKeepInputOrder = false
+        );
         ///resets particle order
         ~KDTree();
         //@}
