@@ -620,6 +620,8 @@ typedef Int_t PARTPIDTYPE;
     int TypeCompare (const void *a, const void *b);
     ///sort in ascending particle potential
     int PotCompare (const void *a, const void *b);
+    ///sort in ascending particle density
+    int DenCompare (const void *a, const void *b);
 
     ///sort in ascending particle pid for std::sort vector inferface
     bool PIDCompareVec (const Particle &a, const Particle &b);
@@ -631,6 +633,8 @@ typedef Int_t PARTPIDTYPE;
     bool TypeCompareVec (const Particle &a, const Particle &b);
     ///sort in ascending particle potential
     bool PotCompareVec (const Particle &a, const Particle &b);
+    ///sort in ascending particle density
+    bool DenCompareVec (const Particle &a, const Particle &b);
     //@}
 }
 
