@@ -100,6 +100,21 @@ namespace NBody
             }
         }
     }
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            if (i!=target){
+            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==1)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+            }
+        }
+    }
 
     void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
     {
@@ -196,6 +211,35 @@ namespace NBody
                 pq->Pop();
                 pq->Push(i, dist2);
             }
+            }
+        }
+    }
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            if (!(bucket[i]==p)){
+            Double_t dist2 = DistanceSqd(p.GetPosition(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==1)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Coordinate &x, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            Double_t dist2 = DistanceSqd(x.GetCoord(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==1)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
             }
         }
     }
