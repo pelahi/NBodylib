@@ -27,7 +27,6 @@ namespace NBody
         Double_t min = bucket[start].GetPosition(j);
         Double_t max = min;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -35,7 +34,6 @@ namespace NBody
 default(shared) private(i) schedule(dynamic) \
 reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetPosition(j) < min) min = bucket[i].GetPosition(j);
@@ -49,7 +47,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         Double_t min = bucket[start].GetVelocity(j);
         Double_t max = min;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -57,7 +54,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 default(shared) private(i) schedule(dynamic) \
 reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetVelocity(j) < min) min = bucket[i].GetVelocity(j);
@@ -71,7 +67,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         Double_t min = bucket[start].GetPhase(j);
         Double_t max = min;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
         if (nthreads <1) nthreads=1;
@@ -79,7 +74,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 default(shared) private(i) schedule(dynamic) \
 reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetPhase(j) < min) min = bucket[i].GetPhase(j);
@@ -96,7 +90,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         Double_t mean=bucket[start].GetPosition(j);
         Double_t min=mean, max=mean;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -104,7 +97,6 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 default(shared) private(i) schedule(dynamic) \
 reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetPosition(j) < min) min = bucket[i].GetPosition(j);
@@ -120,7 +112,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         Double_t mean=bucket[start].GetVelocity(j);
         Double_t min=mean, max=mean;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -128,7 +119,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
 default(shared) private(i) schedule(dynamic) \
 reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetVelocity(j) < min) min = bucket[i].GetVelocity(j);
@@ -144,7 +134,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         Double_t mean=bucket[start].GetPhase(j);
         Double_t min=mean, max=mean;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -152,7 +141,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
 default(shared) private(i) schedule(dynamic) \
 reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start + 1; i < end; i++)
         {
             if (bucket[i].GetPhase(j) < min) min = bucket[i].GetPhase(j);
@@ -170,7 +158,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
     {
         Double_t disp=0;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
         if (nthreads <1) nthreads=1;
@@ -178,7 +165,6 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
 default(shared) private(i) schedule(dynamic) \
 reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start; i < end; i++)
             disp+=(bucket[i].GetPosition(j)-mean)*(bucket[i].GetPosition(j)-mean);
         disp/=(Double_t)(end-start);
@@ -206,7 +192,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         Double_t disp=0;
         Int_t i;
-/*
 #ifdef USEOPENMP
         int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
         if (nthreads <1) nthreads=1;
@@ -214,7 +199,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 default(shared) private(i) schedule(dynamic) \
 reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
-*/
         for (i = start; i < end; i++)
             disp+=(bucket[i].GetPhase(j)-mean)*(bucket[i].GetPhase(j)-mean);
         disp/=(Double_t)(end-start);
@@ -470,19 +454,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             Double_t nbins;
             //if using shannon entropy criterion
             if(splittingcriterion==1) if(end-start>8) nbins=ceil(pow((end-start),1./3.));else nbins=2;
-/*
-#ifdef USEOPENMP
-            //store the maximum number of threads available.
-            int nthreads;
-            #pragma omp parallel
-            {
-                    if (omp_get_thread_num()==0) nthreads=omp_get_num_threads();
-            }
-            if (nthreads>ND) nthreads=ND;
-            #pragma omp parallel for \
-            default(shared) private(j) num_threads(nthreads)
-#endif
-*/
             for (j = 0; j < ND; j++)
             {
                 if(splittingcriterion==1) {
@@ -527,8 +498,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     }
                 }
             }
-
-            splitvalue = (this->*medianfunc)(splitdim, k, start, end, ikeepinputorder);
+            bool irearrangeandbalance=true;
+            if (ikeepinputorder) irearrangeandbalance=false;
+            splitvalue = (this->*medianfunc)(splitdim, k, start, end, irearrangeandbalance);
 
             return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND, BuildNodes(start, k+1),BuildNodes(k+1, end));
         }
