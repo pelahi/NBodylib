@@ -14,6 +14,9 @@
 #include <cstdlib>
 #include <NBodyMath.h>
 #include <SwiftParticle.h>
+#include <map>
+#include <vector>
+#include <memory>
 
 #ifdef USEBOOSTMPI
 #include <boost/mpi.hpp>
@@ -62,6 +65,149 @@ typedef UInt_t PARTPIDTYPE;
 typedef Int_t PARTPIDTYPE;
 #endif
 //@}
+
+
+    /*!
+    \class NBody::HydroProperties
+    \brief A simple class to store hydrodynamic quantities
+    */
+    class HydroProperties
+    {
+        protected:
+            float SmoothingLength, Metallicity;
+            float SphDen, SphPressure, Volume, SelfEnergy;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+        public:
+            HydroProperties(){};
+            HydroProperties(const HydroProperties &h){
+                SmoothingLength = h.SmoothingLength;
+                Metallicity = h.Metallicity;
+                SphDen = h.SphDen;
+                SphPressure = h.SphPressure;
+                Volume = h.Volume;
+                SelfEnergy = h.SelfEnergy;
+                Chemistry = h.Chemistry;
+                Feedback = h.Feedback;
+                ChemistryProduction = h.ChemistryProduction;
+            };
+            HydroProperties &operator=(const HydroProperties &h) {
+                SmoothingLength = h.SmoothingLength;
+                Metallicity = h.Metallicity;
+                SphDen = h.SphDen;
+                SphPressure = h.SphPressure;
+                Volume = h.Volume;
+                SelfEnergy = h.SelfEnergy;
+                Chemistry = h.Chemistry;
+                Feedback = h.Feedback;
+                ChemistryProduction = h.ChemistryProduction;
+            };
+            ~HydroProperties(){};
+
+            float GetChemistry(string &chem) {return Chemistry[chem];}
+            float GetFeedback(string &f) {return Feedback[f];}
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];}
+            float GetSmoothingLength(){return SmoothingLength;}
+            float GetMetallicity(){return Metallicity;}
+            float GetSPHDensity(){return SphDen;}
+            float GetSPHPressure(){return SphPressure;}
+            float GetVolume(){return Volume;}
+            float GetSelfEnergy(){return SelfEnergy;}
+
+            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;}
+            void SetFeedback(string &f, float &value) {Feedback[f]=value;}
+            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;}
+            void SetSmoothingLength(float value){SmoothingLength=value;}
+            void SetMetallicity(float value){Metallicity=value;}
+            void SetSPHDensity(float value){SphDen=value;}
+            void SetSPHPressure(float value){SphPressure=value;}
+            void SetVolume(float value){Volume=value;}
+            void SetSelfEnergy(float value){SelfEnergy=value;}
+            //example eagle chemistry is {"Hydrogen", "Helium",    "Carbon",  "Nitrogen", "Oxygen","Neon", "Magnesium", "Silicon", "Iron"};
+    };
+
+    /*!
+    \class NBody::StarProperties
+    \brief A simple class to store stellar quantities
+    */
+    class StarProperties
+    {
+        protected:
+            float Age, Metallicity;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+        public:
+            StarProperties(){};
+            StarProperties(const StarProperties &s){
+
+            };
+            StarProperties &operator=(const StarProperties &s){
+
+            };
+            ~StarProperties(){};
+
+            float GetChemistry(string &chem) {return Chemistry[chem];};
+            float GetFeedback(string &f) {return Feedback[f];};
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
+            float GetAge(){return Age;};
+            float GetMetallicity(){return Metallicity;}
+
+            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;};
+            void SetFeedback(string &f, float &value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;};
+            void SetAge(float value){Age=value;};
+            void SetMetallicity(float value){Metallicity=value;};
+    };
+    /*!
+    \class NBody::BHProperties
+    \brief A simple class to store black hole  quantities
+    */
+    class BHProperties
+    {
+        protected:
+            float Age, Metallicity, AccretionRate;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+            map<string, float> AccretedMassChannel;
+        public:
+            BHProperties(){};
+            BHProperties(const BHProperties &bh){
+                Age = bh.Age;
+                Metallicity = bh.Metallicity;
+                AccretionRate = bh.AccretionRate;
+                Chemistry = bh.Chemistry;
+                Feedback = bh.Feedback;
+                ChemistryProduction = bh.ChemistryProduction;
+                AccretedMassChannel = bh.AccretedMassChannel;
+
+            };
+            BHProperties &operator=(const BHProperties &bh){
+                Age = bh.Age;
+                Metallicity = bh.Metallicity;
+                AccretionRate = bh.AccretionRate;
+                Chemistry = bh.Chemistry;
+                Feedback = bh.Feedback;
+                ChemistryProduction = bh.ChemistryProduction;
+                AccretedMassChannel = bh.AccretedMassChannel;
+            };
+            ~BHProperties(){};
+
+            float GetChemistry(string &chem) {return Chemistry[chem];};
+            float GetFeedback(string &f) {return Feedback[f];};
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
+            float GetAccretedMassChannel(string &f) {return AccretedMassChannel[f];};
+            float GetAge(){return Age;};
+            float GetMetallicity(){return Metallicity;}
+
+            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;};
+            void SetFeedback(string &f, float &value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;};
+            void SetAge(float value){Age=value;};
+            void SetMetallicity(float value){Metallicity=value;};
+    };
 
 /*!
     \class NBody::Particle
@@ -116,10 +262,12 @@ typedef Int_t PARTPIDTYPE;
         DoublePos_t u;
         ///sph based density
         DoublePos_t sphden;
+        unique_ptr<HydroProperties> hydro;
 #endif
 #ifdef STARON
         ///stellar age
         DoublePos_t tage;
+        unique_ptr<StarProperties> star;
 #endif
 #if defined (GASON) && (STARON)
         ///metallicity
@@ -154,7 +302,13 @@ typedef Int_t PARTPIDTYPE;
         //@}
 #endif
 
+#ifdef BHON
+        unique_ptr<BHProperties> bh;
+#endif
 
+#ifdef EXTRADM
+        unique_ptr<DMProperties> dm;
+#endif
 
         public:
 
@@ -358,6 +512,18 @@ typedef Int_t PARTPIDTYPE;
         Int_t GetSOGroupID() const {return SOGroupID;}
 #endif
 
+#ifdef GASON
+        HydroProperties GetHydroProperties() {return *hydro;};
+        void SetHydroProperties(const HydroProperties &value) {*hydro = value;};
+#endif
+#ifdef STARON
+        StarProperties GetStarProperties() {return *star;};
+        void SetStarProperties(const StarProperties &value) {*star = value;};
+#endif
+#ifdef BHON
+        BHProperties GetBHProperties() {return *bh;};
+        void SetBHProperties(const BHProperties &value) {*bh = value;};
+#endif
         //@}
 
         /// \name Other useful functions

@@ -233,9 +233,11 @@ namespace NBody
 #ifdef GASON
             u=p.u;
             sphden=p.sphden;
+            *hydro = *p.hydro;
 #endif
 #ifdef STARON
             tage=p.tage;
+            *star = *p.star;
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -253,6 +255,9 @@ namespace NBody
             GroupID    = p.GroupID;
             ParentGroupID    = p.ParentGroupID;
             SOGroupID    = p.SOGroupID;
+#endif
+#ifdef BHON
+            *bh = *p.bh;
 #endif
         }
     }
@@ -312,9 +317,11 @@ namespace NBody
 #ifdef GASON
             u=p.u;
             sphden=p.sphden;
+            *hydro = *p.hydro;
 #endif
 #ifdef STARON
             tage=p.tage;
+            *star = *p.star;
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -332,6 +339,9 @@ namespace NBody
             GroupID    = p.GroupID;
             ParentGroupID    = p.ParentGroupID;
             SOGroupID    = p.SOGroupID;
+#endif
+#ifdef BHON
+            *bh = *p.bh;
 #endif
         }
       return *this;
