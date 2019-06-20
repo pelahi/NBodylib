@@ -233,11 +233,12 @@ namespace NBody
 #ifdef GASON
             u=p.u;
             sphden=p.sphden;
-            if (p.hydro != NULL) *hydro = *p.hydro;
+            //copy information if necessary
+            if (p.hydro != NULL) hydro.reset(new HydroProperties(p.hydro));
 #endif
 #ifdef STARON
             tage=p.tage;
-            if (p.star != NULL) *star = *p.star;
+            if (p.star != NULL) star.reset(new StarProperties(p.star));
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -257,7 +258,7 @@ namespace NBody
             SOGroupID    = p.SOGroupID;
 #endif
 #ifdef BHON
-            if (p.bh != NULL) *bh = *p.bh;
+            if (p.bh != NULL) bh.reset(new BHProperties(p.bh));
 #endif
         }
     }
@@ -317,11 +318,12 @@ namespace NBody
 #ifdef GASON
             u=p.u;
             sphden=p.sphden;
-            if (p.hydro != NULL) *hydro = *p.hydro;
+            //when copying data how best to proceed?
+            if (p.hydro != NULL) hydro.reset(new HydroProperties(p.hydro));
 #endif
 #ifdef STARON
             tage=p.tage;
-            if (p.star != NULL) *star = *p.star;
+            if (p.star != NULL) star.reset(new StarProperties(p.star));
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -341,7 +343,7 @@ namespace NBody
             SOGroupID    = p.SOGroupID;
 #endif
 #ifdef BHON
-            if (p.bh != NULL) *bh = *p.bh;
+            if (p.bh != NULL) bh.reset(new BHProperties(p.bh));
 #endif
         }
       return *this;
