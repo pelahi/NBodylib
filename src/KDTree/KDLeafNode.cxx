@@ -100,6 +100,21 @@ namespace NBody
             }
         }
     }
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            if (i!=target){
+            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+            }
+        }
+    }
 
     void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
     {
@@ -196,6 +211,35 @@ namespace NBody
                 pq->Pop();
                 pq->Push(i, dist2);
             }
+            }
+        }
+    }
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            if (!(bucket[i]==p)){
+            Double_t dist2 = DistanceSqd(p.GetPosition(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Coordinate &x, int dim)
+    {
+        for (Int_t i = bucket_start; i < bucket_end; i++)
+        {
+            Double_t dist2 = DistanceSqd(x.GetCoord(),bucket[i].GetPosition(), dim);
+            int checkval=check(bucket[i],params);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
             }
         }
     }
@@ -629,6 +673,12 @@ namespace NBody
         p0=bucket[target];
         FindNearestCriterion(rd,cmp,params,bucket,pq,off,p0,dim);
     }
+    void LeafNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    {
+        Particle p0;
+        p0=bucket[target];
+        FindNearestCheck(rd,check,params,bucket,pq,off,p0,dim);
+    }
 
     void LeafNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Double_t *x, int dim)
     {
@@ -674,6 +724,14 @@ namespace NBody
     void LeafNode::FindNearestCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Particle &p0, int dim)
     {
         FindNearestCriterion(rd,cmp,params,bucket,pq,off,p0,dim);
+    }
+    void LeafNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Particle &p0, int dim)
+    {
+        FindNearestCheck(rd,check,params,bucket,pq,off,p0,dim);
+    }
+    void LeafNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Coordinate &x0, int dim)
+    {
+        FindNearestCheck(rd,check,params,bucket,pq,off,x0,dim);
     }
 
     void LeafNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, Int_t target, int dim)

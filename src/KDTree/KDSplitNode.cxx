@@ -175,6 +175,34 @@ namespace NBody
         }
     }
 
+    void SplitNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = bucket[target].GetPosition(cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCheck(rd,check,params,bucket,pq,off,target, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCheck(rd,check,params,bucket,pq,off,target, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCheck(rd,check,params,bucket,pq,off,target, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCheck(rd,check,params,bucket,pq,off,target, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
     void SplitNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
     {
         Double_t old_off = off[cut_dim];
@@ -363,6 +391,62 @@ namespace NBody
             {
                 off[cut_dim] = new_off;
                 left->FindNearestCriterion(rd,cmp,params,bucket,pq,off,p, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = p.GetPosition(cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCheck(rd,check,params,bucket,pq,off,p, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCheck(rd,check,params,bucket,pq,off,p, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCheck(rd,check,params,bucket,pq,off,p, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCheck(rd,check,params,bucket,pq,off,p, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Coordinate &x, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = x[cut_dim] - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCheck(rd,check,params,bucket,pq,off,x, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCheck(rd,check,params,bucket,pq,off,x, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCheck(rd,check,params,bucket,pq,off,x, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCheck(rd,check,params,bucket,pq,off,x, dim);
                 off[cut_dim] = old_off;
             }
         }
@@ -914,6 +998,12 @@ namespace NBody
         p0=bucket[target];
         FindNearestCriterionPeriodic(rd,cmp,params,bucket,pq,off,p,p0,dim);
     }
+    void SplitNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    {
+        Particle p0;
+        p0=bucket[target];
+        FindNearestCheckPeriodic(rd,check,params,bucket,pq,off,p,p0,dim);
+    }
 
     void SplitNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Double_t *x, int dim)
     {
@@ -1077,6 +1167,63 @@ namespace NBody
             for (int j = 0; j < dim; j++) off[j] = 0.0;
             PeriodicReflectionND(p0,pp,p,dim);
             FindNearestCriterion(rd,cmp,params,bucket,pq,off,pp,dim);
+        }
+    }
+
+    void SplitNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Particle &p0, int dim)
+    {
+        Particle pp;
+        pp=p0;
+        FindNearestCheck(rd,check,params,bucket,pq,off,p0,dim);
+        for (int k=0;k<dim;k++) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection1D(p0,pp,p,k);
+            FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
+        }
+        if (dim==3) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(p0,pp,p,0,1);
+            FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(p0,pp,p,0,2);
+            FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(p0,pp,p,1,2);
+            FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
+        }
+        // search all axis if current max dist less than search radius
+        if (dim>1) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflectionND(p0,pp,p,dim);
+            FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
+        }
+    }
+    void SplitNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Coordinate &x0, int dim)
+    {
+        Coordinate x;
+        x=x0;
+        FindNearestCheck(rd,check,params,bucket,pq,off,x0,dim);
+        for (int k=0;k<dim;k++) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection1D(x0,x,p,k);
+            FindNearestCheck(rd,check,params,bucket,pq,off,x,dim);
+        }
+        if (dim==3) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(x0,x,p,0,1);
+            FindNearestCheck(rd,check,params,bucket,pq,off,x,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(x0,x,p,0,2);
+            FindNearestCheck(rd,check,params,bucket,pq,off,x,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflection2D(x0,x,p,1,2);
+            FindNearestCheck(rd,check,params,bucket,pq,off,x,dim);
+        }
+        // search all axis if current max dist less than search radius
+        if (dim>1) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            PeriodicReflectionND(x0,x,p,dim);
+            FindNearestCheck(rd,check,params,bucket,pq,off,x,dim);
         }
     }
 

@@ -46,12 +46,12 @@
 
 #ifdef USEOPENMP
 #include <omp.h>
-#define CRITPARALLELSIZE 1000000
+#define KDTREEOMPCRITPARALLELSIZE 1000000
 #endif
 
 #ifdef USEMPI
 #include <mpi.h>
-#define CRITPARALLELSIZE 1000000
+#define KDTREEMPICRITPARALLELSIZE 1000000
 #endif
 
 namespace NBody
@@ -127,6 +127,13 @@ namespace NBody
         ///this array is necessary for calculating the phase-space density corectly.
         Double_t **metric;
 
+        ///flag that tells the destructor whether the particle data should be reset to input order
+        bool iresetorder;
+
+        ///flag that says particles do not need to be sorted. this is a dangerous option
+        ///but can be used to significantly speed up tree construction.
+        bool ikeepinputorder;
+
         /// \name Private function pointers used in building tree
         //@{
         Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *);
@@ -162,9 +169,18 @@ namespace NBody
         /// \name Constructors/Destructors
         //@{
         ///Creates tree from an NBody::Particle array
-        KDTree(Particle *p, Int_t numparts, Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000, int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t *Period=NULL, Double_t **metric=NULL);
+        KDTree(Particle *p, Int_t numparts,
+            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
+            Double_t *Period=NULL, Double_t **metric=NULL,
+            bool iKeepInputOrder = false
+        );
         ///Creates tree from NBody::System
-        KDTree(System &s, Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000, int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL);
+        KDTree(System &s,
+            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
+            bool iKeepInputOrder = false
+        );
         ///resets particle order
         ~KDTree();
         //@}
@@ -214,6 +230,13 @@ namespace NBody
         void FindNearestCriterion(Int_t tt, FOFcompfunc cmp, Double_t *params,Int_t *nn, Double_t *dist2, Int_t Nsearch=64);
         //using tree nearest particles that meet a criterion relative to particle passed
         void FindNearestCriterion(Particle p, FOFcompfunc cmp, Double_t *params,Int_t *nn, Double_t *dist2, Int_t Nsearch=64);
+
+        //using tree nearest particles that meet a criterion using particle at bucket[tt] as reference
+        void FindNearestCheck(Int_t tt, FOFcheckfunc check, Double_t *params,Int_t *nn, Double_t *dist2, Int_t Nsearch=64);
+        //using tree nearest particles to particle p that meet a criterion
+        void FindNearestCheck(Particle p, FOFcheckfunc check, Double_t *params,Int_t *nn, Double_t *dist2, Int_t Nsearch=64);
+        //using tree nearest particles to Coordinate x that meet a criterion
+        void FindNearestCheck(Coordinate x, FOFcheckfunc check, Double_t *params,Int_t *nn, Double_t *dist2, Int_t Nsearch=64);
         //@}
 
         /// \name Search for all particles within a given distance
@@ -394,6 +417,17 @@ namespace NBody
         /// of comparison function where npc is number of parameters to be changed and npca is array containing indices of parameters to be altered.
         Int_t *FOFNNDistCriterion(FOFcompfunc p, Double_t *params, Int_t numNN, Int_t **nnIDs, Double_t **dist2,
                                   Double_t disfunc(Int_t , Double_t *), Int_t npc, Int_t *npca, Int_t &numgroups, Int_t minnum=8);
+        //@}
+
+        /// \name Ordering routines
+        //@{
+        /// As tree adjust order of particle array, it overwrites
+        /// particle ids to retain input order.
+        /// However, can ask the tree to overwrite input order and keep the ordering of the
+        /// tree
+        void OverWriteInputOrder();
+        /// set whether tree resets particle array to input order on delete
+        void SetResetOrder(bool);
         //@}
 
         private:
