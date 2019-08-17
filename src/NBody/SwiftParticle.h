@@ -47,10 +47,11 @@ namespace Swift
       /*! Type of the #gpart (DM, gas, star, ...) */
       enum part_type type;
 
-      /*! swift index */
-      int index;
       /*! swift task */
       int task;
+
+      /*! swift index */
+      int index;
 
     };
 
