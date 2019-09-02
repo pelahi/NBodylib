@@ -81,6 +81,7 @@ typedef Int_t PARTPIDTYPE;
             map<string, float> ChemistryProduction;
         public:
             HydroProperties(){};
+            /*
             HydroProperties(const HydroProperties &h){
                 SmoothingLength = h.SmoothingLength;
                 Metallicity = h.Metallicity;
@@ -92,6 +93,8 @@ typedef Int_t PARTPIDTYPE;
                 Feedback = h.Feedback;
                 ChemistryProduction = h.ChemistryProduction;
             };
+            HydroProperties(const HydroProperties &&h){
+            };
             HydroProperties &operator=(const HydroProperties &h) {
                 SmoothingLength = h.SmoothingLength;
                 Metallicity = h.Metallicity;
@@ -102,6 +105,21 @@ typedef Int_t PARTPIDTYPE;
                 Chemistry = h.Chemistry;
                 Feedback = h.Feedback;
                 ChemistryProduction = h.ChemistryProduction;
+            };
+            */
+            bool operator==(const HydroProperties &h) const {
+
+                int ival = 1;
+                ival *= (SmoothingLength == h.SmoothingLength);
+                ival *= (Metallicity == h.Metallicity);
+                ival *= (SphDen == h.SphDen);
+                ival *= (SphPressure == h.SphPressure);
+                ival *= (Volume == h.Volume);
+                ival *= (SelfEnergy == h.SelfEnergy);
+                ival *= (Chemistry == h.Chemistry);
+                ival *= (Feedback == h.Feedback);
+                ival *= (ChemistryProduction == h.ChemistryProduction);
+                return bool(ival);
             };
             ~HydroProperties(){};
 
@@ -140,11 +158,15 @@ typedef Int_t PARTPIDTYPE;
             map<string, float> ChemistryProduction;
         public:
             StarProperties(){};
-            StarProperties(const StarProperties &s){
+            bool operator==(const StarProperties &s) const {
 
-            };
-            StarProperties &operator=(const StarProperties &s){
-
+                int ival = 1;
+                ival *= (Age == s.Age);
+                ival *= (Metallicity == s.Metallicity);
+                ival *= (Chemistry == s.Chemistry);
+                ival *= (Feedback == s.Feedback);
+                ival *= (ChemistryProduction == s.ChemistryProduction);
+                return bool(ival);
             };
             ~StarProperties(){};
 
@@ -174,6 +196,7 @@ typedef Int_t PARTPIDTYPE;
             map<string, float> AccretedMassChannel;
         public:
             BHProperties(){};
+            /*
             BHProperties(const BHProperties &bh){
                 Age = bh.Age;
                 Metallicity = bh.Metallicity;
@@ -192,6 +215,19 @@ typedef Int_t PARTPIDTYPE;
                 Feedback = bh.Feedback;
                 ChemistryProduction = bh.ChemistryProduction;
                 AccretedMassChannel = bh.AccretedMassChannel;
+            };
+            */
+            bool operator==(const BHProperties &b) const {
+
+                int ival = 1;
+                ival *= (Age == b.Age);
+                ival *= (Metallicity == b.Metallicity);
+                ival *= (AccretionRate == b.AccretionRate);
+                ival *= (Chemistry == b.Chemistry);
+                ival *= (Feedback == b.Feedback);
+                ival *= (ChemistryProduction == b.ChemistryProduction);
+                ival *= (AccretedMassChannel == b.AccretedMassChannel);
+                return bool(ival);
             };
             ~BHProperties(){};
 
@@ -318,6 +354,7 @@ typedef Int_t PARTPIDTYPE;
                 Double_t vx = 0, Double_t vy = 0, Double_t vz = 0, PARTIDTYPE ID=0, int type=0, Double_t Rho=0, Double_t Phi=0, PARTPIDTYPE PID=0);
         Particle(Double_t Mass, Double_t *NewPos, Double_t *NewVel, PARTIDTYPE ID=0, int type=0, Double_t Rho=0, Double_t Phi=0, PARTPIDTYPE PID=0);
         Particle(const Particle &p);
+        Particle(Particle &&p);
 #ifdef SWIFTINTERFACE
         Particle(const struct gpart &p,  double lscale, double vscale, double mscale, double uscale, bool icosmological=true, double scalefactor=1.0, double littleh=1.0);
         Particle(const struct swift_vel_part &p);
@@ -330,7 +367,8 @@ typedef Int_t PARTPIDTYPE;
 
         /// \name Overloaded operators
         //@{
-        Particle &operator=(const Particle &part);
+        Particle& operator=(const Particle &part);
+        Particle& operator=(Particle&& other);
         bool operator==(const Particle &p) const
         {
             int ival=1;
@@ -366,6 +404,18 @@ typedef Int_t PARTPIDTYPE;
             ival*=((GroupID==p.GroupID));
             ival*=((ParentGroupID==p.ParentGroupID));
             ival*=((SOGroupID==p.SOGroupID));
+#endif
+#ifdef GASON
+            if (hydro && p.hydro) ival *= (*hydro == *p.hydro);
+            else ival *=0;
+#endif
+#ifdef STARON
+            if (star && p.star) ival *= (*star == *p.star);
+            else ival *=0;
+#endif
+#ifdef BHON
+            if (bh && p.bh) ival *= (*bh == *p.bh);
+            else ival *=0;
 #endif
             return ival;
         }
@@ -513,12 +563,20 @@ typedef Int_t PARTPIDTYPE;
 #endif
 
 #ifdef GASON
+        bool HasHydroProperties() { return bool(hydro); };
         HydroProperties GetHydroProperties() {return *hydro;};
-        void SetHydroProperties(const HydroProperties &value) {*hydro = value;};
+        void SetHydroProperties(const HydroProperties &value) {
+            hydro.reset(new HydroProperties(value));
+        };
+        void SetHydroProperties() {hydro.reset(nullptr);};
 #endif
 #ifdef STARON
+        bool HasStarProperties() { return bool(star); };
         StarProperties GetStarProperties() {return *star;};
-        void SetStarProperties(const StarProperties &value) {*star = value;};
+        void SetStarProperties(const StarProperties &value) {
+            star.reset(new StarProperties(value));
+        };
+        void SetStarProperties() {star.reset(nullptr);};
 #endif
 #ifdef BHON
         BHProperties GetBHProperties() {return *bh;};

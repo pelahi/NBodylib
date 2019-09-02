@@ -234,11 +234,13 @@ namespace NBody
             u=p.u;
             sphden=p.sphden;
             //copy information if necessary
-            if (p.hydro != NULL) hydro.reset(new HydroProperties(*p.hydro));
+            if (p.hydro) hydro.reset(new HydroProperties(*p.hydro));
+            else hydro.reset(nullptr);
 #endif
 #ifdef STARON
             tage=p.tage;
-            if (p.star != NULL) star.reset(new StarProperties(*p.star));
+            if (p.star) star.reset(new StarProperties(*p.star));
+            else star.reset(nullptr);
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -258,9 +260,22 @@ namespace NBody
             SOGroupID    = p.SOGroupID;
 #endif
 #ifdef BHON
-            if (p.bh != NULL) bh.reset(new BHProperties(*p.bh));
+            if (p.bh) bh.reset(new BHProperties(*p.bh));
+            else bh.reset(nullptr);
 #endif
         }
+    }
+    Particle::Particle(Particle &&p)
+    {
+#ifdef GASON
+        hydro  = move(p.hydro);
+#endif
+#ifdef STARON
+        star  = move(p.star);
+#endif
+#ifdef BHON
+        bh  = move(p.bh);
+#endif
     }
 
 #ifdef SWIFTINTERFACE
@@ -319,11 +334,13 @@ namespace NBody
             u=p.u;
             sphden=p.sphden;
             //when copying data how best to proceed?
-            if (p.hydro != NULL) hydro.reset(new HydroProperties(*p.hydro));
+            if (p.hydro) hydro.reset(new HydroProperties(*p.hydro));
+            else hydro.reset(nullptr);
 #endif
 #ifdef STARON
             tage=p.tage;
-            if (p.star != NULL) star.reset(new StarProperties(*p.star));
+            if (p.star) star.reset(new StarProperties(*p.star));
+            else star.reset(nullptr);
 #endif
 #if defined (GASON) && (STARON)
             zmet=p.zmet;
@@ -343,9 +360,68 @@ namespace NBody
             SOGroupID    = p.SOGroupID;
 #endif
 #ifdef BHON
-            if (p.bh != NULL) bh.reset(new BHProperties(*p.bh));
+            if (p.bh) bh.reset(new BHProperties(*p.bh));
+            else bh.reset(nullptr);
 #endif
         }
+      return *this;
+    }
+    /// move assignment operator
+    Particle& Particle::operator=(Particle &&p)
+    {
+#ifndef NOMASS
+        mass = p.mass;
+#endif
+        position[0] = p.position[0];
+        position[1] = p.position[1];
+        position[2] = p.position[2];
+
+        velocity[0] = p.velocity[0];
+        velocity[1] = p.velocity[1];
+        velocity[2] = p.velocity[2];
+        id=p.id;
+        type=p.type;
+        rho=p.rho;
+        phi=p.phi;
+        pid=p.pid;
+#ifdef SWIFTINTERFACE
+        gravityphi=p.gravityphi;
+        swifttask=p.swifttask;
+        swiftindex=p.swiftindex;
+#endif
+#ifdef GASON
+        u=p.u;
+        sphden=p.sphden;
+        //when copying data how best to proceed?
+        if (p.hydro) hydro.reset(new HydroProperties(*p.hydro));
+        else hydro.reset(nullptr);
+#endif
+#ifdef STARON
+        tage=p.tage;
+        if (p.star) star.reset(new StarProperties(*p.star));
+        else star.reset(nullptr);
+#endif
+#if defined (GASON) && (STARON)
+        zmet=p.zmet;
+        sfr=p.sfr;
+#endif
+#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+        entropy=p.entropy;
+        temperature=p.temperature;
+#endif
+#ifdef EXTRAINPUTINFO
+        inputFileID    = p.inputFileID;
+        inputIndexInFile   = p.inputIndexInFile;
+#endif
+#ifdef EXTRAFOFINFO
+        GroupID    = p.GroupID;
+        ParentGroupID    = p.ParentGroupID;
+        SOGroupID    = p.SOGroupID;
+#endif
+#ifdef BHON
+        if (p.bh) bh.reset(new BHProperties(*p.bh));
+        else bh.reset(nullptr);
+#endif
       return *this;
     }
 
