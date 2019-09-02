@@ -545,7 +545,7 @@ typedef Int_t PARTPIDTYPE;
 #endif
 #ifdef BHON
         bool HasBHProperties() { return bool(bh); };
-        StarProperties GetBHProperties() {return *bh;};
+        BHProperties GetBHProperties() {return *bh;};
         void SetBHProperties(const BHProperties &value) {
             bh.reset(new BHProperties(value));
         };
