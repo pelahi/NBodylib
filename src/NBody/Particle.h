@@ -529,6 +529,7 @@ typedef Int_t PARTPIDTYPE;
 
 #ifdef GASON
         bool HasHydroProperties() { return bool(hydro); };
+        void InitHydroProperties() { hydro.reset(new HydroProperties()); };
         HydroProperties& GetHydroProperties() {return *hydro;};
         void SetHydroProperties(const HydroProperties &value) {
             hydro.reset(new HydroProperties(value));
@@ -537,6 +538,7 @@ typedef Int_t PARTPIDTYPE;
 #endif
 #ifdef STARON
         bool HasStarProperties() { return bool(star); };
+        void InitStarProperties() { star.reset(new StarProperties()); };
         StarProperties& GetStarProperties() {return *star;};
         void SetStarProperties(const StarProperties &value) {
             star.reset(new StarProperties(value));
@@ -545,6 +547,7 @@ typedef Int_t PARTPIDTYPE;
 #endif
 #ifdef BHON
         bool HasBHProperties() { return bool(bh); };
+        void InitBHProperties() { bh.reset(new BHProperties()); };
         BHProperties& GetBHProperties() {return *bh;};
         void SetBHProperties(const BHProperties &value) {
             bh.reset(new BHProperties(value));
