@@ -111,9 +111,9 @@ typedef Int_t PARTPIDTYPE;
             float GetVolume(){return Volume;}
             float GetSelfEnergy(){return SelfEnergy;}
 
-            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;}
-            void SetFeedback(string &f, float &value) {Feedback[f]=value;}
-            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;}
+            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;}
+            void SetFeedback(string &f, float value) {Feedback[f]=value;}
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;}
             void SetSmoothingLength(float value){SmoothingLength=value;}
             void SetMetallicity(float value){Metallicity=value;}
             void SetSPHDensity(float value){SphDen=value;}
@@ -158,9 +158,9 @@ typedef Int_t PARTPIDTYPE;
             float GetAge(){return Age;};
             float GetMetallicity(){return Metallicity;}
 
-            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;};
-            void SetFeedback(string &f, float &value) {Feedback[f]=value;};
-            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;};
+            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
+            void SetFeedback(string &f, float value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
             void SetAge(float value){Age=value;};
             void SetMetallicity(float value){Metallicity=value;};
     };
@@ -203,9 +203,10 @@ typedef Int_t PARTPIDTYPE;
             float GetAge(){return Age;};
             float GetMetallicity(){return Metallicity;}
 
-            void SetChemistry(string &chem, float &value) {Chemistry[chem]=value;};
-            void SetFeedback(string &f, float &value) {Feedback[f]=value;};
-            void SetChemistryProduction(string &f, float &value) {ChemistryProduction[f]=value;};
+            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
+            void SetFeedback(string &f, float value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
+            void SetAccretedMassChannel(string &f, float value) {AccretedMassChannel[f]=value;};
             void SetAge(float value){Age=value;};
             void SetMetallicity(float value){Metallicity=value;};
     };
