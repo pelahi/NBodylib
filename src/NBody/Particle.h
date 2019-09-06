@@ -211,6 +211,31 @@ typedef Int_t PARTPIDTYPE;
             void SetMetallicity(float value){Metallicity=value;};
     };
 
+    /*!
+    \class NBody::ExtraDMProperties
+    \brief A simple class to store extra dark matter (gravitaional particle) properties
+    */
+    class ExtraDMProperties
+    {
+        protected:
+            map<string, float> ExtraProperties;
+        public:
+            ExtraDMProperties(){};
+            ExtraDMProperties(const ExtraDMProperties&) = default;
+            ExtraDMProperties(ExtraDMProperties&&) = default;
+            ExtraDMProperties& operator=(const ExtraDMProperties&) = default;
+            ExtraDMProperties& operator=(ExtraDMProperties&&) = default;
+            bool operator==(const ExtraDMProperties &d) const
+            {
+                int ival = 1;
+                ival *= (ExtraProperties == d.ExtraProperties);
+                return bool(ival);
+            };
+            ~ExtraDMProperties() = default;
+
+            float GetExraProperties(string &f){return ExtraProperties[f];}
+            void SetExtraProperties(string &f, float value) {ExtraProperties[f]=value;};
+    };
 /*!
     \class NBody::Particle
     \brief A simple n-body particle class.
@@ -383,6 +408,10 @@ typedef Int_t PARTPIDTYPE;
             if (bh && p.bh) ival *= (*bh == *p.bh);
             else ival *=0;
 #endif
+#ifdef EXTRADMON
+            if (dm && p.dm) ival *= (*dm == *p.dm);
+            else ival *=0;
+#endif
             return ival;
         }
         bool operator!=(const Particle &p) const {return !((*this)==p);}
@@ -536,6 +565,17 @@ typedef Int_t PARTPIDTYPE;
             hydro.reset(new HydroProperties(value));
         };
         void SetHydroProperties() {hydro.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        HydroProperties* ReleaseHydroProperties() { return hydro.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullHydroProperties()
+        {
+            HydroProperties *h = hydro.release();
+            h=nullptr;
+            hydro.reset(nullptr);
+        };
 #endif
 #ifdef STARON
         bool HasStarProperties() { return bool(star); };
@@ -545,6 +585,17 @@ typedef Int_t PARTPIDTYPE;
             star.reset(new StarProperties(value));
         };
         void SetStarProperties() {star.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        StarProperties* ReleaseStarProperties() { return star.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullStarProperties()
+        {
+            StarProperties *s = star.release();
+            s=nullptr;
+            star.reset(nullptr);
+        };
 #endif
 #ifdef BHON
         bool HasBHProperties() { return bool(bh); };
@@ -554,6 +605,38 @@ typedef Int_t PARTPIDTYPE;
             bh.reset(new BHProperties(value));
         };
         void SetBHProperties() {bh.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        BHProperties* ReleaseBHProperties() { return bh.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullBHProperties()
+        {
+            BHProperties *b = bh.release();
+            b=nullptr;
+            bh.reset(nullptr);
+        };
+#endif
+
+#ifdef EXTRADM
+        bool HasExtraDMProperties() { return bool(dm); };
+        void InitExtraDMProperties() { dm.reset(new ExtraDMProperties()); };
+        BHProperties& GetExtraDMProperties() {return *dm;};
+        void SetExtraDMProperties(const ExtraDMProperties &value) {
+            dm.reset(new ExtraDMProperties(value));
+        };
+        void SetExtraDMProperties() {dm.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        BHProperties* ReleaseExtraDMProperties() { return dm.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullExtraDMProperties()
+        {
+            BHProperties *d = dm.release();
+            d=nullptr;
+            dm.reset(nullptr);
+        };
 #endif
         //@}
 
