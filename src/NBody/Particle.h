@@ -14,6 +14,9 @@
 #include <cstdlib>
 #include <NBodyMath.h>
 #include <SwiftParticle.h>
+#include <map>
+#include <vector>
+#include <memory>
 
 #ifdef USEBOOSTMPI
 #include <boost/mpi.hpp>
@@ -63,6 +66,154 @@ typedef Int_t PARTPIDTYPE;
 #endif
 //@}
 
+
+    /*!
+    \class NBody::HydroProperties
+    \brief A simple class to store hydrodynamic quantities
+    */
+    class HydroProperties
+    {
+        protected:
+            ///store properties like SphDen, SphPressure, Volume, SelfEnergy, etc
+            map<string, float> InternalProperties;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+        public:
+            HydroProperties(){};
+            HydroProperties(const HydroProperties&) = default;
+            HydroProperties(HydroProperties&&) = default;
+            HydroProperties& operator=(const HydroProperties&) = default;
+            HydroProperties& operator=(HydroProperties&&) = default;
+            bool operator==(const HydroProperties &h) const
+            {
+                int ival = 1;
+                ival *= (InternalProperties == h.InternalProperties);
+                ival *= (Chemistry == h.Chemistry);
+                ival *= (Feedback == h.Feedback);
+                ival *= (ChemistryProduction == h.ChemistryProduction);
+                return bool(ival);
+            };
+            ~HydroProperties(){};
+
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
+            float GetChemistry(string &f) {return Chemistry[f];}
+            float GetFeedback(string &f) {return Feedback[f];}
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];}
+
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
+            void SetChemistry(string &f, float value) {Chemistry[f]=value;}
+            void SetFeedback(string &f, float value) {Feedback[f]=value;}
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;}
+            //example eagle chemistry is {"Hydrogen", "Helium",    "Carbon",  "Nitrogen", "Oxygen","Neon", "Magnesium", "Silicon", "Iron"};
+    };
+
+    /*!
+    \class NBody::StarProperties
+    \brief A simple class to store stellar quantities
+    */
+    class StarProperties
+    {
+        protected:
+            map<string, float> InternalProperties;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+        public:
+            StarProperties(){};
+            StarProperties(const StarProperties&) = default;
+            StarProperties(StarProperties&&) = default;
+            StarProperties& operator=(const StarProperties&) = default;
+            StarProperties& operator=(StarProperties&&) = default;
+            bool operator==(const StarProperties &s) const
+            {
+                int ival = 1;
+                ival *= (InternalProperties == s.InternalProperties);
+                ival *= (Chemistry == s.Chemistry);
+                ival *= (Feedback == s.Feedback);
+                ival *= (ChemistryProduction == s.ChemistryProduction);
+                return bool(ival);
+            };
+            ~StarProperties(){};
+
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
+            float GetChemistry(string &chem) {return Chemistry[chem];};
+            float GetFeedback(string &f) {return Feedback[f];};
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
+
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
+            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
+            void SetFeedback(string &f, float value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
+    };
+    /*!
+    \class NBody::BHProperties
+    \brief A simple class to store black hole  quantities
+    */
+    class BHProperties
+    {
+        protected:
+            map<string, float> InternalProperties;
+            map<string, float> Chemistry;
+            map<string, float> Feedback;
+            map<string, float> ChemistryProduction;
+            map<string, float> AccretedMassChannel;
+        public:
+            BHProperties(){};
+            BHProperties(const BHProperties&) = default;
+            BHProperties(BHProperties&&) = default;
+            BHProperties& operator=(const BHProperties&) = default;
+            BHProperties& operator=(BHProperties&&) = default;
+            bool operator==(const BHProperties &b) const
+            {
+                int ival = 1;
+                ival *= (InternalProperties == b.InternalProperties);
+                ival *= (Chemistry == b.Chemistry);
+                ival *= (Feedback == b.Feedback);
+                ival *= (ChemistryProduction == b.ChemistryProduction);
+                ival *= (AccretedMassChannel == b.AccretedMassChannel);
+                return bool(ival);
+            };
+            ~BHProperties(){};
+
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
+            float GetChemistry(string &chem) {return Chemistry[chem];};
+            float GetFeedback(string &f) {return Feedback[f];};
+            float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
+            float GetAccretedMassChannel(string &f) {return AccretedMassChannel[f];};
+
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
+            void SetChemistry(string &f, float value) {Chemistry[f]=value;};
+            void SetFeedback(string &f, float value) {Feedback[f]=value;};
+            void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
+            void SetAccretedMassChannel(string &f, float value) {AccretedMassChannel[f]=value;};
+    };
+
+    /*!
+    \class NBody::ExtraDMProperties
+    \brief A simple class to store extra dark matter (gravitaional particle) properties
+    */
+    class ExtraDMProperties
+    {
+        protected:
+            map<string, float> ExtraProperties;
+        public:
+            ExtraDMProperties(){};
+            ExtraDMProperties(const ExtraDMProperties&) = default;
+            ExtraDMProperties(ExtraDMProperties&&) = default;
+            ExtraDMProperties& operator=(const ExtraDMProperties&) = default;
+            ExtraDMProperties& operator=(ExtraDMProperties&&) = default;
+            bool operator==(const ExtraDMProperties &d) const
+            {
+                int ival = 1;
+                ival *= (ExtraProperties == d.ExtraProperties);
+                return bool(ival);
+            };
+            ~ExtraDMProperties() = default;
+
+            float GetExraProperties(string &f){return ExtraProperties[f];}
+            void SetExtraProperties(string &f, float value) {ExtraProperties[f]=value;};
+    };
 /*!
     \class NBody::Particle
     \brief A simple n-body particle class.
@@ -116,10 +267,12 @@ typedef Int_t PARTPIDTYPE;
         DoublePos_t u;
         ///sph based density
         DoublePos_t sphden;
+        unique_ptr<HydroProperties> hydro;
 #endif
 #ifdef STARON
         ///stellar age
         DoublePos_t tage;
+        unique_ptr<StarProperties> star;
 #endif
 #if defined (GASON) && (STARON)
         ///metallicity
@@ -154,7 +307,13 @@ typedef Int_t PARTPIDTYPE;
         //@}
 #endif
 
+#ifdef BHON
+        unique_ptr<BHProperties> bh;
+#endif
 
+#ifdef EXTRADM
+        unique_ptr<DMProperties> dm;
+#endif
 
         public:
 
@@ -164,6 +323,7 @@ typedef Int_t PARTPIDTYPE;
                 Double_t vx = 0, Double_t vy = 0, Double_t vz = 0, PARTIDTYPE ID=0, int type=0, Double_t Rho=0, Double_t Phi=0, PARTPIDTYPE PID=0);
         Particle(Double_t Mass, Double_t *NewPos, Double_t *NewVel, PARTIDTYPE ID=0, int type=0, Double_t Rho=0, Double_t Phi=0, PARTPIDTYPE PID=0);
         Particle(const Particle &p);
+        Particle(Particle &&p) = default;
 #ifdef SWIFTINTERFACE
         Particle(const struct gpart &p,  double lscale, double vscale, double mscale, double uscale, bool icosmological=true, double scalefactor=1.0, double littleh=1.0);
         Particle(const struct swift_vel_part &p);
@@ -176,7 +336,8 @@ typedef Int_t PARTPIDTYPE;
 
         /// \name Overloaded operators
         //@{
-        Particle &operator=(const Particle &part);
+        Particle& operator=(const Particle &part);
+        Particle& operator=(Particle&&) = default;
         bool operator==(const Particle &p) const
         {
             int ival=1;
@@ -212,6 +373,22 @@ typedef Int_t PARTPIDTYPE;
             ival*=((GroupID==p.GroupID));
             ival*=((ParentGroupID==p.ParentGroupID));
             ival*=((SOGroupID==p.SOGroupID));
+#endif
+#ifdef GASON
+            if (hydro && p.hydro) ival *= (*hydro == *p.hydro);
+            else ival *=0;
+#endif
+#ifdef STARON
+            if (star && p.star) ival *= (*star == *p.star);
+            else ival *=0;
+#endif
+#ifdef BHON
+            if (bh && p.bh) ival *= (*bh == *p.bh);
+            else ival *=0;
+#endif
+#ifdef EXTRADMON
+            if (dm && p.dm) ival *= (*dm == *p.dm);
+            else ival *=0;
 #endif
             return ival;
         }
@@ -358,6 +535,87 @@ typedef Int_t PARTPIDTYPE;
         Int_t GetSOGroupID() const {return SOGroupID;}
 #endif
 
+#ifdef GASON
+        bool HasHydroProperties() { return bool(hydro); };
+        void InitHydroProperties() { hydro.reset(new HydroProperties()); };
+        HydroProperties& GetHydroProperties() {return *hydro;};
+        void SetHydroProperties(const HydroProperties &value) {
+            hydro.reset(new HydroProperties(value));
+        };
+        void SetHydroProperties() {hydro.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        HydroProperties* ReleaseHydroProperties() { return hydro.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullHydroProperties()
+        {
+            HydroProperties *h = hydro.release();
+            h=nullptr;
+            hydro.reset(nullptr);
+        };
+#endif
+#ifdef STARON
+        bool HasStarProperties() { return bool(star); };
+        void InitStarProperties() { star.reset(new StarProperties()); };
+        StarProperties& GetStarProperties() {return *star;};
+        void SetStarProperties(const StarProperties &value) {
+            star.reset(new StarProperties(value));
+        };
+        void SetStarProperties() {star.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        StarProperties* ReleaseStarProperties() { return star.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullStarProperties()
+        {
+            StarProperties *s = star.release();
+            s=nullptr;
+            star.reset(nullptr);
+        };
+#endif
+#ifdef BHON
+        bool HasBHProperties() { return bool(bh); };
+        void InitBHProperties() { bh.reset(new BHProperties()); };
+        BHProperties& GetBHProperties() {return *bh;};
+        void SetBHProperties(const BHProperties &value) {
+            bh.reset(new BHProperties(value));
+        };
+        void SetBHProperties() {bh.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        BHProperties* ReleaseBHProperties() { return bh.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullBHProperties()
+        {
+            BHProperties *b = bh.release();
+            b=nullptr;
+            bh.reset(nullptr);
+        };
+#endif
+
+#ifdef EXTRADM
+        bool HasExtraDMProperties() { return bool(dm); };
+        void InitExtraDMProperties() { dm.reset(new ExtraDMProperties()); };
+        BHProperties& GetExtraDMProperties() {return *dm;};
+        void SetExtraDMProperties(const ExtraDMProperties &value) {
+            dm.reset(new ExtraDMProperties(value));
+        };
+        void SetExtraDMProperties() {dm.reset(nullptr);};
+        ///function call that releases ownership of the pointer
+        BHProperties* ReleaseExtraDMProperties() { return dm.release(); };
+        ///function that releases a pointer and sets that pointer to NULL.
+        ///To be used in specific circumstances such as MPI byte copies
+        ///as will otherwise lead to memory leaks. NOT IDEAL
+        void NullExtraDMProperties()
+        {
+            BHProperties *d = dm.release();
+            d=nullptr;
+            dm.reset(nullptr);
+        };
+#endif
         //@}
 
         /// \name Other useful functions
