@@ -74,8 +74,8 @@ typedef Int_t PARTPIDTYPE;
     class HydroProperties
     {
         protected:
-            float SmoothingLength, Metallicity;
-            float SphDen, SphPressure, Volume, SelfEnergy;
+            ///store properties like SphDen, SphPressure, Volume, SelfEnergy, etc
+            map<string, float> InternalProperties;
             map<string, float> Chemistry;
             map<string, float> Feedback;
             map<string, float> ChemistryProduction;
@@ -88,12 +88,7 @@ typedef Int_t PARTPIDTYPE;
             bool operator==(const HydroProperties &h) const
             {
                 int ival = 1;
-                ival *= (SmoothingLength == h.SmoothingLength);
-                ival *= (Metallicity == h.Metallicity);
-                ival *= (SphDen == h.SphDen);
-                ival *= (SphPressure == h.SphPressure);
-                ival *= (Volume == h.Volume);
-                ival *= (SelfEnergy == h.SelfEnergy);
+                ival *= (InternalProperties == h.InternalProperties);
                 ival *= (Chemistry == h.Chemistry);
                 ival *= (Feedback == h.Feedback);
                 ival *= (ChemistryProduction == h.ChemistryProduction);
@@ -101,25 +96,15 @@ typedef Int_t PARTPIDTYPE;
             };
             ~HydroProperties(){};
 
-            float GetChemistry(string &chem) {return Chemistry[chem];}
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
+            float GetChemistry(string &f) {return Chemistry[f];}
             float GetFeedback(string &f) {return Feedback[f];}
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];}
-            float GetSmoothingLength(){return SmoothingLength;}
-            float GetMetallicity(){return Metallicity;}
-            float GetSPHDensity(){return SphDen;}
-            float GetSPHPressure(){return SphPressure;}
-            float GetVolume(){return Volume;}
-            float GetSelfEnergy(){return SelfEnergy;}
 
-            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;}
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
+            void SetChemistry(string &f, float value) {Chemistry[f]=value;}
             void SetFeedback(string &f, float value) {Feedback[f]=value;}
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;}
-            void SetSmoothingLength(float value){SmoothingLength=value;}
-            void SetMetallicity(float value){Metallicity=value;}
-            void SetSPHDensity(float value){SphDen=value;}
-            void SetSPHPressure(float value){SphPressure=value;}
-            void SetVolume(float value){Volume=value;}
-            void SetSelfEnergy(float value){SelfEnergy=value;}
             //example eagle chemistry is {"Hydrogen", "Helium",    "Carbon",  "Nitrogen", "Oxygen","Neon", "Magnesium", "Silicon", "Iron"};
     };
 
@@ -130,7 +115,7 @@ typedef Int_t PARTPIDTYPE;
     class StarProperties
     {
         protected:
-            float Age, Metallicity;
+            map<string, float> InternalProperties;
             map<string, float> Chemistry;
             map<string, float> Feedback;
             map<string, float> ChemistryProduction;
@@ -143,8 +128,7 @@ typedef Int_t PARTPIDTYPE;
             bool operator==(const StarProperties &s) const
             {
                 int ival = 1;
-                ival *= (Age == s.Age);
-                ival *= (Metallicity == s.Metallicity);
+                ival *= (InternalProperties == s.InternalProperties);
                 ival *= (Chemistry == s.Chemistry);
                 ival *= (Feedback == s.Feedback);
                 ival *= (ChemistryProduction == s.ChemistryProduction);
@@ -152,17 +136,15 @@ typedef Int_t PARTPIDTYPE;
             };
             ~StarProperties(){};
 
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
             float GetChemistry(string &chem) {return Chemistry[chem];};
             float GetFeedback(string &f) {return Feedback[f];};
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
-            float GetAge(){return Age;};
-            float GetMetallicity(){return Metallicity;}
 
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
             void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
             void SetFeedback(string &f, float value) {Feedback[f]=value;};
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
-            void SetAge(float value){Age=value;};
-            void SetMetallicity(float value){Metallicity=value;};
     };
     /*!
     \class NBody::BHProperties
@@ -171,7 +153,7 @@ typedef Int_t PARTPIDTYPE;
     class BHProperties
     {
         protected:
-            float Age, Metallicity, AccretionRate;
+            map<string, float> InternalProperties;
             map<string, float> Chemistry;
             map<string, float> Feedback;
             map<string, float> ChemistryProduction;
@@ -185,9 +167,7 @@ typedef Int_t PARTPIDTYPE;
             bool operator==(const BHProperties &b) const
             {
                 int ival = 1;
-                ival *= (Age == b.Age);
-                ival *= (Metallicity == b.Metallicity);
-                ival *= (AccretionRate == b.AccretionRate);
+                ival *= (InternalProperties == b.InternalProperties);
                 ival *= (Chemistry == b.Chemistry);
                 ival *= (Feedback == b.Feedback);
                 ival *= (ChemistryProduction == b.ChemistryProduction);
@@ -196,19 +176,17 @@ typedef Int_t PARTPIDTYPE;
             };
             ~BHProperties(){};
 
+            float GetInternalProperties(string &f) {return InternalProperties[f];}
             float GetChemistry(string &chem) {return Chemistry[chem];};
             float GetFeedback(string &f) {return Feedback[f];};
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
             float GetAccretedMassChannel(string &f) {return AccretedMassChannel[f];};
-            float GetAge(){return Age;};
-            float GetMetallicity(){return Metallicity;}
 
-            void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
+            void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
+            void SetChemistry(string &f, float value) {Chemistry[f]=value;};
             void SetFeedback(string &f, float value) {Feedback[f]=value;};
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
             void SetAccretedMassChannel(string &f, float value) {AccretedMassChannel[f]=value;};
-            void SetAge(float value){Age=value;};
-            void SetMetallicity(float value){Metallicity=value;};
     };
 
     /*!
