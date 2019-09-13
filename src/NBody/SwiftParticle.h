@@ -35,7 +35,7 @@ namespace Swift
         chemistry_element_count
     }__attribute__((packed));
 
-  /* SWIFT/VELOCIraptor particle. */
+    /* SWIFT/VELOCIraptor particle. */
     struct swift_vel_part {
 
       /*! Particle ID. */
@@ -48,7 +48,9 @@ namespace Swift
       float v[3];
 
       /*! Particle mass. */
+      #ifndef NOMASS
       float mass;
+      #endif
 
       /*! Gravitational potential */
       float potential;
@@ -212,47 +214,47 @@ namespace Swift
     /* SWIFT/VELOCIraptor black hole particle. */
     struct swift_vel_bh_part {
 
-            /*! Formation time (or scale factor)*/
-            float formation_time;
+        /*! Formation time (or scale factor)*/
+        float formation_time;
 
-            /*! Subgrid mass of the black hole */
-            float subgrid_mass;
+        /*! Subgrid mass of the black hole */
+        float subgrid_mass;
 
-            /*! Total accreted mass of the black hole (including accreted mass onto BHs
-            * that were merged) */
-            float total_accreted_mass;
+        /*! Total accreted mass of the black hole (including accreted mass onto BHs
+        * that were merged) */
+        float total_accreted_mass;
 
-            /*! Energy reservoir for feedback */
-            float energy_reservoir;
+        /*! Energy reservoir for feedback */
+        float energy_reservoir;
 
-            /*! Instantaneous accretion rate */
-            float accretion_rate;
+        /*! Instantaneous accretion rate */
+        float accretion_rate;
 
-            /*! Density of the gas surrounding the black hole. */
-            float rho_gas;
+        /*! Density of the gas surrounding the black hole. */
+        float rho_gas;
 
-            /*! Smoothed sound speed of the gas surrounding the black hole. */
-            float sound_speed_gas;
+        /*! Smoothed sound speed of the gas surrounding the black hole. */
+        float sound_speed_gas;
 
-            /*! Smoothed velocity (peculiar) of the gas surrounding the black hole */
-            float velocity_gas[3];
+        /*! Smoothed velocity (peculiar) of the gas surrounding the black hole */
+        float velocity_gas[3];
 
-            /*! Curl of the velocity field around the black hole */
-            float circular_velocity_gas[3];
+        /*! Curl of the velocity field around the black hole */
+        float circular_velocity_gas[3];
 
-            /*! Number of seeds in this BH (i.e. itself + the merged ones) */
-            int cumulative_number_seeds;
+        /*! Number of seeds in this BH (i.e. itself + the merged ones) */
+        int cumulative_number_seeds;
 
-            /*! Total number of BH merger events (i.e. not including all progenies) */
-            int number_of_mergers;
+        /*! Total number of BH merger events (i.e. not including all progenies) */
+        int number_of_mergers;
 
-            /*! Chemistry information (e.g. metal content at birth, swallowed metal
-            * content, etc.) */
-            struct swift_vel_chemistry_bh_data chemistry_data;
+        /*! Chemistry information (e.g. metal content at birth, swallowed metal
+        * content, etc.) */
+        struct swift_vel_chemistry_bh_data chemistry_data;
 
-            /*! swift index */
-            int index;
-      };
+        /*! swift index */
+        int index;
+    };
 }
 
 #endif
