@@ -355,6 +355,10 @@ namespace NBody
             if (p.bh) bh.reset(new BHProperties(*p.bh));
             else bh.reset(nullptr);
 #endif
+#ifdef EXTRADMON
+            if (p.dm) dm.reset(new ExtraDMProperties(*p.dm));
+            else dm.reset(nullptr);
+#endif
         }
       return *this;
     }
