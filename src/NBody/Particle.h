@@ -311,8 +311,8 @@ typedef Int_t PARTPIDTYPE;
         unique_ptr<BHProperties> bh;
 #endif
 
-#ifdef EXTRADM
-        unique_ptr<DMProperties> dm;
+#ifdef EXTRADMON
+        unique_ptr<ExtraDMProperties> dm;
 #endif
 
         public:
@@ -596,22 +596,22 @@ typedef Int_t PARTPIDTYPE;
         };
 #endif
 
-#ifdef EXTRADM
+#ifdef EXTRADMON
         bool HasExtraDMProperties() { return bool(dm); };
         void InitExtraDMProperties() { dm.reset(new ExtraDMProperties()); };
-        BHProperties& GetExtraDMProperties() {return *dm;};
+        ExtraDMProperties& GetExtraDMProperties() {return *dm;};
         void SetExtraDMProperties(const ExtraDMProperties &value) {
             dm.reset(new ExtraDMProperties(value));
         };
         void SetExtraDMProperties() {dm.reset(nullptr);};
         ///function call that releases ownership of the pointer
-        BHProperties* ReleaseExtraDMProperties() { return dm.release(); };
+        ExtraDMProperties* ReleaseExtraDMProperties() { return dm.release(); };
         ///function that releases a pointer and sets that pointer to NULL.
         ///To be used in specific circumstances such as MPI byte copies
         ///as will otherwise lead to memory leaks. NOT IDEAL
         void NullExtraDMProperties()
         {
-            BHProperties *d = dm.release();
+            ExtraDMProperties *d = dm.release();
             d=nullptr;
             dm.reset(nullptr);
         };
