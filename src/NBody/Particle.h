@@ -211,7 +211,7 @@ typedef Int_t PARTPIDTYPE;
             };
             ~ExtraDMProperties() = default;
 
-            float GetExraProperties(string &f){return ExtraProperties[f];}
+            float GetExtraProperties(string &f){return ExtraProperties[f];}
             void SetExtraProperties(string &f, float value) {ExtraProperties[f]=value;};
     };
 /*!
