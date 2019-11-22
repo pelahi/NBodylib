@@ -57,6 +57,11 @@
 namespace NBody
 {
 
+    struct KDTreeOMPThreadPool{
+        unsigned int nthreads;
+        unsigned int nactivethreads;
+        vector<unsigned int> activethreadids;
+    };
 
     class KDTree
     {
@@ -134,13 +139,16 @@ namespace NBody
         ///but can be used to significantly speed up tree construction.
         bool ikeepinputorder;
 
+        ///list of threads
+        vector<KDTreeOMPThreadPool> ompthreadpool;
+
         /// \name Private function pointers used in building tree
         //@{
-        Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *);
-        Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t);
-        Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *);
-        Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *);
-        Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, bool);
+        Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
+        Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
+        Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         //@}
 
         /// \name Private arrays used to build tree
@@ -155,7 +163,7 @@ namespace NBody
         /// Private methods used in constructing the tree
         //@{
         ///uses prviate function pointers to recursive build the tree
-        Node* BuildNodes(Int_t start, Int_t end);
+        Node* BuildNodes(Int_t start, Int_t end, KDTreeOMPThreadPool&);
         ///scales the space if necessary by the variance in each dimension
         void ScaleSpace();
         ///checks to see if tree is of proper type
@@ -440,33 +448,48 @@ namespace NBody
 
         /// Find the dimension of which the data has the most spread
         /// for positions
-        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// and phase
-        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions
-        inline Double_t BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// and phs
-        inline Double_t BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd);
+        inline Double_t BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+            KDTreeOMPThreadPool &);
         /// Find the dispersion in a dimension
         /// for positions
-        inline Double_t DispersionPos(int j, Int_t start, Int_t end, Double_t mean);
+        inline Double_t DispersionPos(int j, Int_t start, Int_t end, Double_t mean,
+            KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t DispersionVel(int j, Int_t start, Int_t end, Double_t mean);
+        inline Double_t DispersionVel(int j, Int_t start, Int_t end, Double_t mean,
+            KDTreeOMPThreadPool &);
         /// and phase
-        inline Double_t DispersionPhs(int j, Int_t start, Int_t end, Double_t mean);
+        inline Double_t DispersionPhs(int j, Int_t start, Int_t end, Double_t mean,
+            KDTreeOMPThreadPool &);
         /// Calculate the entropy in a given dimension. This can be used as a node splitting criterion
         /// instead of most spread dimension
         /// for positions
-        inline Double_t EntropyPos(int j, Int_t start, Int_t end, Double_t low, Double_t up, Double_t nbins, Double_t *ni);
+        inline Double_t EntropyPos(int j, Int_t start, Int_t end,
+            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
+            KDTreeOMPThreadPool &);
         /// and for velocities
-        inline Double_t EntropyVel(int j, Int_t start, Int_t end, Double_t low, Double_t up, Double_t nbins, Double_t *ni);
+        inline Double_t EntropyVel(int j, Int_t start, Int_t end,
+            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
+            KDTreeOMPThreadPool &);
         /// and for phase
-        inline Double_t EntropyPhs(int j, Int_t start, Int_t end, Double_t low, Double_t up, Double_t nbins, Double_t *ni);
+        inline Double_t EntropyPhs(int j, Int_t start, Int_t end,
+            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
+            KDTreeOMPThreadPool &);
         //@}
 
         /// \name Rearrange and balance the tree
@@ -474,11 +497,14 @@ namespace NBody
         /// the k'th particle's are lower in index, and vice versa. This function permanently alters
         /// the NBody::System, but it keeps track of the changes.
         //@{
-        inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end, bool balanced=true);
+        inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
+            KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with velocities
-        inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end, bool balanced=true);
+        inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end,
+            KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with full phase-space
-        inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end, bool balanced=true);
+        inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end,
+            KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET
         //inline Double_t MedianDim(int d, Int_t k, Int_t start, Int_t end, bool balanced=true, Double_t **metric=NULL);
@@ -501,6 +527,12 @@ namespace NBody
         //inline void CalculateMetricTensor(int target, int treetype, PriorityQueue *pq, GMatrix gmetric);
         ///load data from queue to array also check if search failed.
         inline void LoadNN(const Int_t ns, PriorityQueue *pq, Int_t *nn, Double_t *dist);
+        //@}
+
+        /// \name OpenMP related thread pool routines
+        //@{
+        KDTreeOMPThreadPool OMPInitThreadPool();
+        vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
     };
 

@@ -242,8 +242,9 @@ namespace NBody
         Node *left;
         Node *right;
         public:
-        SplitNode(Int_t id, int d, Double_t p, Int_t Count, Double_t bnd[6][2], Int_t new_bucket_start, Int_t new_bucket_end, unsigned short ndim, Node *initial_left = NULL,
-                  Node *initial_right = NULL)
+        SplitNode(Int_t id, int d, Double_t p, Int_t Count, Double_t bnd[6][2],
+            Int_t new_bucket_start, Int_t new_bucket_end, unsigned short ndim,
+            Node *initial_left = NULL, Node *initial_right = NULL)
         {
             nid=id;
             cut_dim = d;
