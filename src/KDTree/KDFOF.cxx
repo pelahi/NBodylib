@@ -11,7 +11,7 @@ namespace NBody
 
     Int_t* KDTree::FOF(Double_t fdist, Int_t &numgroup, Int_t minnum, int order, Int_tree_t *pHead, Int_tree_t *pNext, Int_tree_t *pTail, Int_tree_t *pLen)
     {
-        Double_t fdist2=fdist*fdist, off[3];
+        Double_t fdist2=fdist*fdist, off[6];
         //array containing particles group id
         Int_t *pGroup=new Int_t[numparts];
         //array containing head particle of Group
