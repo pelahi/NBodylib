@@ -139,8 +139,8 @@ namespace NBody
         ///but can be used to significantly speed up tree construction.
         bool ikeepinputorder;
 
-        ///list of threads
-        vector<KDTreeOMPThreadPool> ompthreadpool;
+        ///flag indicating whether tree should be build in parallel
+        bool ibuildinparallel;
 
         /// \name Private function pointers used in building tree
         //@{
@@ -181,12 +181,14 @@ namespace NBody
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
             Double_t *Period=NULL, Double_t **metric=NULL,
+            bool iBuildInParallel = true,
             bool iKeepInputOrder = false
         );
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
+            bool iBuildInParallel = true, 
             bool iKeepInputOrder = false
         );
         ///resets particle order

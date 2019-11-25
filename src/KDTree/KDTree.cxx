@@ -25,65 +25,65 @@ namespace NBody
     inline Double_t KDTree::SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t min = bucket[start].GetPosition(j);
-        Double_t max = min;
+        Double_t minval = bucket[start].GetPosition(j);
+        Double_t maxval = minval;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetPosition(j) < min) min = bucket[i].GetPosition(j);
-            if (bucket[i].GetPosition(j) > max) max = bucket[i].GetPosition(j);
+            if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
+            if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
         }
-        bnd[0]=min;bnd[1]=max;
-        return max - min;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
     inline Double_t KDTree::SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t min = bucket[start].GetVelocity(j);
-        Double_t max = min;
+        Double_t minval = bucket[start].GetVelocity(j);
+        Double_t maxval = minval;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetVelocity(j) < min) min = bucket[i].GetVelocity(j);
-            if (bucket[i].GetVelocity(j) > max) max = bucket[i].GetVelocity(j);
+            if (bucket[i].GetVelocity(j) < minval) minval = bucket[i].GetVelocity(j);
+            if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
         }
-        bnd[0]=min;bnd[1]=max;
-        return max - min;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
     inline Double_t KDTree::SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t min = bucket[start].GetPhase(j);
-        Double_t max = min;
+        Double_t minval = bucket[start].GetPhase(j);
+        Double_t maxval = minval;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetPhase(j) < min) min = bucket[i].GetPhase(j);
-            if (bucket[i].GetPhase(j) > max) max = bucket[i].GetPhase(j);
+            if (bucket[i].GetPhase(j) < minval) minval = bucket[i].GetPhase(j);
+            if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
         }
-        bnd[0]=min;bnd[1]=max;
-        return max - min;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
     //@}
     /// \name Find the boundary of the data and return mean
@@ -92,22 +92,22 @@ reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
         KDTreeOMPThreadPool &otp)
     {
         Double_t mean=bucket[start].GetPosition(j);
-        Double_t min=mean, max=mean;
+        Double_t minval=mean, maxval=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetPosition(j) < min) min = bucket[i].GetPosition(j);
-            if (bucket[i].GetPosition(j) > max) max = bucket[i].GetPosition(j);
+            if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
+            if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
             mean+=bucket[i].GetPosition(j);
         }
-        bnd[0]=min;bnd[1]=max;
+        bnd[0]=minval;bnd[1]=maxval;
         mean/=(Double_t)(end-start);
         return mean;
     }
@@ -115,22 +115,22 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         KDTreeOMPThreadPool &otp)
     {
         Double_t mean=bucket[start].GetVelocity(j);
-        Double_t min=mean, max=mean;
+        Double_t minval=mean, maxval=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetVelocity(j) < min) min = bucket[i].GetVelocity(j);
-            if (bucket[i].GetVelocity(j) > max) max = bucket[i].GetVelocity(j);
+            if (bucket[i].GetVelocity(j) < minval) minval = bucket[i].GetVelocity(j);
+            if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
             mean+=bucket[i].GetVelocity(j);
         }
-        bnd[0]=min;bnd[1]=max;
+        bnd[0]=minval;bnd[1]=maxval;
         mean/=(Double_t)(end-start);
         return mean;
     }
@@ -138,22 +138,22 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         KDTreeOMPThreadPool &otp)
     {
         Double_t mean=bucket[start].GetPhase(j);
-        Double_t min=mean, max=mean;
+        Double_t minval=mean, maxval=mean;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
-reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if (nthreads>1)
+reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetPhase(j) < min) min = bucket[i].GetPhase(j);
-            if (bucket[i].GetPhase(j) > max) max = bucket[i].GetPhase(j);
+            if (bucket[i].GetPhase(j) < minval) minval = bucket[i].GetPhase(j);
+            if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
             mean+=bucket[i].GetPhase(j);
         }
-        bnd[0]=min;bnd[1]=max;
+        bnd[0]=minval;bnd[1]=maxval;
         mean/=(Double_t)(end-start);
         return mean;
     }
@@ -166,7 +166,7 @@ reduction(+:mean) reduction(min:min) reduction(max:max) num_threads(nthreads) if
         Double_t disp=0;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE)/float(ND));
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -183,7 +183,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t disp=0;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -200,7 +200,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t disp=0;
         Int_t i;
 #ifdef USEOPENMP
-        int nthreads = floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND;
+        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -517,24 +517,29 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
             splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
-            vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
+            //run the node construction in parallel
+            if (ibuildinparallel && otp.nactivethreads > 1) {
+                //note that if OpenMP not defined then ibuildinparallel is false
+#ifdef USEOPENMP
+                vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
+                Node *left, *right;
 
-//here is example of openmp task based parallelism
-            // #pragma omp task
-            //         fun1(tab, pocz, kon/2, threadsLeft/2);
-            //         #pragma omp task
-            //         fun1(tab, kon - kon/2, kon, threadsLeft - threadsLeft/2);
-            //         #pragma omp taskwait
-/*
-    I think what I should do is have two Node pointers Node *left, *right;
-    Then call #pramga omp task for left, then do it for write and then return
-    the split node after the taskwait. Question is how to make sure that
-    the tasks keep the thread pool for use in the openmp loops 
-*/
-
-            return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND,
-                BuildNodes(start, k+1, newotp[0]), BuildNodes(k+1, end, newotp[1])
-            );
+                #pragma omp parallel
+                #pragma omp single nowait
+                {
+                    #pragma omp task default(shared)
+                    left = BuildNodes(start, k+1, newotp[0]);
+                    #pragma omp task default(shared)
+                    right = BuildNodes(k+1, end, newotp[1]);
+                }
+                return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND,
+                    left, right);
+#endif
+            }
+            else {
+                return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND,
+                    BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
+            }
         }
     }
 
@@ -670,10 +675,16 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       int ttype, int smfunctype, int smres,
       int criterion, int aniso, int scale,
       Double_t *Period, Double_t **m,
+      bool iBuildInParallel,
       bool iKeepInputOrder)
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
+#ifdef USEOPENMP
+        ibuildinparallel = iBuildInParallel;
+#else
+        ibuildinparallel = false;
+#endif
         numparts = nparts;
         numleafnodes=numnodes=0;
         bucket = p;
@@ -709,12 +720,18 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     KDTree::KDTree(System &s, Int_t bucket_size,
       int ttype, int smfunctype, int smres, int criterion, int aniso, int scale,
       Double_t **m,
+      bool iBuildInParallel,
       bool iKeepInputOrder
     )
     {
 
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
+#ifdef USEOPENMP
+        ibuildinparallel = iBuildInParallel;
+#else
+        ibuildinparallel = false;
+#endif
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();
@@ -772,7 +789,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         KDTreeOMPThreadPool ompthreadpool;
 #ifdef USEOPENMP
-        ompthreadpool.nthreads = omp_get_max_threads();
+        if (ibuildinparallel) {
+            ompthreadpool.nthreads = omp_get_max_threads();
+        }
+        else {
+            ompthreadpool.nthreads = 1;
+        }
         ompthreadpool.nactivethreads = ompthreadpool.nthreads;
         ompthreadpool.activethreadids.resize(ompthreadpool.nactivethreads);
         for (auto i=0;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
