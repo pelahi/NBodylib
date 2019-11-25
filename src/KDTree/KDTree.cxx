@@ -28,8 +28,9 @@ namespace NBody
         Double_t minval = bucket[start].GetPosition(j);
         Double_t maxval = minval;
         Int_t i;
+        unsigned int nthreads;;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -49,8 +50,9 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Double_t minval = bucket[start].GetVelocity(j);
         Double_t maxval = minval;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -70,8 +72,9 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Double_t minval = bucket[start].GetPhase(j);
         Double_t maxval = minval;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -94,8 +97,9 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Double_t mean=bucket[start].GetPosition(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -117,8 +121,9 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         Double_t mean=bucket[start].GetVelocity(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -140,8 +145,9 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         Double_t mean=bucket[start].GetPhase(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -165,8 +171,9 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
     {
         Double_t disp=0;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -182,8 +189,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         Double_t disp=0;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -199,8 +207,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         Double_t disp=0;
         Int_t i;
+        unsigned int nthreads;
 #ifdef USEOPENMP
-        int nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))-ND), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) private(i) schedule(dynamic) \
@@ -455,15 +464,21 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         Double_t bnd[6][2];
         Int_t size = end - start;
+        Int_tree_t id = 0;
+        //if not building in parallel can set ids here and update number of nodes
+        //otherwise, must set after construction
+        if (ibuildinparallel == false) {
+            id = numnodes;
+            numnodes++;
+        }
         if (size <= b)
         {
-            numleafnodes++;numnodes++;
+            if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-            return new LeafNode(numnodes-1,start, end,  bnd, ND);
+            return new LeafNode(id ,start, end,  bnd, ND);
         }
         else
         {
-            numnodes++;
             int splitdim=0,j;
             Int_t k = start + (size - 1) / 2;
             Double_t maxspread, minentropy, maxsig,splitvalue;
@@ -514,10 +529,27 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     }
                 }
             }
+            vector<double> splitvalues;
+            for (j = 0; j < ND; j++)
+            {
+                if(splittingcriterion==1) {
+                    splitvalues.push_back(entropya[j]);
+                }
+                else if (splittingcriterion==2) {
+                    splitvalues.push_back(vara[j]);
+                }
+                else {
+                    splitvalues.push_back(spreada[j]);
+                }
+            }
+
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
             splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
-            //run the node construction in parallel
+
+cout<<__PRETTY_FUNCTION__<<" "<<start<<" "<<end<<" "<<splitdim<<" "<<splitvalues[0]<<" "<<splitvalues[1]<<" "<<splitvalues[2]<<endl;
+
+             //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
 #ifdef USEOPENMP
@@ -531,13 +563,15 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     left = BuildNodes(start, k+1, newotp[0]);
                     #pragma omp task default(shared)
                     right = BuildNodes(k+1, end, newotp[1]);
+                    #pragma taskwait
                 }
-                return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND,
+
+                return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                     left, right);
 #endif
             }
             else {
-                return new SplitNode(numnodes-1, splitdim, splitvalue, size, bnd, start, end, ND,
+                return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                     BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
             }
         }
@@ -667,6 +701,49 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
 
+    void KDTree::BuildNodeIDs()
+    {
+        numnodes = 0;
+        numleafnodes = 0;
+        UpdateNodeID(root);
+    }
+
+    void KDTree::UpdateNodeID(Node *node)
+    {
+        node->SetID(numnodes++);
+        //walk tree increasing
+        if (node->GetCount() <= b) {
+            numleafnodes++;
+            return;
+        }
+        else {
+            UpdateNodeID(((SplitNode*)node)->GetLeft());
+            UpdateNodeID(((SplitNode*)node)->GetRight());
+        }
+    }
+
+    void KDTree::WalkNodesFromRoot()
+    {
+        cout<<"Walking tree"<<endl;
+        WalkNode(root);
+    }
+
+    void KDTree::WalkNode(Node *node)
+    {
+        Int_t start, end;
+        Int_tree_t id;
+        start = node->GetStart();
+        end = node->GetEnd();
+        id = node->GetID();
+        cout<<"At node "<<" "<<id<<" "<<start<<" "<<end<<" ";
+        for (auto j=0;j<ND;j++)  cout<<"("<<node->GetBoundary(j,0)<<", "<<node->GetBoundary(j,1)<<")";
+        cout<<endl;
+        if (node->GetCount() > b) {
+            WalkNode(((SplitNode*)node)->GetLeft());
+            WalkNode(((SplitNode*)node)->GetRight());
+        }
+    }
+
     //-- End of private functions used to build the tree
 
     //-- Public constructors
@@ -682,6 +759,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         ikeepinputorder = iKeepInputOrder;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
+        omp_set_nested(int(ibuildinparallel));
 #else
         ibuildinparallel = false;
 #endif
@@ -712,6 +790,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
+            if (ibuildinparallel) BuildNodeIDs();
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
@@ -758,6 +837,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
+            if (ibuildinparallel) BuildNodeIDs();
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
     }
@@ -811,6 +891,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             newthreadpool[1].nthreads = ompthreadpool.nthreads;
             newthreadpool[0].nactivethreads = ompthreadpool.nactivethreads/2;
             newthreadpool[1].nactivethreads = ompthreadpool.nactivethreads - newthreadpool[0].nactivethreads;
+            newthreadpool[0].activethreadids.resize(newthreadpool[0].nactivethreads);
+            newthreadpool[1].activethreadids.resize(newthreadpool[1].nactivethreads);
             for (auto i=0;i<newthreadpool[0].nactivethreads;i++)
                 newthreadpool[0].activethreadids[i] = ompthreadpool.activethreadids[i];
             for (auto i=0;i<newthreadpool[1].nactivethreads;i++)

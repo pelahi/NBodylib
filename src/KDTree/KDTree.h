@@ -164,6 +164,11 @@ namespace NBody
         //@{
         ///uses prviate function pointers to recursive build the tree
         Node* BuildNodes(Int_t start, Int_t end, KDTreeOMPThreadPool&);
+        //set node ids
+        void BuildNodeIDs();
+        //recursive setting of ids
+        void UpdateNodeID(Node *node);
+
         ///scales the space if necessary by the variance in each dimension
         void ScaleSpace();
         ///checks to see if tree is of proper type
@@ -188,7 +193,7 @@ namespace NBody
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
-            bool iBuildInParallel = true, 
+            bool iBuildInParallel = true,
             bool iKeepInputOrder = false
         );
         ///resets particle order
@@ -439,6 +444,9 @@ namespace NBody
         /// set whether tree resets particle array to input order on delete
         void SetResetOrder(bool);
         //@}
+
+        void WalkNodesFromRoot();
+        void WalkNode(Node *node);
 
         private:
 
