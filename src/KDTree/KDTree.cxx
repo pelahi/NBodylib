@@ -744,9 +744,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         ikeepinputorder = iKeepInputOrder;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
-        omp_set_nested(int(ibuildinparallel));
-#else
-        ibuildinparallel = false;
+        bool inested = omp_get_nested();
+        if (inested == false) omp_set_nested(int(ibuildinparallel));
 #endif
         numparts = nparts;
         numleafnodes=numnodes=0;
@@ -779,6 +778,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
+#ifdef USEOPENMP
+        omp_set_nested(inested);
+#endif
     }
 
     KDTree::KDTree(System &s, Int_t bucket_size,
@@ -791,11 +793,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
-#ifdef USEOPENMP
-        ibuildinparallel = iBuildInParallel;
-#else
         ibuildinparallel = false;
-#endif
+        #ifdef USEOPENMP
+                ibuildinparallel = iBuildInParallel;
+                bool inested = omp_get_nested();
+                if (inested == false) omp_set_nested(int(ibuildinparallel));
+        #endif
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();
@@ -825,6 +828,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             if (ibuildinparallel) BuildNodeIDs();
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
+#ifdef USEOPENMP
+        omp_set_nested(inested);
+#endif
     }
     KDTree::~KDTree()
     {
