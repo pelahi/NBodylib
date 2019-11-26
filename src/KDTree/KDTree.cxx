@@ -30,10 +30,10 @@ namespace NBody
         Int_t i;
         unsigned int nthreads;;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -52,10 +52,10 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -74,10 +74,10 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -99,10 +99,10 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -123,10 +123,10 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -147,10 +147,10 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start + 1; i < end; i++)
@@ -173,10 +173,10 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start; i < end; i++)
@@ -191,10 +191,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start ; i < end; i++)
@@ -209,10 +209,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nthreads);
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(dynamic) \
+default(shared) private(i) schedule(static) \
 reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
         for (i = start; i < end; i++)
@@ -452,6 +452,55 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
     //@}
+    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+        KDTreeOMPThreadPool &otp) {
+        int splitdim=0;
+        Int_t size = end - start;
+        Int_t splitindex = start + (size - 1) / 2;
+        Double_t cursplitvalue;
+        Double_t nbins;
+        vector<Double_t> splitvalue(ND);
+        vector<Double_t> entropybins;
+
+        //if using shannon entropy criterion
+        if(splittingcriterion==1) {
+            if(end-start>8) nbins=ceil(pow((end-start),1./3.));
+            else nbins=2;
+            entropybins.resize(nbins);
+        }
+        for (auto j = 0; j < ND; j++)
+        {
+            if(splittingcriterion==1) {
+                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp)+1e-32;//addition incase lattice and no spread
+                Double_t low, up;
+                low=bnd[j][0]-2.0*(splitvalue[j])/(Double_t)(end-start);
+                up=bnd[j][1]+2.0*(splitvalue[j])/(Double_t)(end-start);
+                splitvalue[j] = (this->*entropyfunc)(j, start, end, low, up, nbins, entropybins.data(), otp);
+            }
+            else if (splittingcriterion==2) {
+                splitvalue[j] = (this->*bmfunc)(j, start, end, bnd[j], otp);
+                splitvalue[j] = (this->*dispfunc)(j, start, end, splitvalue[j], otp);
+            }
+            else {
+                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp);
+            }
+        }
+
+        splitdim=0;cursplitvalue = splitvalue[0];
+        //splitdim=0; maxspread=0.0; minentropy=1.0;enflag=0;
+        //for since entropy can only be used in cases where the subspace is not sparse or does not have lattice structure must check
+        //the question is how? At the moment, I do not check for this, though the idea would be only check dimensions that meet the criteria
+        //and if non of them meet it, then enflag still zero and perhaps, use most spread dimension
+        for (auto j = 1; j < ND; j++)
+        {
+            if (splitvalue[j]>cursplitvalue) {
+                splitdim = j;
+                cursplitvalue = splitvalue[j];
+            }
+        }
+        return splitdim;
+    }
+
     //-- End of inline functions
 
     //-- Private functions used to build tree
@@ -479,76 +528,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         else
         {
-            int splitdim=0,j;
-            Int_t k = start + (size - 1) / 2;
-            Double_t maxspread, minentropy, maxsig,splitvalue;
-            Double_t nbins;
-            //if using shannon entropy criterion
-            if(splittingcriterion==1) if(end-start>8) nbins=ceil(pow((end-start),1./3.));else nbins=2;
-            for (j = 0; j < ND; j++)
-            {
-                if(splittingcriterion==1) {
-                    spreada[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp)+1e-32;//addition incase lattice and no spread
-                    Double_t low, up;
-                    low=bnd[j][0]-2.0*(spreada[j])/(Double_t)(end-start);
-                    up=bnd[j][1]+2.0*(spreada[j])/(Double_t)(end-start);
-                    entropya[j] = (this->*entropyfunc)(j, start, end, low, up, nbins, nientropy[j], otp);
-                }
-                else if (splittingcriterion==2) {
-                    meana[j] = (this->*bmfunc)(j, start, end, bnd[j], otp);
-                    vara[j] = (this->*dispfunc)(j, start, end, meana[j], otp);
-                }
-                else {
-                    spreada[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp);
-                }
-            }
-
-            splitdim=0; maxspread=spreada[0]; minentropy=entropya[0];maxsig=vara[0];
-            //splitdim=0; maxspread=0.0; minentropy=1.0;enflag=0;
-            //for since entropy can only be used in cases where the subspace is not sparse or does not have lattice structure must check
-            //the question is how? At the moment, I do not check for this, though the idea would be only check dimensions that meet the criteria
-            //and if non of them meet it, then enflag still zero and perhaps, use most spread dimension
-            for (j = 1; j < ND; j++)
-            {
-                if(splittingcriterion==1) {
-                    if (minentropy>=entropya[j]) {
-                        minentropy = entropya[j];
-                        splitdim = j;
-                    }
-                }
-                else if (splittingcriterion==2) {
-                    if (vara[j] > maxsig) {
-                        maxsig = vara[j];
-                        splitdim = j;
-                    }
-                }
-                else {
-                    if (spreada[j] > maxspread) {
-                        maxspread = spreada[j];
-                        splitdim = j;
-                    }
-                }
-            }
-            vector<double> splitvalues;
-            for (j = 0; j < ND; j++)
-            {
-                if(splittingcriterion==1) {
-                    splitvalues.push_back(entropya[j]);
-                }
-                else if (splittingcriterion==2) {
-                    splitvalues.push_back(vara[j]);
-                }
-                else {
-                    splitvalues.push_back(spreada[j]);
-                }
-            }
 
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
-            splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
-
-cout<<__PRETTY_FUNCTION__<<" "<<start<<" "<<end<<" "<<splitdim<<" "<<splitvalues[0]<<" "<<splitvalues[1]<<" "<<splitvalues[2]<<endl;
-
+            Int_t k = start + (size - 1) / 2;
+            int splitdim = DetermineSplitDim(start, end, bnd, otp);
+            Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
@@ -559,9 +544,9 @@ cout<<__PRETTY_FUNCTION__<<" "<<start<<" "<<end<<" "<<splitdim<<" "<<splitvalues
                 #pragma omp parallel
                 #pragma omp single nowait
                 {
-                    #pragma omp task default(shared)
+                    #pragma omp task shared(left)
                     left = BuildNodes(start, k+1, newotp[0]);
-                    #pragma omp task default(shared)
+                    #pragma omp task shared(right)
                     right = BuildNodes(k+1, end, newotp[1]);
                     #pragma taskwait
                 }

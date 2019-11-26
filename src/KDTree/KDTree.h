@@ -500,6 +500,9 @@ namespace NBody
         inline Double_t EntropyPhs(int j, Int_t start, Int_t end,
             Double_t low, Double_t up, Double_t nbins, Double_t *ni,
             KDTreeOMPThreadPool &);
+        /// Determine the split dimension
+        inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+                KDTreeOMPThreadPool &otp);
         //@}
 
         /// \name Rearrange and balance the tree
