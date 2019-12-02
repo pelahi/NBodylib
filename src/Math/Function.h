@@ -16,24 +16,32 @@ namespace Math
 /// \brief gsl function wrapper
 struct gsl_math_function
 {
-  int (* function) (const gsl_vector *input, void * params, gsl_vector *output);
+  int (* function) (const gsl_vector *params, void * data, gsl_vector *output);
 };
 
 /// \struct Math::gsl_math_function
 /// \brief gsl function wrapper differentiating wrt params, storing info in Jacobian matrix
 struct gsl_math_function_df
 {
-  int (* function) (const gsl_vector * input, void * params, gsl_matrix * outputJacobian);
+  int (* function) (const gsl_vector * params, void * data, gsl_matrix * outputJacobian);
 };
 
+/// \struct Math::gsl_fitting_data
+struct gsl_fitting_data {
+  size_t n;
+  double * x;
+  double * y;
+  size_t npar;
+  int * iparindex;
+};
 
 /// \struct Math::math_function
 /// \brief single dependent variable function
 struct math_function
 {
   Double_t (* function) (Double_t x, void * params);
-  int (* gsl_function) (const gsl_vector *input, void * params, gsl_vector *output);
-  int (* gsl_function_df) (const gsl_vector * input, void * params, gsl_matrix * outputJacobian);
+  int (* gsl_function) (const gsl_vector *params, void * data, gsl_vector *output);
+  int (* gsl_function_df) (const gsl_vector *params, void * data, gsl_matrix * outputJacobian);
   void * params;
 };
 
