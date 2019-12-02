@@ -171,6 +171,12 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         gsl_vector *x_gsl = gsl_vector_alloc(npoints);
         gsl_vector *y_gsl = gsl_vector_alloc(npoints);
         for (auto i=0;i<npoints;i++) {gsl_vector_set(x_gsl,i,x[i]);gsl_vector_set(y_gsl,i,y[i]);}
+        gsl_fitting_data fitdata;
+        fitdata.x = x_gsl -> data;
+        fitdata.y = y_gsl -> data;
+        fitdata.npar = npar;
+        fitdata.iparindex = &parlist[0] ;
+
 
         //parameters related to gsl fitting, set to default
         gsl_multifit_nlinear_parameters gsl_fitting_params = gsl_multifit_nlinear_default_parameters();
@@ -189,6 +195,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         fdf.fvv = NULL; //stores the second derivative
         fdf.n = npar; //number of parameters; //num
         fdf.p = npoints; //number of points
+        fdf.params = &fitdata;
 
         gsl_fitting_params.trs = gsl_multifit_nlinear_trs_lmaccel; //set fitting to accelerated
 
