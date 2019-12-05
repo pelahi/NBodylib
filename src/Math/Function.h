@@ -33,6 +33,8 @@ struct gsl_fitting_data {
   double * y;
   size_t npar;
   int * iparindex;
+  size_t nallparams;
+  double *allparams;
 };
 
 /// \struct Math::math_function

@@ -15,7 +15,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
-#ifdef GSL_22
+#ifdef HAVE_GSL22
 #include <gsl/gsl_multifit_nlinear.h>
 #endif
 #include <Precision.h>
@@ -52,7 +52,7 @@ namespace Math
         Double_t error=1e-3, Double_t cl=0.95,
         int *fixparam=NULL, int binned=1, int maxiterations=1000, int iestimateerror=0);
 
-#ifdef GSL_22
+#ifdef HAVE_GSL22
     Double_t FitNonLinLSWithGSL(const math_function fitfunc, const math_function *difffuncs,
         const int nparams, Double_t *params, GMatrix &covar,
         const int npoints, const Double_t x[], const Double_t y[],

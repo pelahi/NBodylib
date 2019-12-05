@@ -8,13 +8,16 @@ using namespace std;
 namespace Math
 {
     ///\todo must alter so doesn't hang that often but I have no idea what could be taking so long, what hangs
-    Double_t FitNonLinLS(const math_function fitfunc, const math_function *difffuncs, const int nparams, Double_t *params, GMatrix &covar,
-                         const int npoints, const Double_t x[], const Double_t y[], GMatrix *W, Double_t error, Double_t cl, int *fixparam, int binned, int maxiit, int iestimateerror, bool icallgsl)
+    Double_t FitNonLinLS(const math_function fitfunc, const math_function *difffuncs,
+        const int nparams, Double_t *params, GMatrix &covar,
+        const int npoints, const Double_t x[], const Double_t y[], GMatrix *W,
+        Double_t error, Double_t cl, int *fixparam, int binned, int maxiit,
+        int iestimateerror, bool icallgsl)
     {
         Double_t chi2;
-#ifdef GSL_22
+#ifdef HAVE_GSL22
         if (icallgsl) {
-            chi2 = FitNonLinLSNoGSL(fitfunc, difffuncs, nparams, params, covar, npoints, x, y, W, error, cl, fixparam, binned, maxiit, iestimateerror);
+            chi2 = FitNonLinLSWithGSL(fitfunc, difffuncs, nparams, params, covar, npoints, x, y, W, error, cl, fixparam, binned, maxiit, iestimateerror);
         }
         else {
             chi2 = FitNonLinLSNoGSL(fitfunc, difffuncs, nparams, params, covar, npoints, x, y, W, error, cl, fixparam, binned, maxiit, iestimateerror);
@@ -143,7 +146,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
 }
 
 
-#ifdef GSL_22
+#ifdef HAVE_GSL22
     Double_t FitNonLinLSWithGSL(const math_function fitfunc, const math_function *difffuncs,
         const int nparams, Double_t *params, GMatrix &covar,
         const int npoints, const Double_t x[], const Double_t y[],
@@ -170,20 +173,24 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         const gsl_multifit_nlinear_type *T_gsl = gsl_multifit_nlinear_trust;
         gsl_vector *x_gsl = gsl_vector_alloc(npoints);
         gsl_vector *y_gsl = gsl_vector_alloc(npoints);
+        gsl_vector *allparams_gsl = gsl_vector_alloc(nparams);
         for (auto i=0;i<npoints;i++) {gsl_vector_set(x_gsl,i,x[i]);gsl_vector_set(y_gsl,i,y[i]);}
+        for (auto i=0;i<nparams;i++) gsl_vector_set(allparams_gsl, i, (double)params[i]);
         gsl_fitting_data fitdata;
+        fitdata.n = npoints;
         fitdata.x = x_gsl -> data;
         fitdata.y = y_gsl -> data;
         fitdata.npar = npar;
-        fitdata.iparindex = &parlist[0] ;
-
+        fitdata.iparindex = &parlist[0];
+        fitdata.nallparams = nparams;
+        fitdata.allparams = allparams_gsl->data;
 
         //parameters related to gsl fitting, set to default
         gsl_multifit_nlinear_parameters gsl_fitting_params = gsl_multifit_nlinear_default_parameters();
 
         //set workspace
         gsl_multifit_nlinear_workspace *workspace_gsl =
-            gsl_multifit_nlinear_alloc(T_gsl, &gsl_fitting_params, npar, npoints);
+            gsl_multifit_nlinear_alloc(T_gsl, &gsl_fitting_params, npoints, npar);
         gsl_vector *res_gsl = gsl_multifit_nlinear_residual(workspace_gsl);
         gsl_vector *curparam_gsl = gsl_multifit_nlinear_position(workspace_gsl);
         for (auto i=0;i<npar;i++) gsl_vector_set(curparam_gsl, i, params[parlist[i]]);
@@ -193,21 +200,19 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         fdf.f = fitfunc.gsl_function; //function
         fdf.df = fitfunc.gsl_function_df; //stores the jacobian int (* f) (const gsl_vector * x, void * params, gsl_vector * f)
         fdf.fvv = NULL; //stores the second derivative
-        fdf.n = npar; //number of parameters; //num
-        fdf.p = npoints; //number of points
+        fdf.n = npoints; //number of points
+        fdf.p = npar; //number of parameters;
         fdf.params = &fitdata;
-
         gsl_fitting_params.trs = gsl_multifit_nlinear_trs_lmaccel; //set fitting to accelerated
 
         //store information
         xtol = gtol = ftol = error;
         //init fitting
-        gsl_multifit_nlinear_init(x_gsl, &fdf, workspace_gsl);
+        gsl_multifit_nlinear_init(curparam_gsl, &fdf, workspace_gsl);
         //store initial residuals and chi^2
         gsl_blas_ddot(res_gsl, res_gsl, &chi2);
         // iterate until convergence
         gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
-
         // store final chi^2
         gsl_blas_ddot(res_gsl, res_gsl, &chi2);
 
@@ -219,6 +224,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         //free memory and set stuff appropriately
         gsl_vector_free(x_gsl);
         gsl_vector_free(y_gsl);
+        gsl_vector_free(allparams_gsl);
         //gsl_vector_free(res_gsl);
         //gsl_vector_free(curparams_gsl);
         gsl_multifit_nlinear_free(workspace_gsl);
