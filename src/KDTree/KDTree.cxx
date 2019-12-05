@@ -794,11 +794,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
         ibuildinparallel = false;
-        #ifdef USEOPENMP
-                ibuildinparallel = iBuildInParallel;
-                bool inested = omp_get_nested();
-                if (inested == false) omp_set_nested(int(ibuildinparallel));
-        #endif
+#ifdef USEOPENMP
+        ibuildinparallel = iBuildInParallel;
+        bool inested = omp_get_nested();
+        if (inested == false) omp_set_nested(int(ibuildinparallel));
+#endif
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
         bucket = s.Parts();
