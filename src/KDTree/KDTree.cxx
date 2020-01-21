@@ -22,15 +22,12 @@ namespace NBody
 
     /// \name Find most spread dimension
     //@{
-    inline Double_t * KDTree::SpreadestPos(Int_t start, Int_t end, Double_t bnd[][2],
+    inline Double_t KDTree::SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t * spreadout = new Double_t[3];
-        Int_t i;
-        for (auto j = 0; j < ND; j++)
-        {
         Double_t minval = bucket[start].GetPosition(j);
         Double_t maxval = minval;
+        Int_t i;
         unsigned int nthreads;;
 #ifdef USEOPENMP
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
@@ -44,20 +41,15 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
             if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
             if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
         }
-        bnd[j][0]=minval;bnd[j][1]=maxval;
-        spreadout[j] = maxval - minval;
-        }
-        return spreadout;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
-    inline Double_t * KDTree::SpreadestVel(Int_t start, Int_t end, Double_t bnd[][2],
+    inline Double_t KDTree::SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t * spreadout = new Double_t[3];
-        Int_t i;
-        for (auto j = 0; j < ND; j++)
-        {
         Double_t minval = bucket[start].GetVelocity(j);
         Double_t maxval = minval;
+        Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
@@ -71,20 +63,15 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
             if (bucket[i].GetVelocity(j) < minval) minval = bucket[i].GetVelocity(j);
             if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
         }
-        bnd[j][0]=minval;bnd[j][1]=maxval;
-        spreadout[j] = maxval - minval;
-        }
-        return spreadout;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
-    inline Double_t * KDTree::SpreadestPhs(Int_t start, Int_t end, Double_t bnd[][2],
+    inline Double_t KDTree::SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t * spreadout = new Double_t[3];
-        Int_t i;
-        for (auto j = 0; j < ND; j++)
-        {
         Double_t minval = bucket[start].GetPhase(j);
         Double_t maxval = minval;
+        Int_t i;
         unsigned int nthreads;
 #ifdef USEOPENMP
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
@@ -98,10 +85,8 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
             if (bucket[i].GetPhase(j) < minval) minval = bucket[i].GetPhase(j);
             if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
         }
-        bnd[j][0]=minval;bnd[j][1]=maxval;
-        spreadout[j] = maxval - minval;
-        }
-        return spreadout;
+        bnd[0]=minval;bnd[1]=maxval;
+        return maxval - minval;
     }
     //@}
     /// \name Find the boundary of the data and return mean
@@ -474,7 +459,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t splitindex = start + (size - 1) / 2;
         Double_t cursplitvalue;
         Double_t nbins;
-        Double_t * spreadfuncval;
         vector<Double_t> splitvalue(ND);
         vector<Double_t> entropybins;
 
@@ -484,15 +468,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             else nbins=2;
             entropybins.resize(nbins);
         }
-        if (splittingcriterion!=2)
-        {
-            spreadfuncval=(this->*spreadfunc)(start, end, bnd, otp);
-        }
-        
         for (auto j = 0; j < ND; j++)
         {
             if(splittingcriterion==1) {
-                splitvalue[j] = spreadfuncval[j]+1e-32;//addition incase lattice and no spread
+                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp)+1e-32;//addition incase lattice and no spread
                 Double_t low, up;
                 low=bnd[j][0]-2.0*(splitvalue[j])/(Double_t)(end-start);
                 up=bnd[j][1]+2.0*(splitvalue[j])/(Double_t)(end-start);
@@ -503,7 +482,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 splitvalue[j] = (this->*dispfunc)(j, start, end, splitvalue[j], otp);
             }
             else {
-                splitvalue[j] = spreadfuncval[j];
+                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp);
             }
         }
 
@@ -569,7 +548,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     left = BuildNodes(start, k+1, newotp[0]);
                     #pragma omp task shared(right)
                     right = BuildNodes(k+1, end, newotp[1]);
-                    #pragma taskwait
+                    #pragma omp taskwait
                 }
 
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
@@ -763,9 +742,17 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
+        ibuildinparallel = false;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
         bool inested = omp_get_nested();
+        int nthreads;
+        #pragma omp parallel
+        #pragma omp single
+        {
+            nthreads = omp_get_num_threads();
+        }
+        if (nthreads == 1) ibuildinparallel = false;
         if (inested == false) omp_set_nested(int(ibuildinparallel));
 #endif
         numparts = nparts;
@@ -818,6 +805,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
         bool inested = omp_get_nested();
+        int nthreads;
+        #pragma omp parallel
+        #pragma omp single
+        {
+            nthreads = omp_get_num_threads();
+        }
+        if (nthreads == 1) ibuildinparallel = false;
         if (inested == false) omp_set_nested(int(ibuildinparallel));
 #endif
         numparts = s.GetNumParts();
@@ -882,7 +876,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         KDTreeOMPThreadPool ompthreadpool;
 #ifdef USEOPENMP
         if (ibuildinparallel) {
-            ompthreadpool.nthreads = omp_get_max_threads();
+            int nthreads;
+            #pragma omp parallel
+            #pragma omp single
+            {
+                nthreads = omp_get_num_threads();
+            }
+            ompthreadpool.nthreads = nthreads;
         }
         else {
             ompthreadpool.nthreads = 1;
