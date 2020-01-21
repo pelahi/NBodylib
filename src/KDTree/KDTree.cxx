@@ -569,7 +569,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     left = BuildNodes(start, k+1, newotp[0]);
                     #pragma omp task shared(right)
                     right = BuildNodes(k+1, end, newotp[1]);
-                    #pragma omp taskwait
+                    #pragma taskwait
                 }
 
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
@@ -763,17 +763,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
-        ibuildinparallel = false;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
         bool inested = omp_get_nested();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
-        }
-        if (nthreads == 1) ibuildinparallel = false;
         if (inested == false) omp_set_nested(int(ibuildinparallel));
 #endif
         numparts = nparts;
@@ -826,13 +818,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
         bool inested = omp_get_nested();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
-        }
-        if (nthreads == 1) ibuildinparallel = false;
         if (inested == false) omp_set_nested(int(ibuildinparallel));
 #endif
         numparts = s.GetNumParts();
@@ -897,13 +882,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         KDTreeOMPThreadPool ompthreadpool;
 #ifdef USEOPENMP
         if (ibuildinparallel) {
-            int nthreads;
-            #pragma omp parallel
-            #pragma omp single
-            {
-                nthreads = omp_get_num_threads();
-            }
-            ompthreadpool.nthreads = nthreads;
+            ompthreadpool.nthreads = omp_get_max_threads();
         }
         else {
             ompthreadpool.nthreads = 1;
