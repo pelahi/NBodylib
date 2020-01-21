@@ -457,7 +457,6 @@ namespace NBody
         //@{
 
         /// Find the dimension of which the data has the most spread
-        /// for positions, velocities, phase
         /// for positions
         inline Double_t * SpreadestPos(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
@@ -553,4 +552,3 @@ namespace NBody
 }
 #endif
 // KDTREE_H
-
