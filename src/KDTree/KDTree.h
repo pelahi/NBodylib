@@ -146,7 +146,7 @@ namespace NBody
         //@{
         Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        Double_t * (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [][2], KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         //@}
@@ -458,13 +458,13 @@ namespace NBody
 
         /// Find the dimension of which the data has the most spread
         /// for positions
-        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * SpreadestPos(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * SpreadestVel(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// and phase
-        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * SpreadestPhs(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions
