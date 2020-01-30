@@ -10,17 +10,22 @@ namespace NBody
 
     inline void KDTree::LoadNN(const Int_t ns, PriorityQueue *pq, Int_t *nn, Double_t *d)
     {
-        for (Int_t i = ns-1; i >=0; i--)
-        {
-            nn[i] = pq->TopQueue();
-            if (nn[i] == -1)
-            {
-                printf("FindNearest failed for unknown reasons\n");
-//                exit(1);
-            }
-            d[i] = pq->TopPriority();
-            pq->Pop();
+        vector<pair<Int_t, Double_t>> x = pq->Empty();
+        for (auto i = 0; i<ns; i++){
+            nn[i] = x[i].first;
+            d[i] = x[i].second;
         }
+//         for (Int_t i = ns-1; i >=0; i--)
+//         {
+//             nn[i] = pq->TopQueue();
+//             if (nn[i] == -1)
+//             {
+//                 printf("FindNearest failed for unknown reasons\n");
+// //                exit(1);
+//             }
+//             d[i] = pq->TopPriority();
+//             pq->Pop();
+//         }
     }
 
     /// \name Inline functions used when examining phase-space volume
@@ -43,7 +48,8 @@ namespace NBody
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //FindNearestPhase(x, v, ID, dist2, nsmooth);
         PriorityQueue *pq=new PriorityQueue(nsmooth);
-        for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         if (period==NULL) root->FindNearestPhase(0.0,bucket,pq,off,x,v);
         else root->FindNearestPhasePeriodic(0.0,bucket,pq,off,period,x,v);
@@ -74,7 +80,8 @@ namespace NBody
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //FindNearestPhase(x, v, ID, dist2, nsmooth);
         PriorityQueue *pq=new PriorityQueue(nsmooth);
-        for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        //for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         if (period==NULL) root->FindNearestPhase(0.0,bucket,pq,off,x,v);
         else root->FindNearestPhasePeriodic(0.0,bucket,pq,off,period,x,v);
@@ -168,7 +175,8 @@ namespace NBody
         Double_t off[6];
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //use initila metric to find nearest neighbours to then calculate covariance metric
-        for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        //for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1,MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         if (period==NULL) root->FindNearestMetric(0.0,bucket,pq,off,x,v,smetric);
         else root->FindNearestMetricPeriodic(0.0,bucket,pq,off,period,x,v,smetric);
@@ -221,7 +229,8 @@ namespace NBody
         Double_t off[6];
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //use initila metric to find nearest neighbours to then calculate covariance metric
-        for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        //for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         if (period==NULL) root->FindNearestMetric(0.0,bucket,pq,off,x,v,smetric);
         else root->FindNearestMetricPeriodic(0.0,bucket,pq,off,period,x,v,smetric);
@@ -292,7 +301,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[ND];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1,MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
 
         if (period==NULL) {
@@ -364,7 +374,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -378,7 +389,8 @@ namespace NBody
     {
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -391,7 +403,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[6];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 6; i++) off[i] = 0.0;
 
@@ -407,7 +420,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -423,7 +437,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -440,7 +455,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -456,7 +472,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -471,7 +488,8 @@ namespace NBody
         if (period!=NULL) Nsearch+=1;
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -505,7 +523,8 @@ namespace NBody
     {
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[ND];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < ND; i++) off[i] = 0.0;
 
@@ -560,7 +579,8 @@ namespace NBody
     {
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -573,7 +593,8 @@ namespace NBody
     {
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[3];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 3; i++) off[i] = 0.0;
 
@@ -585,7 +606,8 @@ namespace NBody
     {
         PriorityQueue *pq=new PriorityQueue(Nsearch);
         Double_t off[6];
-        for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < Nsearch; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
 
         for (int i = 0; i < 6; i++) off[i] = 0.0;
 

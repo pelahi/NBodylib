@@ -540,6 +540,9 @@ namespace NBody
         //inline void CalculateMetricTensor(int target, int treetype, PriorityQueue *pq, GMatrix gmetric);
         ///load data from queue to array also check if search failed.
         inline void LoadNN(const Int_t ns, PriorityQueue *pq, Int_t *nn, Double_t *dist);
+        inline void LoadPQQueue(const Int_t ns, PriorityQueue *pq, Int_t *a);
+        inline void LoadPQPriority(const Int_t ns, PriorityQueue *pq, Double_t *a);
+        inline void LoadPQPair(const Int_t ns, PriorityQueue *pq, Int_t *a, Double_t *b);
         //@}
 
         /// \name OpenMP related thread pool routines

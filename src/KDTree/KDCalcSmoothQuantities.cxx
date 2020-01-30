@@ -13,6 +13,38 @@ namespace NBody
         if (i<size-1) return (x[i]+(x[i+1]-x[i])*(r-delta*i)/delta);
         else return x[i];//(x[i]-(x[i]-x[i-1])*(delta*(i+1.)-r)/delta);
     }
+    inline void KDTree::LoadPQQueue(const Int_t ns, PriorityQueue *pq, Int_t *a)
+    {
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
+        for (auto i = 0; i<ns; i++){
+            a[i] = xvec[i].first;
+            if (a[i] == -1)
+            {
+                printf("Near neighobur search failed for unknown reasons\n");
+                exit(1);
+            }
+        }
+    }
+    inline void KDTree::LoadPQPriority(const Int_t ns, PriorityQueue *pq, Double_t *a)
+    {
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
+        for (auto i = 0; i<ns; i++){
+            a[i] = xvec[i].second;
+        }
+    }
+    inline void KDTree::LoadPQPair(const Int_t ns, PriorityQueue *pq, Int_t *a, Double_t *b)
+    {
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
+        for (auto i = 0; i<ns; i++){
+            a[i] = xvec[i].first;
+            if (a[i] == -1)
+            {
+                printf("Near neighobur search failed for unknown reasons\n");
+                exit(1);
+            }
+            b[i] = xvec[i].second;
+        }
+    }
     /// get metric describing local phase-space volume (see KDFindNearest for description) (since inline, copied again, think of better way of including the functions)
     inline void KDTree::CalculateMetricSpacing(Int_t target, int treetype, Double_t *smetric){
         CalculateMetricSpacing(bucket[target].GetPosition(),bucket[target].GetVelocity(),treetype,smetric);
@@ -25,19 +57,21 @@ namespace NBody
         Double_t sr0[ND],kvol;
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         PriorityQueue *pq=new PriorityQueue(nsmooth);
-        for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         root->FindNearestPhase(0.0,bucket,pq,off,x,v);
-        for (Int_t i = nsmooth-1; i >=0; i--)
-        {
-            ID[i] = pq->TopQueue();
-            if (ID[i] == -1)
-            {
-                printf("CalculateMetricSpacing failed for unknown reasons\n");
-                exit(1);
-            }
-            pq->Pop();
-        }
+        // for (Int_t i = nsmooth-1; i >=0; i--)
+        // {
+        //     ID[i] = pq->TopQueue();
+        //     if (ID[i] == -1)
+        //     {
+        //         printf("CalculateMetricSpacing failed for unknown reasons\n");
+        //         exit(1);
+        //     }
+        //     pq->Pop();
+        // }
+        LoadPQQueue(nsmooth,pq,ID);
         delete pq;
         //move outward from 2nd most nearest neighbour to nsmooth till all metric distances are not zero (ie product is nolonger zero
         kvol=0.0;
@@ -62,19 +96,21 @@ namespace NBody
         Double_t sr0[ND],kvol;
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         PriorityQueue *pq=new PriorityQueue(nsmooth);
-        for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < nsmooth; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         root->FindNearestPhase(0.0,bucket,pq,off,x,v);
-        for (Int_t i = nsmooth-1; i >=0; i--)
-        {
-            ID[i] = pq->TopQueue();
-            if (ID[i] == -1)
-            {
-                printf("CalculateMetricSpacing failed for unknown reasons\n");
-                exit(1);
-            }
-            pq->Pop();
-        }
+        // for (Int_t i = nsmooth-1; i >=0; i--)
+        // {
+        //     ID[i] = pq->TopQueue();
+        //     if (ID[i] == -1)
+        //     {
+        //         printf("CalculateMetricSpacing failed for unknown reasons\n");
+        //         exit(1);
+        //     }
+        //     pq->Pop();
+        // }
+        LoadPQQueue(nsmooth,pq,ID);
         delete pq;
         //move outward from 2nd most nearest neighbour to nsmooth till all metric distances are not zero (ie product is nolonger zero
         kvol=0.0;
@@ -104,7 +140,8 @@ namespace NBody
         Double_t off[6];
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //use initila metric to find nearest neighbours to then calculate covariance metric
-        for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         root->FindNearestMetric(0.0,bucket,pq,off,x,v,smetric);
 
@@ -116,7 +153,8 @@ namespace NBody
         }
         //calculate center of mass based on all nearby particles in the priority queue
         //find the nearest particles and store them in the queue
-        for (Int_t i=0;i<qsize;i++){idlist[i]=pq->TopQueue();r2list[i]=pq->TopPriority();pq->Pop();}
+        // for (Int_t i=0;i<qsize;i++){idlist[i]=pq->TopQueue();r2list[i]=pq->TopPriority();pq->Pop();}
+        LoadPQPair(qsize,pq,idlist,r2list);
         for (Int_t i=0;i<qsize;i++){
             for (int j=0;j<ND;j++)
                 cm[j]+=(xyz[j]-bucket[idlist[i]].GetPhase(j))*bucket[idlist[i]].GetMass();
@@ -156,7 +194,8 @@ namespace NBody
         Double_t off[6];
         for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
         //use initila metric to find nearest neighbours to then calculate covariance metric
-        for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        // for (Int_t i = 0; i < qsize; i++) pq->Push(-1, MAXVALUE);
+        pq->Fill(-1, MAXVALUE);
         for (int i = 0; i < ND; i++) off[i] = 0.0;
         root->FindNearestMetric(0.0,bucket,pq,off,x,v,smetric);
 
@@ -168,7 +207,8 @@ namespace NBody
         }
         //calculate center of mass based on all nearby particles in the priority queue
         //find the nearest particles and store them in the queue
-        for (Int_t i=0;i<qsize;i++){idlist[i]=pq->TopQueue();r2list[i]=pq->TopPriority();pq->Pop();}
+        // for (Int_t i=0;i<qsize;i++){idlist[i]=pq->TopQueue();r2list[i]=pq->TopPriority();pq->Pop();}
+        LoadPQPair(qsize,pq,idlist,r2list);
         for (Int_t i=0;i<qsize;i++){
             for (int j=0;j<ND;j++)
                 cm[j]+=(xyz[j]-bucket[idlist[i]].GetPhase(j))*bucket[idlist[i]].GetMass();
@@ -222,7 +262,8 @@ namespace NBody
         {
             Int_t target = i;
 
-            for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,target,ND);
             else if (treetype==TVEL)root->FindNearestVel(0.0,bucket,pq,off,target,ND);
@@ -268,35 +309,48 @@ namespace NBody
                 else for (int k=0;k<ND;k++)temp*=m0[k]*m1[k];
                 norm*=temp;
             }
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcDensity failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     Double_t rij = sqrt(pq->TopPriority());
+            //     //Double_t Wij = 0.5 * WSPH(rij, hi);
+            //     //smoothing kernel used to get weight of particle in SPH calculation
+            //     Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //
+            //     Int_t id = pq->TopQueue();
+            //
+            //     bucket[i].SetDensity(bucket[i].GetDensity() + Wij * bucket[id].GetMass());
+            //     bucket[id].SetDensity(bucket[id].GetDensity() + Wij * bucket[i].GetMass());
+            //     //if want to reduce search by setting a maximum distance
+            //     /*if (i < numparts - 1)
+            //     {
+            //         Double_t d;
+            //         if (treetype==0) d = DistanceSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition());
+            //         else if (treetype==1) d = VelDistSqd(bucket[i+1].GetVelocity(), bucket[pq->TopQueue()].GetVelocity());
+            //         else if (treetype==2) d = PhaseDistSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition(),
+            //                             bucket[i+1].GetVelocity(),bucket[pq->TopQueue()].GetVelocity());
+            //         else if (treetype==3) d = DimDistSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition(),
+            //                             bucket[i+1].GetVelocity(),bucket[pq->TopQueue()].GetVelocity(),metric);
+            //         if (d > new_furthest) new_furthest = d;
+            //     }*/
+            //     pq->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcDensity failed for some reason\n");
-                    exit(1);
-                }
-                Double_t rij = sqrt(pq->TopPriority());
+                Double_t rij = sqrt(xvec[i].second);
                 //Double_t Wij = 0.5 * WSPH(rij, hi);
                 //smoothing kernel used to get weight of particle in SPH calculation
                 Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-                Int_t id = pq->TopQueue();
+                Int_t id = xvec[i].first;
 
                 bucket[i].SetDensity(bucket[i].GetDensity() + Wij * bucket[id].GetMass());
                 bucket[id].SetDensity(bucket[id].GetDensity() + Wij * bucket[i].GetMass());
-                //if want to reduce search by setting a maximum distance
-                /*if (i < numparts - 1)
-                {
-                    Double_t d;
-                    if (treetype==0) d = DistanceSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition());
-                    else if (treetype==1) d = VelDistSqd(bucket[i+1].GetVelocity(), bucket[pq->TopQueue()].GetVelocity());
-                    else if (treetype==2) d = PhaseDistSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition(),
-                                        bucket[i+1].GetVelocity(),bucket[pq->TopQueue()].GetVelocity());
-                    else if (treetype==3) d = DimDistSqd(bucket[i+1].GetPosition(),bucket[pq->TopQueue()].GetPosition(),
-                                        bucket[i+1].GetVelocity(),bucket[pq->TopQueue()].GetVelocity(),metric);
-                    if (d > new_furthest) new_furthest = d;
-                }*/
-                pq->Pop();
             }
             //furthest = new_furthest*1000;
         }
@@ -332,7 +386,8 @@ namespace NBody
 
         for (Int_t i = 0; i < numparts; i++)
         {
-            for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             //find nearest physical neighbours or phase-space neighbours
             if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,i,ND);
@@ -351,17 +406,22 @@ namespace NBody
                     }
                 }
             }
+            // for (Int_t j = 0; j <Nsearch; j++) {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcVelDensity failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     nnIDs[j]=pq->TopQueue();
+            //     vdist[j]=sqrt(VelDistSqd(bucket[i].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
+            //     pq->Pop();
+            // }
+            LoadPQQueue(Nsearch, pq, nnIDs);
             for (Int_t j = 0; j <Nsearch; j++) {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcVelDensity failed for some reason\n");
-                    exit(1);
-                }
-                nnIDs[j]=pq->TopQueue();
                 vdist[j]=sqrt(VelDistSqd(bucket[i].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
-                pq->Pop();
             }
-            for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             //from this set find nearest velocity neighbours
             for (Int_t j=0;j<Nsearch;j++)
                 if (vdist[j] < pq2->TopPriority()){
@@ -372,14 +432,23 @@ namespace NBody
             Double_t hi=0.5*pq2->TopPriority();
             //Normalizing by most distant velocity neighbour
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     Double_t rij = pq2->TopPriority();
+            //     //Int_t id=pq2->TopQueue();
+            //     //smoothing kernel used to get weight of particle in SPH calculation
+            //     Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //     bucket[i].SetDensity(bucket[i].GetDensity() + Wij);
+            //     pq2->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                Double_t rij = pq2->TopPriority();
+                Double_t rij = xvec[j].second;
                 //Int_t id=pq2->TopQueue();
                 //smoothing kernel used to get weight of particle in SPH calculation
                 Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
                 bucket[i].SetDensity(bucket[i].GetDensity() + Wij);
-                pq2->Pop();
             }
         }
         delete pq;
@@ -421,25 +490,31 @@ namespace NBody
 
         for (Int_t i = 0; i < numparts; i++)
         {
-            for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             //find nearest physical neighbours
             root->FindNearestPos(0.0,bucket,pq,off,i,ND);
             Double_t hi=0.5*pq->TopPriority();
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j <Nsearch; j++) {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcVelDensitywithPhysDensity failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     nnIDs[j]=pq->TopQueue();
+            //     //xdist[j]=pq->TopPriority();
+            //     vdist[j]=sqrt(VelDistSqd(bucket[i].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
+            //     pq->Pop();
+            // }
+            LoadPQQueue(Nsearch, pq, nnIDs);
             for (Int_t j = 0; j <Nsearch; j++) {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcVelDensitywithPhysDensity failed for some reason\n");
-                    exit(1);
-                }
-                nnIDs[j]=pq->TopQueue();
-                //xdist[j]=pq->TopPriority();
                 vdist[j]=sqrt(VelDistSqd(bucket[i].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
-                pq->Pop();
             }
             //for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest,0);
-            for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            pq2->Fill(-1,furthest);
             //from this set find nearest velocity neighbours
             for (Int_t j=0;j<Nsearch;j++)
                 if (vdist[j] < pq2->TopPriority()){
@@ -452,10 +527,24 @@ namespace NBody
 			//Normalizing by most distant velocity neighbour
             Double_t vnorm=1.0/pow(vhi,(Double_t)(ND*1.));
             Int_t id = bucket[i].GetID();
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     Double_t vij = pq2->TopPriority();
+            //     Int_t id2=pq2->TopQueue();
+            //     Double_t rij=sqrt(DistanceSqd(bucket[i].GetPosition(),bucket[id2].GetPosition(),ND));
+            //     //Double_t rij=pq2->TopValue(0);
+            //     //smoothing kernel used to get weight of particle in SPH calculation
+            //     Double_t vWij = Wsm(vij/vhi, (int)(vij/vhi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*vnorm;
+            //     Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //     //here weight velocity distance by the physical overlap between the particles
+            //     vden[id]+=vWij*(Wij/bucket[i].GetDensity() * bucket[i].GetMass());
+            //     pq2->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                Double_t vij = pq2->TopPriority();
-                Int_t id2=pq2->TopQueue();
+                Double_t vij = xvec[j].second;
+                Int_t id2=xvec[j].first;
                 Double_t rij=sqrt(DistanceSqd(bucket[i].GetPosition(),bucket[id2].GetPosition(),ND));
                 //Double_t rij=pq2->TopValue(0);
                 //smoothing kernel used to get weight of particle in SPH calculation
@@ -463,7 +552,6 @@ namespace NBody
                 Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
                 //here weight velocity distance by the physical overlap between the particles
                 vden[id]+=vWij*(Wij/bucket[i].GetDensity() * bucket[i].GetMass());
-                pq2->Pop();
             }
         }
         delete pq;
@@ -502,24 +590,43 @@ namespace NBody
         {
             Int_t target = i;
 
-            for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             root->FindNearestPos(0.0,bucket,pq,off,target,ND);
 
             Double_t hi = 0.5 * sqrt(pq->TopPriority());
 			//Normalizing by most distant neighbour
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcSmoothVel failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     Double_t rij = sqrt(pq->TopPriority());
+            //     Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //
+            //     Int_t index = pq->TopQueue();
+            //     Int_t id1 = bucket[i].GetID();
+            //     Int_t id2 = bucket[index].GetID();
+            //     Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //         smvel[id1][k]+=temp* bucket[index].GetVelocity(k);
+            //     temp=Wij/bucket[i].GetDensity() * bucket[i].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //         smvel[id2][k]+=temp * bucket[i].GetVelocity(k);
+            //
+            //     pq->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcSmoothVel failed for some reason\n");
-                    exit(1);
-                }
-                Double_t rij = sqrt(pq->TopPriority());
+                Double_t rij = sqrt(xvec[j].second);
                 Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-                Int_t index = pq->TopQueue();
+                Int_t index = xvec[j].first;
                 Int_t id1 = bucket[i].GetID();
                 Int_t id2 = bucket[index].GetID();
                 Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
@@ -528,8 +635,6 @@ namespace NBody
                 temp=Wij/bucket[i].GetDensity() * bucket[i].GetMass();
                 for (int k=0;k<ND;k++)
                     smvel[id2][k]+=temp * bucket[i].GetVelocity(k);
-
-                pq->Pop();
             }
         }
         if (scalespace) for (Int_t i = 0; i < numparts; i++) for (int j=0;j<ND;j++) smvel[i][j]*=ivol;
@@ -567,7 +672,8 @@ namespace NBody
         {
             Int_t target = i;
 
-            for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < 6; j++) off[j] = 0.0;
             root->FindNearestPos(0.0,bucket,pq,off,target,ND);
             Double_t dv1,dv2;
@@ -575,17 +681,45 @@ namespace NBody
             Double_t hi = 0.5 * sqrt(pq->TopPriority());
 			//Normalizing by most distant neighbour
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcSmoothVelDisp failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     Double_t rij = sqrt(pq->TopPriority());
+            //     Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //
+            //     Int_t index = pq->TopQueue();
+            //     Int_t id1 = bucket[i].GetID();
+            //     Int_t id2 = bucket[index].GetID();
+            //
+            //     Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     for (int l=0;l<ND;l++)
+            //     {
+            //         dv1=bucket[index].GetVelocity(k)-smvel[id1][k];
+            //         dv2=bucket[index].GetVelocity(l)-smvel[id1][l];
+            //         smveldisp[id1](k,l)+= temp*dv1*dv2;
+            //     }
+            //     temp=Wij/bucket[i].GetDensity() * bucket[i].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     for (int l=0;l<ND;l++)
+            //     {
+            //         dv1=bucket[i].GetVelocity(k)-smvel[id2][k];
+            //         dv2=bucket[i].GetVelocity(l)-smvel[id2][l];
+            //         smveldisp[id2](k,l)+=temp*dv1*dv2;
+            //     }
+            //     pq->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcSmoothVelDisp failed for some reason\n");
-                    exit(1);
-                }
-                Double_t rij = sqrt(pq->TopPriority());
+                Double_t rij = sqrt(xvec[j].second);
                 Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-                Int_t index = pq->TopQueue();
+                Int_t index = xvec[j].first;
                 Int_t id1 = bucket[i].GetID();
                 Int_t id2 = bucket[index].GetID();
 
@@ -605,7 +739,6 @@ namespace NBody
                     dv2=bucket[i].GetVelocity(l)-smvel[id2][l];
                     smveldisp[id2](k,l)+=temp*dv1*dv2;
                 }
-                pq->Pop();
             }
         }
         if (scalespace) for (Int_t i = 0; i < numparts; i++) for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp[i](j,k)*=ivol;
@@ -646,7 +779,8 @@ namespace NBody
         {
             Int_t target = i;
 
-            for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             root->FindNearestPos(0.0,bucket,pq,off,target,ND);
             Double_t dv1;
@@ -654,17 +788,41 @@ namespace NBody
             Double_t hi = 0.5 * sqrt(pq->TopPriority());
 			//Normalizing by most distant neighbour
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcSmoothVelDisp failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     Double_t rij = sqrt(pq->TopPriority());
+            //     Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //
+            //     Int_t index = pq->TopQueue();
+            //     Int_t id1 = bucket[i].GetID();
+            //     Int_t id2 = bucket[index].GetID();
+            //
+            //     Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     {
+            //         dv1=bucket[index].GetVelocity(k)-smvel[id1][k];
+            //         smvelskew[id1][k]+= temp*dv1*dv1*dv1/pow(smveldisp[id1](k,k),(Double_t)1.5);
+            //     }
+            //     temp=Wij/bucket[i].GetDensity() * bucket[i].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     {
+            //         dv1=bucket[i].GetVelocity(k)-smvel[id2][k];
+            //         smvelskew[id2][k]+=temp*dv1*dv1*dv1/pow(smveldisp[id2](k,k),(Double_t)1.5);
+            //     }
+            //     pq->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcSmoothVelDisp failed for some reason\n");
-                    exit(1);
-                }
-                Double_t rij = sqrt(pq->TopPriority());
+                Double_t rij = sqrt(xvec[j].second);
                 Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-                Int_t index = pq->TopQueue();
+                Int_t index = xvec[j].first;
                 Int_t id1 = bucket[i].GetID();
                 Int_t id2 = bucket[index].GetID();
 
@@ -680,7 +838,6 @@ namespace NBody
                     dv1=bucket[i].GetVelocity(k)-smvel[id2][k];
                     smvelskew[id2][k]+=temp*dv1*dv1*dv1/pow(smveldisp[id2](k,k),(Double_t)1.5);
                 }
-                pq->Pop();
             }
         }
         if (scalespace) for (Int_t i = 0; i < numparts; i++) for (int j=0;j<ND;j++) smvelskew[i][j]*=ivol;
@@ -721,7 +878,8 @@ namespace NBody
         {
             Int_t target = i;
 
-            for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             root->FindNearestPos(0.0,bucket,pq,off,target,ND);
             Double_t dv1;
@@ -729,17 +887,41 @@ namespace NBody
             Double_t hi = 0.5 * sqrt(pq->TopPriority());
 			//Normalizing by most distant neighbour
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            // for (Int_t j = 0; j < Nsmooth; j++)
+            // {
+            //     if (pq->TopQueue() == -1)
+            //     {
+            //         printf("CalcSmoothVelDisp failed for some reason\n");
+            //         exit(1);
+            //     }
+            //     Double_t rij = sqrt(pq->TopPriority());
+            //     Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+            //
+            //     Int_t index = pq->TopQueue();
+            //     Int_t id1 = bucket[i].GetID();
+            //     Int_t id2 = bucket[index].GetID();
+            //
+            //     Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     {
+            //         dv1=bucket[index].GetVelocity(k)-smvel[id1][k];
+            //         smvelkurt[id1][k]+= temp*dv1*dv1*dv1*dv1/(smveldisp[id1](k,k)*smveldisp[id1](k,k))-3.;
+            //     }
+            //     temp=Wij/bucket[i].GetDensity() * bucket[i].GetMass();
+            //     for (int k=0;k<ND;k++)
+            //     {
+            //         dv1=bucket[i].GetVelocity(k)-smvel[id2][k];
+            //         smvelkurt[id2][k]+=temp*dv1*dv1*dv1*dv1/(smveldisp[id2](k,k)*smveldisp[id2](k,k))-3.;
+            //     }
+            //     pq->Pop();
+            // }
+            vector<pair<Int_t, Double_t>> xvec = pq->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcSmoothVelDisp failed for some reason\n");
-                    exit(1);
-                }
-                Double_t rij = sqrt(pq->TopPriority());
+                Double_t rij = sqrt(xvec[j].second);
                 Double_t Wij = 0.5 * Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-                Int_t index = pq->TopQueue();
+                Int_t index = xvec[j].first;
                 Int_t id1 = bucket[i].GetID();
                 Int_t id2 = bucket[index].GetID();
 
@@ -755,7 +937,6 @@ namespace NBody
                     dv1=bucket[i].GetVelocity(k)-smvel[id2][k];
                     smvelkurt[id2][k]+=temp*dv1*dv1*dv1*dv1/(smveldisp[id2](k,k)*smveldisp[id2](k,k))-3.;
                 }
-                pq->Pop();
             }
         }
         if (scalespace) for (Int_t i = 0; i < numparts; i++) for (int j=0;j<ND;j++) smvelkurt[i][j]*=ivol;
@@ -777,7 +958,8 @@ namespace NBody
         Double_t m0[ND],m1[ND],off[ND];
         GMatrix gm(ND,ND);
 
-        for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,target,ND);
         else if (treetype==TVEL)root->FindNearestVel(0.0,bucket,pq,off,target,ND);
@@ -823,17 +1005,28 @@ namespace NBody
             norm*=temp;
         }
 
+        // for (Int_t j = 0; j < Nsmooth; j++)
+        // {
+        //     if (pq->TopQueue() == -1)
+        //     {
+        //         printf("CalcDensity failed for some reason\n");
+        //         exit(1);
+        //     }
+        //     Double_t rij = sqrt(pq->TopPriority());
+        //     Double_t Wij =  Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
+        //
+        //     Int_t id = pq->TopQueue();
+        //
+        //     den+= Wij * bucket[id].GetMass();
+        //     pq->Pop();
+        // }
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcDensity failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij =  Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-            Int_t id = pq->TopQueue();
+            Int_t id = xvec[j].first;
 
             den+= Wij * bucket[id].GetMass();
             pq->Pop();
@@ -866,7 +1059,8 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t vden=0.;
 
-        for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,target,ND);
         else if (treetype==TPHS) {
@@ -884,17 +1078,12 @@ namespace NBody
                 }
             }
         }
+        LoadPQQueue(Nsearch, pq, nnIDs);
         for (Int_t j = 0; j <Nsearch; j++) {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcDensity failed for some reason\n");
-                exit(1);
-            }
-            nnIDs[j]=pq->TopQueue();
             vdist[j]=sqrt(VelDistSqd(bucket[target].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
-            pq->Pop();
         }
-        for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        pq2->Fill(-1, furthest);
         for (Int_t j=0;j<Nsearch;j++)
             if (vdist[j] < pq2->TopPriority()){
                 pq2->Pop();
@@ -903,13 +1092,13 @@ namespace NBody
         Double_t hi=0.5*pq2->TopPriority();
         //Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            Double_t rij = pq2->TopPriority();
+            Double_t rij = xvec[j].second;
             //smoothing kernel used to get weight of particle in SPH calculation
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
             vden+=Wij;
-            pq2->Pop();
         }
         if (iflag==0) {
         delete pq;
@@ -944,23 +1133,19 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t vden=0;
 
-            for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+            pq->Fill(-1, furthest);
             for (int j = 0; j < ND; j++) off[j] = 0.0;
             //find nearest physical neighbours
             root->FindNearestPos(0.0,bucket,pq,off,target,ND);
             Double_t hi=0.5*pq->TopPriority();
             Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+            LoadPQQueue(Nsearch, pq, nnIDs);
             for (Int_t j = 0; j <Nsearch; j++) {
-                if (pq->TopQueue() == -1)
-                {
-                    printf("CalcVelDensitywithPhysDensity failed for some reason\n");
-                    exit(1);
-                }
-                nnIDs[j]=pq->TopQueue();
                 vdist[j]=sqrt(VelDistSqd(bucket[target].GetVelocity(),bucket[nnIDs[j]].GetVelocity(),ND));
-                pq->Pop();
             }
-            for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+            pq2->Fill(-1, furthest);
             //from this set find nearest velocity neighbours
             for (Int_t j=0;j<Nsearch;j++)
                 if (vdist[j] < pq2->TopPriority()){
@@ -971,17 +1156,17 @@ namespace NBody
             Double_t vhi=0.5*pq2->TopPriority();
 			//Normalizing by most distant velocity neighbour
             Double_t vnorm=1.0/pow(vhi,(Double_t)(ND*1.));
+            vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
             for (Int_t j = 0; j < Nsmooth; j++)
             {
-                Double_t vij = pq2->TopPriority();
-                Int_t id=pq2->TopQueue();
+                Double_t vij = xvec[j].second;
+                Int_t id= xvec[j].first;
                 Double_t rij=sqrt(DistanceSqd(bucket[target].GetPosition(),bucket[id].GetPosition(),ND));
                 //smoothing kernel used to get weight of particle in SPH calculation
                 Double_t vWij = Wsm(vij/vhi, (int)(vij/vhi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*vnorm;
                 Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
                 //here weight velocity distance by the physical overlap between the particles
                 vden+=vWij*(Wij/bucket[target].GetDensity() * bucket[target].GetMass());
-                pq2->Pop();
             }
         delete pq;
         delete pq2;
@@ -1008,28 +1193,24 @@ namespace NBody
 
         for (int j=0;j<ND;j++) smvel[j]=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        //for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,target,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVel failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<3;k++)
                 smvel[k]+= temp* bucket[index].GetVelocity(k);
 
-            pq->Pop();
         }
         if (scalespace) for (int j=0;j<ND;j++) smvel[j]*=ivol;
         delete pq;
@@ -1053,7 +1234,8 @@ namespace NBody
 
         for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp(j,k)=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,target,ND);
         Double_t dv1,dv2;
@@ -1061,16 +1243,12 @@ namespace NBody
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVelDisp failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
 
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<ND;k++)
@@ -1080,7 +1258,6 @@ namespace NBody
                 dv2=bucket[index].GetVelocity(l)-smvel[l];
                 smveldisp(k,l)+= temp*dv1*dv2;
             }
-            pq->Pop();
         }
         if (scalespace) for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp(j,k)*=ivol;
         delete pq;
@@ -1101,7 +1278,8 @@ namespace NBody
         Double_t m0[ND],m1[ND],off[ND];
         GMatrix gm(ND,ND);
 
-        for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,x,ND);
         else if (treetype==TVEL)root->FindNearestVel(0.0,bucket,pq,off,x,ND);
@@ -1128,20 +1306,15 @@ namespace NBody
             else for (int k=0;k<ND;k++)temp*=m0[k]*m1[k];
             norm*=temp;
         }
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcDensity failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij =  Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-            Int_t id = pq->TopQueue();
+            Int_t id = xvec[j].first;
 
             den+= Wij * bucket[id].GetMass();
-            pq->Pop();
         }
         if (scalespace) den*=ivol;
         delete pq;
@@ -1170,7 +1343,8 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t vden=0.;
 
-        for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
         for (Int_t j = 0; j <Nsearch; j++) {
@@ -1183,7 +1357,8 @@ namespace NBody
             vdist[j]=sqrt(VelDistSqd(v,bucket[nnIDs[j]].GetVelocity(),ND));
             pq->Pop();
         }
-        for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        pq2->Fill(-1, furthest);
         for (Int_t j=0;j<Nsearch;j++)
             if (vdist[j] < pq2->TopPriority()){
                 pq2->Pop();
@@ -1192,13 +1367,13 @@ namespace NBody
         Double_t hi=0.5*pq2->TopPriority();
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            Double_t rij = pq2->TopPriority();
+            Double_t rij = xvec[j].second;
             //smoothing kernel used to get weight of particle in SPH calculation
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
             vden+=Wij;
-            pq2->Pop();
         }
         delete pq;
         delete pq2;
@@ -1225,28 +1400,23 @@ namespace NBody
 
         for (int j=0;j<ND;j++) smvel[j]=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVel failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<3;k++)
                 smvel[k]+= temp* bucket[index].GetVelocity(k);
-
-            pq->Pop();
         }
         if (scalespace) for (int j=0;j<ND;j++) smvel[j]*=ivol;
         delete pq;
@@ -1270,7 +1440,8 @@ namespace NBody
 
         for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp(j,k)=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
         Double_t dv1,dv2;
@@ -1278,16 +1449,12 @@ namespace NBody
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVelDisp failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
 
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<ND;k++)
@@ -1297,7 +1464,6 @@ namespace NBody
                 dv2=bucket[index].GetVelocity(l)-smvel[l];
                 smveldisp(k,l)+= temp*dv1*dv2;
             }
-            pq->Pop();
         }
         if (scalespace) for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp(j,k)*=ivol;
         delete pq;
@@ -1316,7 +1482,8 @@ namespace NBody
         Double_t m0[ND],m1[ND],off[ND];
         GMatrix gm(ND,ND);
 
-        for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         if (treetype==TPHYS||treetype==TPROJ) root->FindNearestPos(0.0,bucket,pq,off,x,ND);
         else if (treetype==TVEL)root->FindNearestVel(0.0,bucket,pq,off,x,ND);
@@ -1343,20 +1510,15 @@ namespace NBody
             else for (int k=0;k<ND;k++)temp*=m0[k]*m1[k];
             norm*=temp;
         }
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcDensity failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij =  Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
 
-            Int_t id = pq->TopQueue();
+            Int_t id = xvec[j].first;
 
             den+= Wij * bucket[id].GetMass();
-            pq->Pop();
         }
         if (scalespace) den*=ivol;
         delete pq;
@@ -1385,20 +1547,16 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t vden=0.;
 
-        for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsearch; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
+        LoadPQQueue(Nsearch, pq, nnIDs);
         for (Int_t j = 0; j <Nsearch; j++) {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcDensity failed for some reason\n");
-                exit(1);
-            }
-            nnIDs[j]=pq->TopQueue();
             vdist[j]=sqrt(VelDistSqd(v,bucket[nnIDs[j]].GetVelocity(),ND));
-            pq->Pop();
         }
-        for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        // for (Int_t j = 0; j <Nsmooth; j++) pq2->Push(-1, furthest);
+        pq2->Fill(-1, furthest);
         for (Int_t j=0;j<Nsearch;j++)
             if (vdist[j] < pq2->TopPriority()){
                 pq2->Pop();
@@ -1407,13 +1565,13 @@ namespace NBody
         Double_t hi=0.5*pq2->TopPriority();
         //Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq2->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            Double_t rij = pq2->TopPriority();
+            Double_t rij = xvec[j].second;
             //smoothing kernel used to get weight of particle in SPH calculation
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
             vden+=Wij;
-            pq2->Pop();
         }
         delete pq;
         delete pq2;
@@ -1440,28 +1598,23 @@ namespace NBody
 
         for (int j=0;j<ND;j++) smvel[j]=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
         //Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVel failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<3;k++)
                 smvel[k]+= temp* bucket[index].GetVelocity(k);
-
-            pq->Pop();
         }
         if (scalespace) for (int j=0;j<ND;j++) smvel[j]*=ivol;
         delete pq;
@@ -1485,7 +1638,8 @@ namespace NBody
 
         for (int j=0;j<ND;j++) for (int k=0;k<ND;k++) smveldisp(j,k)=0;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
         Double_t dv1,dv2;
@@ -1493,16 +1647,12 @@ namespace NBody
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
         //Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothVelDisp failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
 
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             for (int k=0;k<ND;k++)
@@ -1549,26 +1699,22 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t mean=0.;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,target,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothLocalMean failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             mean+= temp* weight[bucket[index].GetID()];
-            pq->Pop();
         }
         if (scalespace) mean*=ivol;
         delete pq;
@@ -1588,27 +1734,23 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t disp=0.,delta;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,target,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothLocalDisp failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             delta=(weight[bucket[index].GetID()]-mean);
             disp+=temp*delta*delta;
-            pq->Pop();
         }
         if (scalespace) disp*=ivol;
         delete pq;
@@ -1629,26 +1771,22 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t mean=0.;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothLocalMean failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             mean+= temp* weight[bucket[index].GetID()];
-            pq->Pop();
         }
         if (scalespace) mean*=ivol;
         delete pq;
@@ -1666,23 +1804,20 @@ namespace NBody
         Double_t furthest = MAXVALUE,off[ND];
         Double_t disp=0.,delta;
 
-        for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        // for (Int_t j = 0; j < Nsmooth; j++) pq->Push(-1, furthest);
+        pq->Fill(-1, furthest);
         for (int j = 0; j < ND; j++) off[j] = 0.0;
         root->FindNearestPos(0.0,bucket,pq,off,x,ND);
 
         Double_t hi = 0.5 * sqrt(pq->TopPriority());
     	//Normalizing by most distant neighbour
         Double_t norm=1.0/pow(hi,(Double_t)(ND*1.));
+        vector<pair<Int_t, Double_t>> xvec = pq->Empty();
         for (Int_t j = 0; j < Nsmooth; j++)
         {
-            if (pq->TopQueue() == -1)
-            {
-                printf("CalcSmoothLocalDisp failed for some reason\n");
-                exit(1);
-            }
-            Double_t rij = sqrt(pq->TopPriority());
+            Double_t rij = sqrt(xvec[j].second);
             Double_t Wij = Wsm(rij/hi, (int)(rij/hi*0.5*(kernres-1)), kernres, 2.0/(Double_t)(kernres-1), Kernel)*norm;
-            Int_t index = pq->TopQueue();
+            Int_t index = xvec[j].first;
             Double_t temp=Wij/bucket[index].GetDensity() * bucket[index].GetMass();
             delta=(weight[bucket[index].GetID()]-mean);
             disp+=temp*delta*delta;

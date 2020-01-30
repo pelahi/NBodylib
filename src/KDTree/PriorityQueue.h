@@ -36,10 +36,27 @@ namespace NBody
             pq = new queue_member[max+1];
         }
         ~PriorityQueue() { delete [] pq; }
-        bool Empty()
+        bool isEmpty()
         {
             if (n == 0) return true;
             else return false;
+        }
+        void Fill(Int_t q, Double_t p)
+        {
+            n = max_size;
+            for (auto i=1;i<=n;i++) {
+                pq[i].queue = q;
+                pq[i].priority = p;
+            }
+        }
+        vector<pair<Int_t, Double_t>> Empty()
+        {
+            vector<pair<Int_t, Double_t>> val(n);
+            for (auto i=1;i<=n;i++) {
+                val[i-1] = make_pair(pq[i].queue,pq[i].priority);
+            }
+            n = 0;
+            return val;
         }
         Int_t Size() { return n; }
         Int_t MaxSize() { return max_size; }
@@ -105,11 +122,11 @@ namespace NBody
             for (Int_t i=0;i<max+1;i++) npq[i].values=new Double_t[Nval];
         }
         ~NPriorityQueue()
-        { 
+        {
             for (Int_t i=0;i<max_size+1;i++) delete[] npq[i].values;
             delete[] npq;
         }
-        void Push(Int_t p, Double_t dist, Double_t *pvalue) 
+        void Push(Int_t p, Double_t dist, Double_t *pvalue)
         {
             if (++n > max_size)
             {
@@ -150,7 +167,7 @@ namespace NBody
             for (int i=0;i<nvalues;i++) npq[p].values[i]=npq[n+1].values[i];
         }
         Double_t TopValue(Int_t N) {
-            if (N<nvalues) return npq[1].values[N]; 
+            if (N<nvalues) return npq[1].values[N];
             else return 0;
         }
     };
