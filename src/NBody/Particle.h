@@ -101,10 +101,20 @@ typedef Int_t PARTPIDTYPE;
             float GetFeedback(string &f) {return Feedback[f];}
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];}
 
+            map<string, float> GetInternalProperties() {return InternalProperties;}
+            map<string, float> GetChemistry() {return Chemistry;}
+            map<string, float> GetFeedback() {return Feedback;}
+            map<string, float> GetChemistryProduction() {return ChemistryProduction;}
+
             void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
             void SetChemistry(string &f, float value) {Chemistry[f]=value;}
             void SetFeedback(string &f, float value) {Feedback[f]=value;}
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;}
+
+            void SetInternalProperties(map<string, float> m) {InternalProperties=m;}
+            void SetChemistry(map<string, float> m) {Chemistry=m;}
+            void SetFeedback(map<string, float> m) {Feedback=m;}
+            void SetChemistryProduction(map<string, float> m) {ChemistryProduction=m;}
             //example eagle chemistry is {"Hydrogen", "Helium",    "Carbon",  "Nitrogen", "Oxygen","Neon", "Magnesium", "Silicon", "Iron"};
     };
 
@@ -141,10 +151,20 @@ typedef Int_t PARTPIDTYPE;
             float GetFeedback(string &f) {return Feedback[f];};
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
 
+            map<string, float> GetInternalProperties() {return InternalProperties;}
+            map<string, float> GetChemistry() {return Chemistry;}
+            map<string, float> GetFeedback() {return Feedback;}
+            map<string, float> GetChemistryProduction() {return ChemistryProduction;}
+
             void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
             void SetChemistry(string &chem, float value) {Chemistry[chem]=value;};
             void SetFeedback(string &f, float value) {Feedback[f]=value;};
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
+
+            void SetInternalProperties(map<string, float> m) {InternalProperties=m;}
+            void SetChemistry(map<string, float> m) {Chemistry=m;}
+            void SetFeedback(map<string, float> m) {Feedback=m;}
+            void SetChemistryProduction(map<string, float> m) {ChemistryProduction=m;}
     };
     /*!
     \class NBody::BHProperties
@@ -182,11 +202,23 @@ typedef Int_t PARTPIDTYPE;
             float GetChemistryProduction(string &f) {return ChemistryProduction[f];};
             float GetAccretedMassChannel(string &f) {return AccretedMassChannel[f];};
 
+            map<string, float> GetInternalProperties() {return InternalProperties;}
+            map<string, float> GetChemistry() {return Chemistry;}
+            map<string, float> GetFeedback() {return Feedback;}
+            map<string, float> GetChemistryProduction() {return ChemistryProduction;}
+            map<string, float> GetAccretedMassChannel() {return AccretedMassChannel;}
+
             void SetInternalProperties(string &f, float value) {InternalProperties[f]=value;}
             void SetChemistry(string &f, float value) {Chemistry[f]=value;};
             void SetFeedback(string &f, float value) {Feedback[f]=value;};
             void SetChemistryProduction(string &f, float value) {ChemistryProduction[f]=value;};
             void SetAccretedMassChannel(string &f, float value) {AccretedMassChannel[f]=value;};
+
+            void SetInternalProperties(map<string, float> m) {InternalProperties=m;}
+            void SetChemistry(map<string, float> m) {Chemistry=m;}
+            void SetFeedback(map<string, float> m) {Feedback=m;}
+            void SetChemistryProduction(map<string, float> m) {ChemistryProduction=m;}
+            void SetAccretedMassChannel(map<string, float> m) {AccretedMassChannel=m;}
     };
 
     /*!
@@ -212,7 +244,9 @@ typedef Int_t PARTPIDTYPE;
             ~ExtraDMProperties() = default;
 
             float GetExtraProperties(string &f){return ExtraProperties[f];}
+            map<string, float> GetExtraProperties() {return ExtraProperties;}
             void SetExtraProperties(string &f, float value) {ExtraProperties[f]=value;};
+            void SetExtraProperties(map<string, float> m) {ExtraProperties=m;}
     };
 /*!
     \class NBody::Particle
