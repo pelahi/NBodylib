@@ -311,10 +311,11 @@ namespace NBody
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
         //first check to see if entire node lies wihtin search distance
+        Particle bucket_target=bucket[target];
         Double_t maxr0=0.,maxr1=0.;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            maxr0+=(bucket_target.GetPosition(j)-xbnd[j][0])*(bucket_target.GetPosition(j)-xbnd[j][0]);
+            maxr1+=(bucket_target.GetPosition(j)-xbnd[j][1])*(bucket_target.GetPosition(j)-xbnd[j][1]);
         }
         if (maxr0<fdist2&&maxr1<fdist2)
             for (Int_t i = bucket_start; i < bucket_end; i++)
@@ -323,7 +324,7 @@ namespace NBody
         for (Int_t i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+            Double_t dist2 = DistanceSqd(bucket_target.GetPosition(),bucket[i].GetPosition(), dim);
             if (dist2 < fdist2) tagged[nt++]=i;
             }
         }
@@ -359,9 +360,10 @@ namespace NBody
     {
         //first check to see if entire node lies wihtin search distance
         Double_t maxr0=0.,maxr1=0.;
+        Particle bucket_target=bucket[target];
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            maxr0+=(bucket_target.GetPosition(j)-xbnd[j][0])*(bucket_target.GetPosition(j)-xbnd[j][0]);
+            maxr1+=(bucket_target.GetPosition(j)-xbnd[j][1])*(bucket_target.GetPosition(j)-xbnd[j][1]);
         }
         if (maxr0<fdist2&&maxr1<fdist2)
             for (Int_t i = bucket_start; i < bucket_end; i++)
@@ -370,7 +372,7 @@ namespace NBody
         for (Int_t i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+            Double_t dist2 = DistanceSqd(bucket_target.GetPosition(),bucket[i].GetPosition(), dim);
             if (dist2 < fdist2) tagged.push_back(i);
             }
         }
