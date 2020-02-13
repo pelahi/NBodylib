@@ -400,7 +400,9 @@ namespace NBody
         //@{
 
         /// simple physical FOF search, velocity FOF, and 6D phase FOF.
-        Int_t *FOF(Double_t fdist, Int_t &numgroup, Int_t minnum=8, int order=0, Int_tree_t *pHead=NULL, Int_tree_t *pNext=NULL, Int_tree_t *pTail=NULL, Int_tree_t *pLen=NULL);
+        Int_t *FOF(Double_t fdist, Int_t &numgroup, Int_t minnum=8, int order=0,
+            Int_tree_t *pHead=NULL, Int_tree_t *pNext=NULL, Int_tree_t *pTail=NULL, Int_tree_t *pLen=NULL,
+            int ipcheckflag=0, FOFcheckfunc check=Pnocheck, Double_t *params=NULL);
         /// this searches tree for particles that meed some criterion given by some comparison function
         /// NOTE: comparison function is used only for leaf nodes.
         /// NOTE: parameters for tree search and comparison are contained in the params variable
