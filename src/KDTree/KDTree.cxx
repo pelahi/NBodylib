@@ -455,8 +455,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp) {
         int splitdim=0;
-        Int_t size = end - start;
-        Int_t splitindex = start + (size - 1) / 2;
         Double_t cursplitvalue;
         Double_t nbins;
         vector<Double_t> splitvalue(ND);
