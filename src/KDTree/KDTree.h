@@ -144,7 +144,7 @@ namespace NBody
 
         /// \name Private function pointers used in building tree
         //@{
-        Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        Double_t * (NBody::KDTree::*bmfunc)(Int_t , Int_t , Double_t [][2], KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
         Double_t * (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [][2], KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
@@ -468,13 +468,13 @@ namespace NBody
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions
-        inline Double_t * BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[6][2],
+        inline Double_t * BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t * BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[6][2],
+        inline Double_t * BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// and phs
-        inline Double_t * BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[6][2],
+        inline Double_t * BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[][2],
             KDTreeOMPThreadPool &);
         /// Find the dispersion in a dimension
         /// for positions

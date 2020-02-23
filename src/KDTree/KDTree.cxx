@@ -106,7 +106,7 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
     //@}
     /// \name Find the boundary of the data and return mean
     //@{
-    inline Double_t * KDTree::BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[6][2],
+    inline Double_t * KDTree::BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[][2],
         KDTreeOMPThreadPool &otp)
     {
         Double_t * bmout = new Double_t[3];
@@ -130,11 +130,11 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         }
         bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        bmout=mean;
+        bmout[j]=mean;
     }
     return bmout;
     }
-    inline Double_t * KDTree::BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[6][2],
+    inline Double_t * KDTree::BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[][2],
         KDTreeOMPThreadPool &otp)
     {
         Double_t * bmout = new Double_t[3];
@@ -158,11 +158,11 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         }
         bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        bmout=mean;
+        bmout[j]=mean;
     }
     return bmout;
     }
-    inline Double_t * KDTree::BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[6][2],
+    inline Double_t * KDTree::BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[][2],
         KDTreeOMPThreadPool &otp)
     {
         Double_t * bmout = new Double_t[3];
@@ -186,7 +186,7 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
         }
         bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        bmout=mean;
+        bmout[j]=mean;
     }
     return bmout;
     }
@@ -486,7 +486,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t splitindex = start + (size - 1) / 2;
         Double_t cursplitvalue;
         Double_t nbins;
-        Double_t * spreadfuncval, bmfuncval;
+        Double_t * spreadfuncval;
+        Double_t * bmfuncval;
         vector<Double_t> splitvalue(ND);
         vector<Double_t> entropybins;
 
