@@ -106,9 +106,11 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
     //@}
     /// \name Find the boundary of the data and return mean
     //@{
-    inline Double_t KDTree::BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
+    inline Double_t * KDTree::BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp)
     {
+        Double_t * bmout = new Double_t[3];
+        for (auto j = 0; j < ND; j++) {
         Double_t mean=bucket[start].GetPosition(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
@@ -126,13 +128,17 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
             if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
             mean+=bucket[i].GetPosition(j);
         }
-        bnd[0]=minval;bnd[1]=maxval;
+        bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        return mean;
+        bmout=mean;
     }
-    inline Double_t KDTree::BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
+    return bmout;
+    }
+    inline Double_t * KDTree::BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp)
     {
+        Double_t * bmout = new Double_t[3];
+        for (auto j = 0; j < ND; j++) {
         Double_t mean=bucket[start].GetVelocity(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
@@ -150,13 +156,17 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
             if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
             mean+=bucket[i].GetVelocity(j);
         }
-        bnd[0]=minval;bnd[1]=maxval;
+        bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        return mean;
+        bmout=mean;
     }
-    inline Double_t KDTree::BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+    return bmout;
+    }
+    inline Double_t * KDTree::BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp)
     {
+        Double_t * bmout = new Double_t[3];
+        for (auto j = 0; j < ND; j++) {
         Double_t mean=bucket[start].GetPhase(j);
         Double_t minval=mean, maxval=mean;
         Int_t i;
@@ -174,9 +184,11 @@ reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthrea
             if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
             mean+=bucket[i].GetPhase(j);
         }
-        bnd[0]=minval;bnd[1]=maxval;
+        bnd[j][0]=minval;bnd[j][1]=maxval;
         mean/=(Double_t)(end-start);
-        return mean;
+        bmout=mean;
+    }
+    return bmout;
     }
     //@}
     /// \name Find the dispersion in a dimension (biased variance using 1/N as opposed to 1/(N-1) so that if N=2, doesn't crash)
@@ -474,7 +486,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t splitindex = start + (size - 1) / 2;
         Double_t cursplitvalue;
         Double_t nbins;
-        Double_t * spreadfuncval;
+        Double_t * spreadfuncval, bmfuncval;
         vector<Double_t> splitvalue(ND);
         vector<Double_t> entropybins;
 
@@ -488,6 +500,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         {
             spreadfuncval=(this->*spreadfunc)(start, end, bnd, otp);
         }
+        else if (splittingcriterion==2) {
+            bmfuncval = (this->*bmfunc)(start, end, bnd, otp);
+        }
         
         for (auto j = 0; j < ND; j++)
         {
@@ -499,8 +514,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 splitvalue[j] = (this->*entropyfunc)(j, start, end, low, up, nbins, entropybins.data(), otp);
             }
             else if (splittingcriterion==2) {
-                splitvalue[j] = (this->*bmfunc)(j, start, end, bnd[j], otp);
-                splitvalue[j] = (this->*dispfunc)(j, start, end, splitvalue[j], otp);
+                splitvalue[j] = (this->*dispfunc)(j, start, end, bmfuncval[j], otp);
             }
             else {
                 splitvalue[j] = spreadfuncval[j];
@@ -544,7 +558,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         if (size <= b)
         {
             if (ibuildinparallel == false) numleafnodes++;
-            for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
+            // for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
+            (this->*bmfunc)(start, end, bnd, otp);
             return new LeafNode(id ,start, end,  bnd, ND);
         }
         else

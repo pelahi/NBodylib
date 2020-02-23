@@ -468,13 +468,13 @@ namespace NBody
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions
-        inline Double_t BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * BoundaryandMeanPos(Int_t start, Int_t end, Double_t bnd[6][2],
             KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * BoundaryandMeanVel(Int_t start, Int_t end, Double_t bnd[6][2],
             KDTreeOMPThreadPool &);
         /// and phs
-        inline Double_t BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline Double_t * BoundaryandMeanPhs(Int_t start, Int_t end, Double_t bnd[6][2],
             KDTreeOMPThreadPool &);
         /// Find the dispersion in a dimension
         /// for positions
