@@ -64,6 +64,17 @@ typedef UInt_t PARTPIDTYPE;
 #else
 typedef Int_t PARTPIDTYPE;
 #endif
+
+#ifdef QUADQUADPRECISION_NBODY_DOUBLE
+typedef qd_real NBodyDouble_t;
+#elif QUADPRECISION_NBODY_DOUBLE
+typedef dd_real NBodyDouble_t;
+#elif SINGLEPRECISION_NBODY_DOUBLE
+typedef float NBodyDouble_t;
+#else
+typedef Double_t NBodyDouble_t;
+#endif
+
 //@}
 
 
@@ -262,7 +273,7 @@ typedef Int_t PARTPIDTYPE;
         protected:
         ///mass
 #ifndef NOMASS
-        Double_t mass;
+        NBodyDouble_t mass;
 #endif
 #ifdef LOWPRECISIONPOS
         /// x, y, z
@@ -284,11 +295,11 @@ typedef Int_t PARTPIDTYPE;
         int type;
         //@}
         ///density
-        Double_t rho;
+        NBodyDouble_t rho;
         ///potential
-        Double_t phi;
+        NBodyDouble_t phi;
 #ifdef SWIFTINTERFACE
-        Double_t gravityphi;
+        NBodyDouble_t gravityphi;
         int swifttask;
         int swiftindex;
 #endif

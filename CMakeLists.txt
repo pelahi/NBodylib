@@ -81,7 +81,8 @@ nbody_option(LONG_INT          "Use long ints to represent all integers. Needed 
 
 # Particle class details options
 nbody_option(NO_MASS                    "Do not store the mass as all particles are the same mass" OFF)
-nbody_option(SINGLE_PARTICLE_PRECISION  "Do not store the mass as all particles are the same mass" OFF)
+nbody_option(SINGLE_PARTICLE_PRECISION  "Particle properties stored as floats same mass" OFF)
+nbody_option(SINGLE_PARTICLE_POSITION_PRECISION  "Particle position and some properties stored as floats" OFF)
 nbody_option(UNSIGNED_PARTICLE_PIDS     "Use unsigned particle PIDs" OFF)
 nbody_option(UNSIGNED_PARTICLE_IDS      "Use unsigned particle IDs" OFF)
 nbody_option(USE_GAS                    "Particle class has gas" OFF)
@@ -129,6 +130,8 @@ nbody_option_defines(SINGLE_PRECISION          SINGLEPRECISION)
 nbody_option_defines(LONG_INT                  LONGINT)
 nbody_option_defines(NO_MASS                   NOMASS)
 nbody_option_defines(SINGLE_PARTICLE_PRECISION LOWPRECISIONPOS)
+nbody_option_defines(SINGLE_PARTICLE_PRECISION LOWNBODYPRECISION)
+nbody_option_defines(SINGLE_PARTICLE_POSITION_PRECISION LOWPRECISIONPOS)
 nbody_option_defines(UNSIGNED_PARTICLE_PIDS    PARTICLEUPIDS)
 nbody_option_defines(UNSIGNED_PARTICLE_IDS     PARTICLEUIDS)
 nbody_option_defines(LARGEKDTREE               LARGETREE)
@@ -217,11 +220,12 @@ nbody_report(Dependencies "OpenMP" OPENMP)
 nbody_report(Types "All calculations/properties stored as float" SINGLE_PRECISION "All integeres are long int" LONG_INT)
 nbody_report("Particle data" "Do not store mass, all particles are the same mass" NO_MASS
              "Use single precision to store positions, velocities, other props" SINGLE_PARTICLE_PRECISION
+			 "Use single precision to store positions, velocities" SINGLE_PARTICLE_POSITION_PRECISION
              "Use unsigned particle PIDs" UNSIGNED_PARTICLE_PIDS "Use unsigned particle IDs" UNSIGNED_PARTICLE_IDS
-             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH 
-             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES 
+             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH
+             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES
              "Extra input info stored" USE_EXTRA_INPUT_INFO
-             "Extra FOF info stored" USE_EXTRA_FOF_INFO 
+             "Extra FOF info stored" USE_EXTRA_FOF_INFO
              "Large memory KDTree" USE_LARGE_KDTREE
              "Particle compiled for SWIFT" USE_SWIFT_INTERFACE
 		 )
