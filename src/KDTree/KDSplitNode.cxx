@@ -895,12 +895,17 @@ namespace NBody
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        //types of trees
+        const int TPHYS=0,TPROJ=1,TVEL=2,TPHS=3,TMETRIC=4;
+        double invscaling;
+        if ((int)params[0]==TPHYS) invscaling = 1.0/params[1];
+        else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
+        else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
+        else invscaling=1.0;
         if (new_off < 0)
         {
             left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            if ((int)params[0]==0) rd += (-old_off*old_off + new_off*new_off)/params[1];
-            else if ((int)params[0]==1) rd += (-old_off*old_off + new_off*new_off)/params[2];
-            else if ((int)params[0]==2) rd += (-old_off*old_off + new_off*new_off)/params[(cut_dim<3)*1+(cut_dim>=3)*2];
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;
@@ -911,9 +916,7 @@ namespace NBody
         else
         {
             right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            if ((int)params[0]==0) rd += (-old_off*old_off + new_off*new_off)/params[1];
-            else if ((int)params[0]==1) rd += (-old_off*old_off + new_off*new_off)/params[2];
-            else if ((int)params[0]==2) rd += (-old_off*old_off + new_off*new_off)/params[(cut_dim<3)*1+(cut_dim>=3)*2];
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;
@@ -928,12 +931,17 @@ namespace NBody
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        //types of trees
+        const int TPHYS=0,TPROJ=1,TVEL=2,TPHS=3,TMETRIC=4;
+        double invscaling;
+        if ((int)params[0]==TPHYS) invscaling = 1.0/params[1];
+        else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
+        else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
+        else invscaling=1.0;
         if (new_off < 0)
         {
             left->FOFSearchCriterionSetBasisForLinks(rd,cmp,check,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            if ((int)params[0]==0) rd += (-old_off*old_off + new_off*new_off)/params[1];
-            else if ((int)params[0]==1) rd += (-old_off*old_off + new_off*new_off)/params[2];
-            else if ((int)params[0]==2) rd += (-old_off*old_off + new_off*new_off)/params[(cut_dim<3)*1+(cut_dim>=3)*2];
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;
@@ -944,9 +952,7 @@ namespace NBody
         else
         {
             right->FOFSearchCriterionSetBasisForLinks(rd,cmp,check,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            if ((int)params[0]==0) rd += (-old_off*old_off + new_off*new_off)/params[1];
-            else if ((int)params[0]==1) rd += (-old_off*old_off + new_off*new_off)/params[2];
-            else if ((int)params[0]==2) rd += (-old_off*old_off + new_off*new_off)/params[(cut_dim<3)*1+(cut_dim>=3)*2];
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;

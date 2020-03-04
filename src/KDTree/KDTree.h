@@ -146,7 +146,7 @@ namespace NBody
         //@{
         Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
-        Double_t * (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [][2], KDTreeOMPThreadPool &);
+        Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         //@}
@@ -400,7 +400,9 @@ namespace NBody
         //@{
 
         /// simple physical FOF search, velocity FOF, and 6D phase FOF.
-        Int_t *FOF(Double_t fdist, Int_t &numgroup, Int_t minnum=8, int order=0, Int_tree_t *pHead=NULL, Int_tree_t *pNext=NULL, Int_tree_t *pTail=NULL, Int_tree_t *pLen=NULL);
+        Int_t *FOF(Double_t fdist, Int_t &numgroup, Int_t minnum=8, int order=0,
+            Int_tree_t *pHead=NULL, Int_tree_t *pNext=NULL, Int_tree_t *pTail=NULL, Int_tree_t *pLen=NULL,
+            int ipcheckflag=0, FOFcheckfunc check=Pnocheck, Double_t *params=NULL);
         /// this searches tree for particles that meed some criterion given by some comparison function
         /// NOTE: comparison function is used only for leaf nodes.
         /// NOTE: parameters for tree search and comparison are contained in the params variable
@@ -458,13 +460,13 @@ namespace NBody
 
         /// Find the dimension of which the data has the most spread
         /// for positions
-        inline Double_t * SpreadestPos(Int_t start, Int_t end, Double_t bnd[][2],
+        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
             KDTreeOMPThreadPool &);
         /// and velocities
-        inline Double_t * SpreadestVel(Int_t start, Int_t end, Double_t bnd[][2],
+        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
             KDTreeOMPThreadPool &);
         /// and phase
-        inline Double_t * SpreadestPhs(Int_t start, Int_t end, Double_t bnd[][2],
+        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions

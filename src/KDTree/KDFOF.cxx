@@ -9,7 +9,9 @@
 namespace NBody
 {
 
-    Int_t* KDTree::FOF(Double_t fdist, Int_t &numgroup, Int_t minnum, int order, Int_tree_t *pHead, Int_tree_t *pNext, Int_tree_t *pTail, Int_tree_t *pLen)
+    Int_t* KDTree::FOF(Double_t fdist, Int_t &numgroup, Int_t minnum, int order,
+        Int_tree_t *pHead, Int_tree_t *pNext, Int_tree_t *pTail, Int_tree_t *pLen,
+        int ipcheckflag, FOFcheckfunc check, Double_t *params)
     {
         Double_t fdist2=fdist*fdist, off[6];
         //array containing particles group id
@@ -39,10 +41,13 @@ namespace NBody
         Int_t maxlen=0;
 
         //initial arrays
+        //initial arrays
         for (Int_t i=0;i<numparts;i++) {
-            pGroup[i]=0;
             pHead[i]=pTail[i]=i;
             pNext[i]=-1;
+            id=bucket[i].GetID();
+            if (ipcheckflag) pGroup[id]=check(bucket[i],params);
+            else pGroup[id]=0;
         }
         for (Int_t i=0;i<numnodes;i++) pBucketFlag[i]=0;
 
