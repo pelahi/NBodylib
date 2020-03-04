@@ -534,15 +534,19 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             Int_t k = start + (size - 1) / 2;
             int splitdim = DetermineSplitDim(start, end, bnd, otp);
             Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
+            string s;
+            s = __func__+string("--omp--")+to_string(otp.nactivethreads)+string("--[start,end,size]--")
+                +to_string(start)+string(",")+to_string(end)+string(",")+to_string(size)+string("--");
+            GetKDTreeMemUsage(s);
+
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
 #ifdef USEOPENMP
                 vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
                 Node *left, *right;
-
                 #pragma omp parallel
-                #pragma omp single nowait
+                #pragma omp single
                 {
                     #pragma omp task shared(left)
                     left = BuildNodes(start, k+1, newotp[0]);
@@ -550,7 +554,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                     right = BuildNodes(k+1, end, newotp[1]);
                     #pragma omp taskwait
                 }
-
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                     left, right);
 #endif
@@ -912,5 +915,74 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
 #endif
         return newthreadpool;
+    }
+
+    /// get the memory use looking at the task
+    void KDTree::GetKDTreeMemUsage(string s){
+        ifstream f;
+        size_t pos1, pos2;
+        unsigned long long size, resident, shared, text, data, library, dirty, peak;
+        map<string,float> memuse;
+        bool iflag = true;
+        char buffer[2500];
+        string memreport, temp, delimiter1("VmPeak:"), delimiter2("kB");
+        ofstream Fmem;
+        // Open the file storing memory information associated with the process;
+        f.open("/proc/self/statm");
+        if (f.is_open()) {
+            f >> size >> resident >> shared >> text >> library >> data >>dirty;
+            f.close();
+        }
+        else {
+            iflag = false;
+        }
+        f.open("/proc/self/status");
+        if (f.is_open()) {
+            while (f.getline(buffer, 2500)){
+                temp = string(buffer);
+                if ((pos1 = temp.find(delimiter1)) != string::npos) {
+                    pos2 = temp.find(delimiter2);
+                    temp = temp.substr(pos1+delimiter1.size(), pos2);
+                    peak = stol(temp)*1024;
+                    break;
+                }
+            }
+            f.close();
+        }
+        else {
+            iflag = false;
+        }
+        memreport = string("Memory report : ")+s;
+        //having scanned data for memory footprint in pages, report
+        //memory footprint in GB
+        if (iflag) {
+            // Convert pages into bytes. Usually 4096, but could be 512 on some
+            // systems so take care in conversion to KB. */
+            uint64_t sz = sysconf(_SC_PAGESIZE);
+            size *= sz ;
+            resident *= sz ;
+            shared *= sz ;
+            text *= sz ;
+            library *= sz ;
+            data *=  sz ;
+            dirty *= sz ;
+            float bytestoGB = 1.0/(1024.0*1024.*1024.);
+            memuse["Size"] = size*bytestoGB;
+            memuse["Resident"] = resident*bytestoGB;
+            memuse["Shared"] = shared*bytestoGB;
+            memuse["Text"] = text*bytestoGB;
+            memuse["Library"] = library*bytestoGB;
+            memuse["Data"] = data*bytestoGB;
+            memuse["Dirty"] = dirty*bytestoGB;
+            memuse["Peak"] = peak*bytestoGB;
+
+            for (map<string,float>::iterator it=memuse.begin(); it!=memuse.end(); ++it) {
+                memreport += it->first + string(" = ") + to_string(it->second) + string(" GB, ");
+            }
+        }
+        else{
+            memreport+= string(" unable to open or scane system file storing memory use");
+        }
+        cout<<memreport<<endl;
     }
 }

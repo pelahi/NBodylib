@@ -44,6 +44,9 @@
 #include <iostream>
 #include <vector>
 
+#include <unistd.h>
+
+
 #ifdef USEOPENMP
 #include <omp.h>
 #define KDTREEOMPCRITPARALLELSIZE 1000000
@@ -549,6 +552,7 @@ namespace NBody
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
+        void GetKDTreeMemUsage(string s);
     };
 
 }
