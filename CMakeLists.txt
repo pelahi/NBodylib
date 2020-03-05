@@ -81,7 +81,8 @@ nbody_option(LONG_INT          "Use long ints to represent all integers. Needed 
 
 # Particle class details options
 nbody_option(NO_MASS                    "Do not store the mass as all particles are the same mass" OFF)
-nbody_option(SINGLE_PARTICLE_PRECISION  "Particle properties stored as floats same mass" OFF)
+nbody_option(SINGLE_PARTICLE_PRECISION  "Particle properties stored as floats" OFF)
+nbody_option(SINGLE_PARTICLE_PROPERTY_PRECISION  "Particle properties other than position stored as floats" OFF)
 nbody_option(SINGLE_PARTICLE_POSITION_PRECISION  "Particle position and some properties stored as floats" OFF)
 nbody_option(UNSIGNED_PARTICLE_PIDS     "Use unsigned particle PIDs" OFF)
 nbody_option(UNSIGNED_PARTICLE_IDS      "Use unsigned particle IDs" OFF)
@@ -132,6 +133,7 @@ nbody_option_defines(NO_MASS                   NOMASS)
 nbody_option_defines(SINGLE_PARTICLE_PRECISION LOWPRECISIONPOS)
 nbody_option_defines(SINGLE_PARTICLE_PRECISION SINGLEPRECISION_NBODY_DOUBLE)
 nbody_option_defines(SINGLE_PARTICLE_POSITION_PRECISION LOWPRECISIONPOS)
+nbody_option_defines(SINGLE_PARTICLE_PROPERTY_PRECISION SINGLEPRECISION_NBODY_DOUBLE)
 nbody_option_defines(UNSIGNED_PARTICLE_PIDS    PARTICLEUPIDS)
 nbody_option_defines(UNSIGNED_PARTICLE_IDS     PARTICLEUIDS)
 nbody_option_defines(LARGEKDTREE               LARGETREE)
