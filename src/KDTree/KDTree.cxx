@@ -540,17 +540,15 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #ifdef USEOPENMP
                 vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
                 Node *left, *right;
-
-                #pragma omp parallel
-                #pragma omp single nowait
+                #pragma omp parallel default(shared) num_threads(2)
+                #pragma omp single
                 {
-                    #pragma omp task shared(left)
+                    #pragma omp task
                     left = BuildNodes(start, k+1, newotp[0]);
-                    #pragma omp task shared(right)
+                    #pragma omp task
                     right = BuildNodes(k+1, end, newotp[1]);
                     #pragma omp taskwait
                 }
-
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                     left, right);
 #endif
