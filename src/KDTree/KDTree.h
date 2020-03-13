@@ -43,6 +43,8 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <utility>
+#include <algorithm> 
 
 #ifdef USEOPENMP
 #include <omp.h>
