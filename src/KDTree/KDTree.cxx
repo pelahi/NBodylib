@@ -331,32 +331,32 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t i, j;
         Double_t x;
         Particle w;
-
+        Particle *pval = NULL;
         //produced a balanced tree
         if (balanced){
-        while (left < right)
-        {
-            x = bucket[k].GetPosition(d);
-            w = bucket[right];
-            bucket[right] = bucket[k];
-            bucket[k] = w;
-            i = left-1;
-            j = right;
-            while (1) {
-                while (i < j) if (bucket[++i].GetPosition(d) >= x) break;
-                while (i < j) if (bucket[--j].GetPosition(d) <= x) break;
-                w = bucket[i];
-                bucket[i] = bucket[j];
-                bucket[j] = w;
-                if (j <= i) break;
+            while (left < right)
+            {
+                x = bucket[k].GetPosition(d);
+                swap(bucket[right],bucket[k]);
+                pval = &bucket[k];
+                i = left-1;
+                j = right;
+                while (1) {
+                    while (i < j) if (bucket[++i].GetPosition(d) >= x) break;
+                    while (i < j) if (bucket[--j].GetPosition(d) <= x) break;
+                    swap(bucket[i],bucket[j]);
+                    pval = &bucket[j];
+                    if (j <= i) break;
+                }
+                w = *pval;
+                bucket[j] = move(bucket[i]);
+                bucket[i] = move(bucket[right]);
+                bucket[right] = w;
+                pval = NULL;
+                if (i >= k) right = i - 1;
+                if (i <= k) left = i + 1;
             }
-            bucket[j] = bucket[i];
-            bucket[i] = bucket[right];
-            bucket[right] = w;
-            if (i >= k) right = i - 1;
-            if (i <= k) left = i + 1;
-        }
-        return bucket[k].GetPosition(d);
+            return bucket[k].GetPosition(d);
         }
         //requires that particle order is already balanced. Use with caution
         else
@@ -374,31 +374,32 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t i, j;
         Double_t x;
         Particle w;
+        Particle *pval = NULL;
 
         if (balanced){
-        while (left < right)
-        {
-            x = bucket[k].GetVelocity(d);
-            w = bucket[right];
-            bucket[right] = bucket[k];
-            bucket[k] = w;
-            i = left-1;
-            j = right;
-            while (1) {
-                while (i < j) if (bucket[++i].GetVelocity(d) >= x) break;
-                while (i < j) if (bucket[--j].GetVelocity(d) <= x) break;
-                w = bucket[i];
-                bucket[i] = bucket[j];
-                bucket[j] = w;
-                if (j <= i) break;
+            while (left < right)
+            {
+                x = bucket[k].GetVelocity(d);
+                swap(bucket[right],bucket[k]);
+                pval = &bucket[k];
+                i = left-1;
+                j = right;
+                while (1) {
+                    while (i < j) if (bucket[++i].GetVelocity(d) >= x) break;
+                    while (i < j) if (bucket[--j].GetVelocity(d) <= x) break;
+                    swap(bucket[i],bucket[j]);
+                    pval = &bucket[j];
+                    if (j <= i) break;
+                }
+                w = *pval;
+                bucket[j] = move(bucket[i]);
+                bucket[i] = move(bucket[right]);
+                bucket[right] = w;
+                pval = NULL;
+                if (i >= k) right = i - 1;
+                if (i <= k) left = i + 1;
             }
-            bucket[j] = bucket[i];
-            bucket[i] = bucket[right];
-            bucket[right] = w;
-            if (i >= k) right = i - 1;
-            if (i <= k) left = i + 1;
-        }
-        return bucket[k].GetVelocity(d);
+            return bucket[k].GetVelocity(d);
         }
         //requires that particle order is already balanced. Use with caution
         else
@@ -416,32 +417,32 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t i, j;
         Double_t x;
         Particle w;
+        Particle *pval = NULL;
 
         if (balanced){
-        while (left < right)
-        {
-            x=bucket[k].GetPhase(d);
-            w = bucket[right];
-            bucket[right] = bucket[k];
-            bucket[k] = w;
-            i = left-1;
-            j = right;
-            while (1) {
-                while (i < j) {if (bucket[++i].GetPhase(d) >= x) break;}
-                while (i < j) {if (bucket[--j].GetPhase(d) <= x) break;}
-                w = bucket[i];
-                bucket[i] = bucket[j];
-                bucket[j] = w;
-                if (j <= i) break;
+            while (left < right)
+            {
+                x = bucket[k].GetPhase(d);
+                swap(bucket[right],bucket[k]);
+                pval = &bucket[k];
+                i = left-1;
+                j = right;
+                while (1) {
+                    while (i < j) {if (bucket[++i].GetPhase(d) >= x) break;}
+                    while (i < j) {if (bucket[--j].GetPhase(d) <= x) break;}
+                    swap(bucket[i],bucket[j]);
+                    pval = &bucket[j];
+                    if (j <= i) break;
+                }
+                w = *pval;
+                bucket[j] = move(bucket[i]);
+                bucket[i] = move(bucket[right]);
+                bucket[right] = w;
+                pval = NULL;
+                if (i >= k) right = i - 1;
+                if (i <= k) left = i + 1;
             }
-            bucket[j] = bucket[i];
-            bucket[i] = bucket[right];
-            bucket[right] = w;
-            if (i >= k) right = i - 1;
-            if (i <= k) left = i + 1;
-        }
-
-        return bucket[k].GetPhase(d);
+            return bucket[k].GetPhase(d);
         }
         //requires that particle order is already balanced. Use with caution
         else
