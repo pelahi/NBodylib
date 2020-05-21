@@ -222,7 +222,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
           gsl_blas_ddot(res_gsl, res_gsl, &chi2);
         } else {
           /* Fit failed, return large chi^2 */
-          std::cerr << "gsl_multifit_nlinear_driver() call failed!";
+          std::cerr << "gsl_multifit_nlinear_driver() call failed!\n";
           chi2 = std::numeric_limits<Double_t>::infinity();
         }
         // store cond(J(x))
