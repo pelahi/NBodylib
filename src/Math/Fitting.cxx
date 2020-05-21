@@ -217,12 +217,12 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         int err = gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
         gsl_set_error_handler(old_handler);
         // store final chi^2
-        if(err==0) {
+        if(err==GSL_SUCCESS) {
           /* Fitting was successful */
           gsl_blas_ddot(res_gsl, res_gsl, &chi2);
         } else {
           /* Fit failed, return large chi^2 */
-          std::cerr << "gsl_multifit_nlinear_driver() call failed!\n";
+          std::cerr << "gsl_multifit_nlinear_driver() call failed, err=" << err <<"\n";
           chi2 = std::numeric_limits<Double_t>::infinity();
         }
         // store cond(J(x))
