@@ -12,6 +12,7 @@
 set(MATH_SRC
     Coordinate2D.cxx
     Coordinate.cxx
+    Exceptions.cxx
     Fitting.cxx
     GMatrix.cxx
     Integrate.cxx
