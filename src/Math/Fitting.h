@@ -22,7 +22,6 @@
 #endif
 #include <Precision.h>
 #include <Function.h>
-#include <Exceptions.h>
 #include <Matrix.h>
 #include <GMatrix.h>
 #include <Interpolate.h>

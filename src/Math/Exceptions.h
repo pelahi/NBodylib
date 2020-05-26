@@ -6,10 +6,14 @@
 #ifndef NBODYEXCEPTION_H
 #define NBODYEXCEPTION_H
 
+#include <exception>
+#include <string>
+#include <gsl/gsl_errno.h>
+
 namespace Math
 {
 
-class gsl_error {
+class gsl_error : public std::exception {
 
 private:
 	std::string reason;
@@ -44,8 +48,20 @@ public:
 		return gsl_errno;
 	}
 
+    std::string get_errmsg() {
+        return errmsg;
+    }
+
 };
 
+void throw_exception_gsl_handler(const char *reason, const char *file, int line, int gsl_errno){
+    throw Math::gsl_error(reason, file, line, gsl_errno, gsl_strerror(gsl_errno));
 }
+void install_gsl_error_handler() {
+    gsl_set_error_handler(&throw_exception_gsl_handler);
+}
+
+}
+
 
 #endif

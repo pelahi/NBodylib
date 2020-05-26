@@ -2,6 +2,7 @@
  *  \brief subroutines for fitting functions to data.
  */
 
+#include <Exceptions.h>
 #include <Fitting.h>
 
 using namespace std;
@@ -222,9 +223,8 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         {
             // if any error is called just set chi2 to infinity
             chi2 = numeric_limits<Double_t>::infinity();
-
-            // if want specific treatment of errors can implement the following
-            // auto gsl_errcode = e.get_gsl_errno();
+            cerr<<"WARNING: in "<<__func__<<" have GSL error "<< e.get_errmsg()<<" "<<e.get_reason()<<endl;
+            // print warning based on type of error
             // switch (gsl_errcode) {
             //     case GSL_EMAXITER:
             //         chi2 = numeric_limits<Double_t>::infinity();
@@ -241,7 +241,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
             //     defaut:
             //         chi2 = numeric_limits<Double_t>::infinity();
             //         break;
-            }
+            // }
         }
 
         // store cond(J(x))
