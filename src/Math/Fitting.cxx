@@ -212,9 +212,34 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         //store initial residuals and chi^2
         gsl_blas_ddot(res_gsl, res_gsl, &chi2);
         // iterate until convergence
-        gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
-        // store final chi^2
-        gsl_blas_ddot(res_gsl, res_gsl, &chi2);
+        try {
+            gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
+        }
+        catch (gsl_error &e)
+        {
+            auto gsl_errcode = e.get_gsl_errno();
+            switch (gsl_errcode) {
+                case GSL_SUCCESS:
+                    // store final chi^2
+                    gsl_blas_ddot(res_gsl, res_gsl, &chi2);
+                    break;
+                // case GSL_EMAXITER:
+                //     chi2 = numeric_limits<Double_t>::infinity();
+                //     break;
+                // case GSL_EROUND:
+                //     chi2 = numeric_limits<Double_t>::infinity();
+                //     break;
+                // case GSL_ESING:
+                //     chi2 = numeric_limits<Double_t>::infinity();
+                //     break;
+                // case GSL_EDIVERGE:
+                //     chi2 = numeric_limits<Double_t>::infinity();
+                //     break;
+                defaut:
+                    chi2 = numeric_limits<Double_t>::infinity();
+                    break;
+            }
+        }
 
         // store cond(J(x))
         //gsl_multifit_nlinear_rcond(&rcond, work);
