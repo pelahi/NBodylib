@@ -91,14 +91,14 @@ matrix:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 GSL2.2
+    env: COMPILER=g++-5 GSL22
   - compiler: gcc
     dist: bionic
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 GSL2.2 USESWIFT=1
+    env: COMPILER=g++-5 GSL22 USESWIFT=1
 
 # We "source" it because it exports variables
 before_install:
