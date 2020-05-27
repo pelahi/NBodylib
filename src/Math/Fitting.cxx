@@ -209,41 +209,20 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         //store information
         xtol = gtol = ftol = error;
         //init fitting
-        gsl_multifit_nlinear_init(curparam_gsl, &fdf, workspace_gsl);
+        gsl_invoke(gsl_multifit_nlinear_init, curparam_gsl, &fdf, workspace_gsl);
         //store initial residuals and chi^2
-        gsl_blas_ddot(res_gsl, res_gsl, &chi2);
-        //now trying fitting
-        try {
-            // iterate until convergence
-            gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
-            // store final chi^2
-            gsl_blas_ddot(res_gsl, res_gsl, &chi2);
+        gsl_invoke(gsl_blas_ddot, res_gsl, res_gsl, &chi2);
+        // iterate until convergence
+        int err = gsl_multifit_nlinear_driver(maxiit, xtol, gtol, ftol, NULL, NULL, &info_gsl, workspace_gsl);
+        // store final chi^2
+        if(err==GSL_SUCCESS) {
+          /* Fitting was successful */
+          gsl_invoke(gsl_blas_ddot, res_gsl, res_gsl, &chi2);
+        } else {
+          /* Fit failed, return large chi^2 */
+          std::cerr << "gsl_multifit_nlinear_driver() call failed, err=" << gsl_strerror(err) <<"\n";
+          chi2 = std::numeric_limits<Double_t>::infinity();
         }
-        catch (gsl_error &e)
-        {
-            // if any error is called just set chi2 to infinity
-            chi2 = numeric_limits<Double_t>::infinity();
-            cerr<<"WARNING: in "<<__func__<<" have GSL error "<< e.get_errmsg()<<" "<<e.get_reason()<<endl;
-            // print warning based on type of error
-            // switch (gsl_errcode) {
-            //     case GSL_EMAXITER:
-            //         chi2 = numeric_limits<Double_t>::infinity();
-            //         break;
-            //     case GSL_EROUND:
-            //         chi2 = numeric_limits<Double_t>::infinity();
-            //         break;
-            //     case GSL_ESING:
-            //         chi2 = numeric_limits<Double_t>::infinity();
-            //         break;
-            //     case GSL_EDIVERGE:
-            //         chi2 = numeric_limits<Double_t>::infinity();
-            //         break;
-            //     defaut:
-            //         chi2 = numeric_limits<Double_t>::infinity();
-            //         break;
-            // }
-        }
-
         // store cond(J(x))
         //gsl_multifit_nlinear_rcond(&rcond, work);
         //store results
