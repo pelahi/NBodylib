@@ -442,7 +442,7 @@ namespace Math
         gsl_rng_env_setup ();
         T = gsl_rng_default;
         rnd = gsl_rng_alloc (T);
-        gsl_monte_vegas_integrate (gslfm, a, b, gslfm->dim, numintervals, rnd, ws,&result, &temperror);
+        gsl_invoke(gsl_monte_vegas_integrate, gslfm, a, b, gslfm->dim, numintervals, rnd, ws,&result, &temperror);
         if (error)*error=temperror;
         if (chisq)*chisq=ws->chisq;
         gsl_rng_free (rnd);
