@@ -16,41 +16,24 @@ namespace Math
 class gsl_error : public std::exception {
 
 private:
-	std::string reason;
-	std::string file;
-	int line;
 	int gsl_errno;
 	std::string errmsg;
 
 public:
-	gsl_error(const char *reason, const char *file, int line, int gsl_errno, const char *errmsg) :
-		reason(reason),
-		file(file),
-		line(line),
+	gsl_error(int gsl_errno) :
 		gsl_errno(gsl_errno),
-		errmsg(errmsg)
+		errmsg(gsl_strerror(gsl_errno))
 	{
-	}
-
-	std::string get_reason() {
-		return reason;
-	}
-
-	std::string get_file() {
-		return file;
-	}
-
-	int get_line() {
-		return line;
 	}
 
 	int get_gsl_errno() {
 		return gsl_errno;
 	}
 
-    std::string get_errmsg() {
-        return errmsg;
-    }
+	const char *what() const noexcept
+	{
+		return errmsg.c_str();
+	}
 
 };
 
