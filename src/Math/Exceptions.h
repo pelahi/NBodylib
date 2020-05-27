@@ -8,6 +8,8 @@
 
 #include <exception>
 #include <string>
+#include <utility>
+
 #include <gsl/gsl_errno.h>
 
 namespace Math
@@ -36,6 +38,15 @@ public:
 	}
 
 };
+
+template<typename Func, typename ... Args>
+void gsl_invoke(Func &&f, Args ... args)
+{
+	int status = f(std::forward<Args>(args)...);
+	if (status != GSL_SUCCESS) {
+		throw gsl_error(status);
+	}
+}
 
 }
 
