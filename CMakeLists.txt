@@ -261,9 +261,7 @@ macro(add_nbody_lib libname sources)
 	add_library(${libname} OBJECT ${sources})
 	target_compile_definitions(${libname} PRIVATE ${NBODY_DEFINES})
 	target_include_directories(${libname} PRIVATE ${NBODY_INCLUDE_DIRS})
-	if ("${NBODY_CXX_FLAGS}")
-		set_target_properties(${libname} PROPERTIES COMPILE_FLAGS ${NBODY_CXX_FLAGS})
-	endif()
+    target_compile_options(${libname} PRIVATE ${NBODY_CXX_FLAGS})
 endmacro()
 
 # Include all subdirectories,
