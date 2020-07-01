@@ -74,6 +74,7 @@ endmacro()
 
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
+nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" ON)
 
 # Precision options
 nbody_option(SINGLE_PRECISION  "Use single point precision to store all properties and perform all calculations" OFF)
@@ -165,6 +166,18 @@ macro(find_openmp)
 	endif()
 endmacro()
 
+# How we find OpenACC and set it up
+#
+macro(find_openacc)
+	find_package(OpenACC COMPONENTS CXX)
+	if (OpenACC_CXX_FOUND)
+		list(APPEND NBODY_CXX_FLAGS ${OpenACC_CXX_FLAGS})
+		list(APPEND NBODY_LINK_FLAGS ${OpenACC_CXX_FLAGS})
+		list(APPEND NBODY_DEFINES USEOPENACC)
+		set(NBODY_HAS_OPENACC Yes)
+	endif()
+endmacro()
+
 #
 # Now go and find our dependencies, depending on whether
 # we actually need them or not
@@ -174,6 +187,10 @@ find_gsl()
 set(NBODY_HAS_OPENMP No)
 if (NBODY_OPENMP)
 	find_openmp()
+endif()
+set(NBODY_HAS_OPENACC No)
+if (NBODY_OPENACC)
+	find_openacc()
 endif()
 
 
@@ -214,14 +231,15 @@ endmacro()
 
 message("\nNBodyLib successfully configured with the following settings:")
 nbody_report(Dependencies "OpenMP" OPENMP)
+nbody_report(Dependencies "OpenACC" OPENACC)
 nbody_report(Types "All calculations/properties stored as float" SINGLE_PRECISION "All integeres are long int" LONG_INT)
 nbody_report("Particle data" "Do not store mass, all particles are the same mass" NO_MASS
              "Use single precision to store positions, velocities, other props" SINGLE_PARTICLE_PRECISION
              "Use unsigned particle PIDs" UNSIGNED_PARTICLE_PIDS "Use unsigned particle IDs" UNSIGNED_PARTICLE_IDS
-             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH 
-             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES 
+             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH
+             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES
              "Extra input info stored" USE_EXTRA_INPUT_INFO
-             "Extra FOF info stored" USE_EXTRA_FOF_INFO 
+             "Extra FOF info stored" USE_EXTRA_FOF_INFO
              "Large memory KDTree" USE_LARGE_KDTREE
              "Particle compiled for SWIFT" USE_SWIFT_INTERFACE
 		 )
