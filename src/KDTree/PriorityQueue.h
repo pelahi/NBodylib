@@ -105,11 +105,11 @@ namespace NBody
             for (Int_t i=0;i<max+1;i++) npq[i].values=new Double_t[Nval];
         }
         ~NPriorityQueue()
-        { 
+        {
             for (Int_t i=0;i<max_size+1;i++) delete[] npq[i].values;
             delete[] npq;
         }
-        void Push(Int_t p, Double_t dist, Double_t *pvalue) 
+        void Push(Int_t p, Double_t dist, Double_t *pvalue)
         {
             if (++n > max_size)
             {
@@ -150,7 +150,7 @@ namespace NBody
             for (int i=0;i<nvalues;i++) npq[p].values[i]=npq[n+1].values[i];
         }
         Double_t TopValue(Int_t N) {
-            if (N<nvalues) return npq[1].values[N]; 
+            if (N<nvalues) return npq[1].values[N];
             else return 0;
         }
     };
