@@ -74,6 +74,7 @@ endmacro()
 
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
+nbody_option(OPENMPENABLEGPU "Attempt to include OpenMP GPU support through target directive in NBodyLib" ON)
 nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" ON)
 
 # Precision options
@@ -162,9 +163,9 @@ macro(find_openmp)
 		list(APPEND NBODY_CXX_FLAGS ${OpenMP_CXX_FLAGS})
 		list(APPEND NBODY_LINK_FLAGS ${OpenMP_CXX_FLAGS})
 		list(APPEND NBODY_DEFINES USEOPENMP USEOMP)
-        if( ${OpenMP_CXX_VERSION} GREATER 4.0 OR ${OpenMP_CXX_VERSION} EQUAL 4.0)
-            list(APPEND NBODY_DEFINES USEOMPTARGET)
-            set(NBODY_HAS_OMPTARGET Yes)
+        if(NBODY_OPENMPENABLEGPU AND (${OpenMP_CXX_VERSION} GREATER 4.0 OR ${OpenMP_CXX_VERSION} EQUAL 4.0))
+            list(APPEND NBODY_DEFINES USEOPENMPGPU)
+            set(NBODY_HAS_OPENMPGPU Yes)
         endif()
 		set(NBODY_HAS_OPENMP Yes)
 	endif()
@@ -189,6 +190,7 @@ endmacro()
 find_gsl()
 
 set(NBODY_HAS_OPENMP No)
+set(NBODY_HAS_OPENMPGPU No)
 if (NBODY_OPENMP)
 	find_openmp()
 endif()
@@ -234,7 +236,8 @@ macro(nbody_report feature)
 endmacro()
 
 message("\nNBodyLib successfully configured with the following settings:")
-nbody_report(Dependencies "OpenMP" OPENMP "OpenMP target directive supported" OMPTARGET)
+nbody_report(Dependencies "OpenMP" OPENMP
+    "OpenMP target directive for GPU accelaration supported and active" OPENMPGPU)
 nbody_report(Dependencies "OpenACC" OPENACC)
 nbody_report(Types "All calculations/properties stored as float" SINGLE_PRECISION "All integeres are long int" LONG_INT)
 nbody_report("Particle data" "Do not store mass, all particles are the same mass" NO_MASS
