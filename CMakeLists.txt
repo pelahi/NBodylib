@@ -75,7 +75,7 @@ endmacro()
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
 nbody_option(OPENMPENABLEGPU "Attempt to include OpenMP GPU support through target directive in NBodyLib" ON)
-nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" ON)
+nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" OFF)
 
 # Precision options
 nbody_option(SINGLE_PRECISION  "Use single point precision to store all properties and perform all calculations" OFF)
@@ -206,6 +206,10 @@ if (NBODY_OPENACC)
 	find_openacc()
 endif()
 
+# check that either OpenMP or OpenACC enabled but not both
+if (NBODY_OPENMP AND NBODY_OPENACC)
+    message(FATAL_ERROR "NBody library configured to use both OpenMP and OpenACC. Use one or the other.")
+endif()
 
 # Add subdirectories to list of include directories
 foreach(_subdir IN ITEMS ${_subdirs})
