@@ -853,7 +853,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             delete[] Kernel;
             delete[] derKernel;
             if (period!=NULL) delete[] period;
-            if (iresetorder) qsort(bucket, numparts, sizeof(Particle), IDCompare);
+            if (iresetorder) std::sort(bucket, bucket + numparts, IDCompareVec);
             if (scalespace) {
             for (Int_t i=0;i<numparts;i++)
                 for (int j=0;j<3;j++) {
