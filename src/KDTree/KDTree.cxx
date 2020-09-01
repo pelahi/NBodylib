@@ -19,310 +19,255 @@ namespace NBody
 {
 
     // -- Inline functions that get called often when building the tree.
+    #ifdef USEOPENMP
+    // define openmp reduction operations
+    #pragma omp declare reduction( \
+        vec_plus : \
+        std::vector<Double_t> : \
+        std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
+        [](Double_t x, Double_t y)-> Double_t {return x+y;})) \
+        initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+    #pragma omp declare reduction( \
+        vec_max : \
+        std::vector<Double_t> : \
+        std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
+        [](Double_t x, Double_t y)-> Double_t {return std::max(x,y);})) \
+        initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+    #pragma omp declare reduction( \
+        vec_min : \
+        std::vector<Double_t> : \
+        std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
+        [](Double_t x, Double_t y)-> Double_t {return std::min(x,y);})) \
+        initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+    #endif
+
+    /// \name wrappers for gettting the desired info from particles
+    //@{
+    inline void KDTree::GetParticlePos(const Particle &p, vector<Double_t> &x) {
+        for (auto j = 0; j < ND; j++) x[j] = p.GetPosition(j);
+    }
+    inline void KDTree::GetParticleVel(const Particle &p, vector<Double_t> &x) {
+        for (auto j = 0; j < ND; j++) x[j] = p.GetVelocity(j);
+    }
+    inline void KDTree::GetParticlePhs(const Particle &p, vector<Double_t> &x) {
+        for (auto j = 0; j < ND; j++) x[j] = p.GetPhase(j);
+    }
+    inline void KDTree::GetParticleProj(const Particle &p, vector<Double_t> &x) {
+        for (auto j = 0; j < ND; j++) x[j] = p.GetPosition(j);
+    }
+
+    inline Double_t KDTree::GetParticleithPos(const Particle &p, int i) {
+        return p.GetPosition(i);
+    }
+    inline Double_t KDTree::GetParticleithVel(const Particle &p, int i) {
+        return p.GetVelocity(i);
+    }
+    inline Double_t KDTree::GetParticleithPhs(const Particle &p, int i) {
+        return p.GetPhase(i);
+    }
+    inline Double_t KDTree::GetParticleithProj(const Particle &p, int i) {
+        return p.GetPosition(i);
+    }
 
     /// \name Find most spread dimension
     //@{
-    inline Double_t KDTree::SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
+
+    inline void KDTree::Spreadest(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &spread,
         KDTreeOMPThreadPool &otp)
     {
-        Double_t minval = bucket[start].GetPosition(j);
-        Double_t maxval = minval;
-        Int_t i;
-        unsigned int nthreads;;
+        vector<Double_t> minval(ND), maxval(ND), x(ND);
+        (this->*getparticlepos)(bucket[start], x);
+        for (auto j=0;j<ND;j++) minval[j] = maxval[j] = x[j];
 #ifdef USEOPENMP
+        unsigned int nthreads;
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
+default(shared) schedule(static) \
+private(x) \
+reduction(vec_min:minval) reduction(vec_max:maxval) \
+num_threads(nthreads) if (nthreads>1)
 #endif
-        for (i = start + 1; i < end; i++)
+        for (auto i = start + 1; i < end; i++)
         {
-            if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
-            if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
+            (this->*getparticlepos)(bucket[i], x);
+            for (auto j = 0; j < ND; j++)
+            {
+                minval[j] = min(minval[j],x[j]);
+                maxval[j] = max(minval[j],x[j]);
+            }
         }
-        bnd[0]=minval;bnd[1]=maxval;
-        return maxval - minval;
-    }
-    inline Double_t KDTree::SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t minval = bucket[start].GetVelocity(j);
-        Double_t maxval = minval;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start + 1; i < end; i++)
-        {
-            if (bucket[i].GetVelocity(j) < minval) minval = bucket[i].GetVelocity(j);
-            if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
+        for (auto j = 0; j < ND; j++) {
+            bnd[j][0] = minval[j];
+            bnd[j][1] = maxval[j];
+            spread[j] = maxval[j] - minval[j];
         }
-        bnd[0]=minval;bnd[1]=maxval;
-        return maxval - minval;
-    }
-    inline Double_t KDTree::SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t minval = bucket[start].GetPhase(j);
-        Double_t maxval = minval;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start + 1; i < end; i++)
-        {
-            if (bucket[i].GetPhase(j) < minval) minval = bucket[i].GetPhase(j);
-            if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
-        }
-        bnd[0]=minval;bnd[1]=maxval;
-        return maxval - minval;
-    }
-    //@}
-    /// \name Find the boundary of the data and return mean
-    //@{
-    inline Double_t KDTree::BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t mean=bucket[start].GetPosition(j);
-        Double_t minval=mean, maxval=mean;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start + 1; i < end; i++)
-        {
-            if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
-            if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
-            mean+=bucket[i].GetPosition(j);
-        }
-        bnd[0]=minval;bnd[1]=maxval;
-        mean/=(Double_t)(end-start);
-        return mean;
-    }
-    inline Double_t KDTree::BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t mean=bucket[start].GetVelocity(j);
-        Double_t minval=mean, maxval=mean;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start + 1; i < end; i++)
-        {
-            if (bucket[i].GetVelocity(j) < minval) minval = bucket[i].GetVelocity(j);
-            if (bucket[i].GetVelocity(j) > maxval) maxval = bucket[i].GetVelocity(j);
-            mean+=bucket[i].GetVelocity(j);
-        }
-        bnd[0]=minval;bnd[1]=maxval;
-        mean/=(Double_t)(end-start);
-        return mean;
-    }
-    inline Double_t KDTree::BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t mean=bucket[start].GetPhase(j);
-        Double_t minval=mean, maxval=mean;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:mean) reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start + 1; i < end; i++)
-        {
-            if (bucket[i].GetPhase(j) < minval) minval = bucket[i].GetPhase(j);
-            if (bucket[i].GetPhase(j) > maxval) maxval = bucket[i].GetPhase(j);
-            mean+=bucket[i].GetPhase(j);
-        }
-        bnd[0]=minval;bnd[1]=maxval;
-        mean/=(Double_t)(end-start);
-        return mean;
-    }
-    //@}
-    /// \name Find the dispersion in a dimension (biased variance using 1/N as opposed to 1/(N-1) so that if N=2, doesn't crash)
-    //@{
-    inline Double_t KDTree::DispersionPos(int j, Int_t start, Int_t end, Double_t mean,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t disp=0;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:disp) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start; i < end; i++)
-            disp+=(bucket[i].GetPosition(j)-mean)*(bucket[i].GetPosition(j)-mean);
-        disp/=(Double_t)(end-start);
-        return disp;
-    }
-    inline Double_t KDTree::DispersionVel(int j, Int_t start, Int_t end, Double_t mean,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t disp=0;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:disp) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start ; i < end; i++)
-            disp+=(bucket[i].GetVelocity(j)-mean)*(bucket[i].GetVelocity(j)-mean);
-        disp/=(Double_t)(end-start);
-        return disp;
-    }
-    inline Double_t KDTree::DispersionPhs(int j, Int_t start, Int_t end, Double_t mean,
-        KDTreeOMPThreadPool &otp)
-    {
-        Double_t disp=0;
-        Int_t i;
-        unsigned int nthreads;
-#ifdef USEOPENMP
-        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-        if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) private(i) schedule(static) \
-reduction(+:disp) num_threads(nthreads) if (nthreads>1)
-#endif
-        for (i = start; i < end; i++)
-            disp+=(bucket[i].GetPhase(j)-mean)*(bucket[i].GetPhase(j)-mean);
-        disp/=(Double_t)(end-start);
-        return disp;
     }
     //@}
 
-/*
-    //code that applies a correction to the boundary of a node, ibnd is initial boundary range estimate,
-    //xbnd is the current parent nodes estimate
-    //at the moment the code is not setup to correct for underestimation in outer and inner parts
-    //(I'm not exactly sure how this corrects this, must check Enbid paper)
-    inline void BoundaryCor(int j, Int_t count, Int_t dim, Int_t numparts, Double_t *ibnd, Double_t *xbnd){
-        //factors in the correction (taken from Enbind where don't assume cubic cells)
-        Double_t fac1=10.0, fac2=0.2, fac3=2.0;
-        Double_t temp1,temp2,temp3;
-        temp1=fac1*pow((Double_t)numparts,1.0/(Double_t)dim);
-        temp2=fac2/temp1;
-        if((ibnd[1]-ibnd[0])/(xbnd[1]-xbnd[0])> 1.0/(Double_t)numparts)
+    /// \name Find the boundary of the data and return mean
+    //@{
+    inline void KDTree::BoundaryandMean(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &mean,
+        KDTreeOMPThreadPool &otp)
+    {
+        vector<Double_t> minval(ND), maxval(ND), x(ND);
+        (this->*getparticlepos)(bucket[start], x);
+        minval = maxval = x;
+#ifdef USEOPENMP
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+#pragma omp parallel for \
+default(shared) schedule(static) \
+private(x) \
+reduction(vec_min:minval) reduction(vec_max:maxval) reduction(vec_plus:mean) \
+num_threads(nthreads) if (nthreads>1)
+#endif
+        for (auto i = start + 1; i < end; i++)
         {
-            temp3=(ibnd[1]-ibnd[0])/(count-1);
-            if(((xbnd[1]-ibnd[1])>(temp2*temp3))&&((ibnd[0]-xbnd[0])>(temp2*temp3)))
+            (this->*getparticlepos)(bucket[i], x);
+            for (auto j = 0; j < ND; j++)
             {
-                xbnd[1]=ibnd[1]+fac3*temp3;
-                xbnd[0]=ibnd[0]-fac3*temp3;
-            }
-            else
-            {
-                if((xbnd[1]-ibnd[1])>(temp1*temp3)) xbnd[1]=ibnd[1]+fac3*temp3;
-                if((ibnd[0]-xbnd[0])>(temp1*temp3)) xbnd[0]=ibnd[0]-fac3*temp3;
+                minval[j] = min(minval[j],x[j]);
+                maxval[j] = max(minval[j],x[j]);
+                mean[j] += x[j];
             }
         }
-    }
-*/
-     /// \name Calculate the entropy in a given dimension. This can be used as a node splitting criterion
-     /// This calculates Shannon Entropy, where the region is split into nbins=pow(N,1/3) (N is number of particles) where minimum nbins=1,
-     /// and can be used instead of most spread dimension
-     //@{
-    inline Double_t KDTree::EntropyPos(int j, Int_t start, Int_t end,
-        Double_t low, Double_t up, Double_t nbins, Double_t *nientropy,
-        KDTreeOMPThreadPool &otp)
-    {
-        Int_t ibin, i;
-        Double_t mtot=0.,entropy=0.;
-        Double_t dx=(up-low)/nbins;
-        for (i=0;i<nbins;i++) nientropy[i]=0.;
-        for (i=start;i<end;i++){
-            mtot+=bucket[i].GetMass();
-            ibin=(Int_t)((bucket[i].GetPosition(j)-low)/dx);
-            nientropy[ibin]+=bucket[i].GetMass();
+        auto norm = 1.0/(Double_t)(end-start);
+        for (auto j = 0; j < ND; j++) {
+            bnd[j][0] = minval[j];
+            bnd[j][1] = maxval[j];
+            mean[j] *= norm;
         }
-        mtot=1.0/mtot;
-        for (i=0;i<nbins;i++) {
-            if (nientropy[i]>0) {
-                Double_t temp=nientropy[i]*mtot;
-                entropy-=temp*log10(temp);
-            }
-        }
-        return entropy/log10((Double_t)nbins);
-    }
-    inline Double_t KDTree::EntropyVel(int j, Int_t start, Int_t end,
-        Double_t low, Double_t up, Double_t nbins, Double_t *nientropy,
-        KDTreeOMPThreadPool &otp)
-    {
-        Int_t ibin,i;
-        Double_t mtot=0.,entropy=0.;
-        Double_t dx=(up-low)/nbins;
-        for (i=0;i<nbins;i++) nientropy[i]=0.;
-        for (i=start;i<end;i++){
-            mtot+=bucket[i].GetMass();
-            ibin=(Int_t)((bucket[i].GetVelocity(j)-low)/dx);
-            nientropy[ibin]+=bucket[i].GetMass();
-        }
-        mtot=1.0/mtot;
-        for (i=0;i<nbins;i++) {
-            if (nientropy[i]>0) {
-                Double_t temp=nientropy[i]*mtot;
-                entropy-=temp*log10(temp);
-            }
-        }
-        return entropy/log10((Double_t)nbins);
-    }
-    inline Double_t KDTree::EntropyPhs(int j, Int_t start, Int_t end,
-        Double_t low, Double_t up, Double_t nbins, Double_t *nientropy,
-        KDTreeOMPThreadPool &otp)
-    {
-        Int_t ibin,i;
-        Double_t mtot=0.,entropy=0.;
-        Double_t dx=(up-low)/nbins;
-        for (i=0;i<=nbins;i++) nientropy[i]=0.;
-        for (i=start;i<end;i++){
-            mtot+=bucket[i].GetMass();
-            ibin=(Int_t)((bucket[i].GetPhase(j)-low)/dx);
-            nientropy[ibin]+=bucket[i].GetMass();
-        }
-        mtot=1.0/mtot;
-        for (Int_t i=0;i<nbins;i++) {
-            if (nientropy[i]>0) {
-                Double_t temp=nientropy[i]*mtot;
-                entropy-=temp*log10(temp);
-            }
-        }
-        return entropy/log10(nbins);
     }
     //@}
+
+    /// \name Find the dispersion in a dimension (biased variance using 1/N as opposed to 1/(N-1) so that if N=2, doesn't crash)
+    //@{
+    inline void KDTree::Dispersion(Int_t start, Int_t end, vector<Double_t> &mean, vector<Double_t> &disp,
+        KDTreeOMPThreadPool &otp)
+    {
+        vector<Double_t> x(ND);
+        for (auto &d:disp) d=0;
+#ifdef USEOPENMP
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+#pragma omp parallel for \
+default(shared) schedule(static) \
+private(x) \
+reduction(vec_plus:disp) \
+num_threads(nthreads) if (nthreads>1)
+#endif
+        for (auto i = start; i < end; i++) {
+            (this->*getparticlepos)(bucket[i], x);
+            for (auto j = 0; j < ND; j++) disp[j]+=pow(x[j]-mean[j], static_cast<Double_t>(2.0));
+        }
+        auto norm = 1.0/(Double_t)(end-start);
+        for (auto j = 0; j < ND; j++) {
+            disp[j] *= norm;
+        }
+    }
+    //@}
+
+    /// \name Calculate the entropy in a given dimension. This can be used as a node splitting criterion
+    /// This calculates Shannon Entropy, where the region is split into nbins=pow(N,1/3) (N is number of particles) where minimum nbins=1,
+    /// and can be used instead of most spread dimension
+    //@{
+   inline void KDTree::Entropy(Int_t start, Int_t end, Int_t nbins,
+       Double_t **bnd, vector<Double_t> &spread, vector<Double_t> &entropy,
+       KDTreeOMPThreadPool &otp)
+   {
+       vector<Double_t> low(ND), up(ND), x(ND), dx(ND);
+       auto norm = 2.0/(Double_t)(end-start);
+       vector<Double_t> nientropy(nbins*ND);
+       Double_t mtot =0.;
+       for (auto j=0;j<ND;j++)
+       {
+            low[j] = bnd[j][0] - spread[j]*norm;
+            up[j] = bnd[j][1] + spread[j]*norm;
+            dx[j] = (up[j] - low[j])/(Double_t)nbins;
+       }
+       for (auto &ni:nientropy) ni = 0.;
+#ifdef USEOPENMP
+       unsigned int nthreads;
+       nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+       if (nthreads <1) nthreads=1;
+#pragma omp parallel for \
+default(shared) schedule(static) \
+private(x) \
+reduction(+:mtot) reduction(vec_plus:nientropy) \
+num_threads(nthreads) if (nthreads>1)
+#endif
+       for (auto i=start;i<end;i++)
+       {
+           auto mass=bucket[i].GetMass();
+           (this->*getparticlepos)(bucket[i], x);
+           for (auto j=0;j<ND;j++) {
+               auto ibin=static_cast<Int_t>((x[j]-low[j])/dx[j]);
+               nientropy[ibin+j*nbins] += mass;
+           }
+           mtot += mass;
+       }
+       mtot=1.0/mtot;
+       norm = 1.0/log10((Double_t)nbins);
+       for (auto j=0;j<ND;j++) {
+           auto offset = j*nbins;
+           for (auto i=0;i<nbins;i++) {
+               if (nientropy[i] == 0) continue;
+               auto temp=nientropy[i+offset]*mtot;
+               entropy[j] -= temp*log10(temp);
+           }
+           entropy[j] *= norm;
+       }
+   }
 
     /// \name Determine the median coordinates in some space
     //@{
+    inline Double_t KDTree::Median(int d, Int_t k, Int_t start, Int_t end,
+        KDTreeOMPThreadPool &otp, bool balanced)
+    {
+        Int_t left = start;
+        Int_t right = end-1;
+        Int_t i, j;
+        Double_t x;
+        Particle w;
+        Particle *pval = NULL;
+        //produced a balanced tree
+        if (balanced){
+            while (left < right)
+            {
+                x = (this->*getparticleithpos)(bucket[k],d);
+                swap(bucket[right],bucket[k]);
+                pval = &bucket[k];
+                i = left-1;
+                j = right;
+                while (1) {
+                    while (i < j) if ((this->*getparticleithpos)(bucket[++i],d) >= x) break;
+                    while (i < j) if ((this->*getparticleithpos)(bucket[--j],d) <= x) break;
+                    swap(bucket[i],bucket[j]);
+                    pval = &bucket[j];
+                    if (j <= i) break;
+                }
+                w = *pval;
+                bucket[j] = move(bucket[i]);
+                bucket[i] = move(bucket[right]);
+                bucket[right] = w;
+                pval = NULL;
+                if (i >= k) right = i - 1;
+                if (i <= k) left = i + 1;
+            }
+            return (this->*getparticleithpos)(bucket[k], d);
+        }
+        //requires that particle order is already balanced. Use with caution
+        else
+        {
+            return (this->*getparticleithpos)(bucket[k], d);
+            //printf("Note yet implemented\n");
+            //exit(9);
+        }
+    }
+
     inline Double_t KDTree::MedianPos(int d, Int_t k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
@@ -453,36 +398,31 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
     //@}
-    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
-        KDTreeOMPThreadPool &otp) {
+    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end,
+        KDTreeOMPThreadPool &otp)
+    {
         int splitdim=0;
         Double_t cursplitvalue;
         Double_t nbins;
-        vector<Double_t> splitvalue(ND);
+        Double_t bnd[6][2];
+        vector<Double_t> spread(ND), mean(ND), splitvalue(ND);
         vector<Double_t> entropybins;
 
         //if using shannon entropy criterion
         if(splittingcriterion==1) {
             if(end-start>8) nbins=ceil(pow((end-start),1./3.));
             else nbins=2;
-            entropybins.resize(nbins);
+            (this->*spreadfunc)(start, end, bnd, spread, otp)
+            (this->*entropyfunc)(start, end, bnd, nbins, entropybins, spread, splitvalue, otp);
         }
-        for (auto j = 0; j < ND; j++)
-        {
-            if(splittingcriterion==1) {
-                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp)+1e-32;//addition incase lattice and no spread
-                Double_t low, up;
-                low=bnd[j][0]-2.0*(splitvalue[j])/(Double_t)(end-start);
-                up=bnd[j][1]+2.0*(splitvalue[j])/(Double_t)(end-start);
-                splitvalue[j] = (this->*entropyfunc)(j, start, end, low, up, nbins, entropybins.data(), otp);
-            }
-            else if (splittingcriterion==2) {
-                splitvalue[j] = (this->*bmfunc)(j, start, end, bnd[j], otp);
-                splitvalue[j] = (this->*dispfunc)(j, start, end, splitvalue[j], otp);
-            }
-            else {
-                splitvalue[j] = (this->*spreadfunc)(j, start, end, bnd[j], otp);
-            }
+        //if using dispersion
+        else if (splittingcriterion==2) {
+            (this->*bmfunc)(start, end, bnd, mean, otp);
+            (this->*dispfunc)(start, end, mean, splitvalue, otp);
+        }
+        // if just using spread
+        else {
+            (this->*spreadfunc)(start, end, bnd, splitvalue, otp);
         }
 
         splitdim=0; cursplitvalue = splitvalue[0];
@@ -522,8 +462,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         if (size <= b)
         {
             if (ibuildinparallel == false) numleafnodes++;
-            for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-            return new LeafNode(id ,start, end,  bnd, ND);
+            vector<Double_t> mean(ND);
+            (this->*bmfunc)(start, end, bnd, mean, otp);
+            return new LeafNode(id, start, end, bnd, ND);
         }
         else
         {
@@ -531,7 +472,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
             Int_t k = start + (size - 1) / 2;
-            int splitdim = DetermineSplitDim(start, end, bnd, otp);
+            int splitdim = DetermineSplitDim(start, end, otp);
             Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
@@ -609,36 +550,49 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             root=NULL; return 0;
         }
         else {
-        if (treetype==TPHYS)
-        {
-            bmfunc=&NBody::KDTree::BoundaryandMeanPos;
-            dispfunc=&NBody::KDTree::DispersionPos;
-            spreadfunc=&NBody::KDTree::SpreadestPos;
-            entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
-        }
-        else if (treetype==TVEL) {
-            bmfunc=&NBody::KDTree::BoundaryandMeanVel;
-            dispfunc=&NBody::KDTree::DispersionVel;
-            spreadfunc=&NBody::KDTree::SpreadestVel;
-            entropyfunc=&NBody::KDTree::EntropyVel;
-            medianfunc=&NBody::KDTree::MedianVel;
-        }
-        else if (treetype==TPHS) {
-            bmfunc=&NBody::KDTree::BoundaryandMeanPhs;
-            dispfunc=&NBody::KDTree::DispersionPhs;
-            spreadfunc=&NBody::KDTree::SpreadestPhs;
-            entropyfunc=&NBody::KDTree::EntropyPhs;
-            medianfunc=&NBody::KDTree::MedianPhs;
-        }
-        else if (treetype==TPROJ) {
-            bmfunc=&NBody::KDTree::BoundaryandMeanPos;
-            dispfunc=&NBody::KDTree::DispersionPos;
-            spreadfunc=&NBody::KDTree::SpreadestPos;
-            entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
-        }
-        return 1;
+            bmfunc=&NBody::KDTree::BoundaryandMean;
+            dispfunc=&NBody::KDTree::Dispersion;
+            spreadfunc=&NBody::KDTree::Spreadest;
+            entropyfunc=&NBody::KDTree::Entropy;
+            medianfunc=&NBody::KDTree::Median;
+            if (treetype==TPHYS)
+            {
+                // bmfunc=&NBody::KDTree::BoundaryandMeanPos;
+                // dispfunc=&NBody::KDTree::DispersionPos;
+                // spreadfunc=&NBody::KDTree::SpreadestPos;
+                // entropyfunc=&NBody::KDTree::EntropyPos;
+                // medianfunc=&NBody::KDTree::MedianPos;
+                getparticlepos=&NBody::KDTree::GetParticlePos;
+                getparticleithpos=&NBody::KDTree::GetParticleithPos;
+            }
+            else if (treetype==TVEL) {
+                getparticlepos=&NBody::KDTree::GetParticleVel;
+                getparticleithpos=&NBody::KDTree::GetParticleithVel;
+                // bmfunc=&NBody::KDTree::BoundaryandMeanVel;
+                // dispfunc=&NBody::KDTree::DispersionVel;
+                // spreadfunc=&NBody::KDTree::SpreadestVel;
+                // entropyfunc=&NBody::KDTree::EntropyVel;
+                // medianfunc=&NBody::KDTree::MedianVel;
+            }
+            else if (treetype==TPHS) {
+                getparticlepos=&NBody::KDTree::GetParticlePhs;
+                getparticleithpos=&NBody::KDTree::GetParticleithPhs;
+                // bmfunc=&NBody::KDTree::BoundaryandMeanPhs;
+                // dispfunc=&NBody::KDTree::DispersionPhs;
+                // spreadfunc=&NBody::KDTree::SpreadestPhs;
+                // entropyfunc=&NBody::KDTree::EntropyPhs;
+                // medianfunc=&NBody::KDTree::MedianPhs;
+            }
+            else if (treetype==TPROJ) {
+                getparticlepos=&NBody::KDTree::GetParticleProj;
+                getparticleithpos=&NBody::KDTree::GetParticleithProj;
+                // bmfunc=&NBody::KDTree::BoundaryandMeanPos;
+                // dispfunc=&NBody::KDTree::DispersionPos;
+                // spreadfunc=&NBody::KDTree::SpreadestPos;
+                // entropyfunc=&NBody::KDTree::EntropyPos;
+                // medianfunc=&NBody::KDTree::MedianPos;
+            }
+            return 1;
         }
     }
     ///Calculate kernel quantities

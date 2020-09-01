@@ -146,11 +146,20 @@ namespace NBody
 
         /// \name Private function pointers used in building tree
         //@{
-        Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*bmfunc)(Int_t , Int_t , Double_t [][], vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*dispfunc)(Int_t, Int_t, vector<Double_t> &, vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [][], vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*entropyfunc)(Int_t , Int_t , Int_t, Double_t [][], vector<Double_t> &, vector<Double_t> &, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
+
+        void (NBody::KDTree::*getparticlepos) (const Particle &p, vector<Double_t> &x);
+        Double_t (NBody::KDTree::*getparticleithpos) (const Particle &p, int i);
+
+        // Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        // Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
+        // Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
+        // Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
+        // Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         //@}
 
         /// \name Private arrays used to build tree
@@ -459,53 +468,32 @@ namespace NBody
         /// \name Splitting criteria methods
         /// How to split the system
         //@{
+        inline void GetParticlePos(const Particle &p, vector<Double_t> &x);
+        inline void GetParticleVel(const Particle &p, vector<Double_t> &x);
+        inline void GetParticlePhs(const Particle &p, vector<Double_t> &x);
+        inline void GetParticleProj(const Particle &p, vector<Double_t> &x);
+
+        inline Double_t GetParticleithPos(const Particle &p, int i);
+        inline Double_t GetParticleithVel(const Particle &p, int i);
+        inline Double_t GetParticleithPhs(const Particle &p, int i);
+        inline Double_t GetParticleithProj(const Particle &p, int i);
 
         /// Find the dimension of which the data has the most spread
-        /// for positions
-        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
+        inline void Spreadest(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &spread,
             KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
+        /// Find the boundary of the data and mean
+        inline void BoundaryandMean(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &mean,
             KDTreeOMPThreadPool &);
-        /// and phase
-        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// Find the boundary of the data and return mean
-        /// for positions
-        inline Double_t BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and phs
-        inline Double_t BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// Find the dispersion in a dimension
-        /// for positions
-        inline Double_t DispersionPos(int j, Int_t start, Int_t end, Double_t mean,
-            KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t DispersionVel(int j, Int_t start, Int_t end, Double_t mean,
-            KDTreeOMPThreadPool &);
-        /// and phase
-        inline Double_t DispersionPhs(int j, Int_t start, Int_t end, Double_t mean,
+            /// Find the dispersion in a dimension
+        inline void Dispersion(Int_t start, Int_t end, vector<Double_t> &mean, vector<Double_t> &disp,
             KDTreeOMPThreadPool &);
         /// Calculate the entropy in a given dimension. This can be used as a node splitting criterion
         /// instead of most spread dimension
-        /// for positions
-        inline Double_t EntropyPos(int j, Int_t start, Int_t end,
-            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
-            KDTreeOMPThreadPool &);
-        /// and for velocities
-        inline Double_t EntropyVel(int j, Int_t start, Int_t end,
-            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
-            KDTreeOMPThreadPool &);
-        /// and for phase
-        inline Double_t EntropyPhs(int j, Int_t start, Int_t end,
-            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
+        inline void Entropy(Int_t start, Int_t end, Int_t nbins,
+            Double_t **bnd, vector<Double_t> &spread, vector<Double_t> &entropy,
             KDTreeOMPThreadPool &);
         /// Determine the split dimension
-        inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+        inline int DetermineSplitDim(Int_t start, Int_t end,
                 KDTreeOMPThreadPool &otp);
         //@}
 
@@ -514,6 +502,9 @@ namespace NBody
         /// the k'th particle's are lower in index, and vice versa. This function permanently alters
         /// the NBody::System, but it keeps track of the changes.
         //@{
+        inline Double_t Median(int d, Int_t k, Int_t start, Int_t end,
+            KDTreeOMPThreadPool &, bool balanced=true);
+
         inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with velocities
