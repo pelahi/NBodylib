@@ -189,7 +189,7 @@ namespace NBody
             }
     }
             r[1]=averad;
-            int nthreads;
+            int nthreads = 1;
     #pragma omp parallel
     {
             if (omp_get_thread_num()==0) nthreads=omp_get_num_threads();
@@ -245,7 +245,7 @@ namespace NBody
             }
     }
             r[1]=averad;
-            int nthreads;
+            int nthreads = 1;
     #pragma omp parallel
     {
             if (omp_get_thread_num()==0) nthreads=omp_get_num_threads();

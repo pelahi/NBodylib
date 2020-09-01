@@ -1522,9 +1522,9 @@ namespace NBody
     {
         return CalcDensityPosition(x.GetCoord(),Nsmooth,v.GetCoord());
     }
-    Double_t KDTree::CalcVelDensityPosition(Coordinate x, Int_t Nsmooth, Int_t Nsearch)
+    Double_t KDTree::CalcVelDensityPosition(Coordinate x, Coordinate v, Int_t Nsmooth, Int_t Nsearch)
     {
-        return CalcVelDensityPosition(x.GetCoord(),Nsmooth,Nsearch);
+        return CalcVelDensityPosition(x.GetCoord(), v.GetCoord(), Nsmooth,Nsearch);
     }
     Coordinate KDTree::CalcSmoothVelPosition(Coordinate x, Int_t Nsmooth, int densityset)
     {
