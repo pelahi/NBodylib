@@ -114,7 +114,7 @@ namespace NBody
 
         ///0 if using most spread dimension as criterion, 1 if use entropy along with entropy array, 2 if using largest dispersion
         int splittingcriterion;
-        Double_t *nientropy[MAXND];
+        // Double_t *nientropy[MAXND];
 
         ///kernel construction
         ///resolution in kernel array and type
@@ -146,12 +146,11 @@ namespace NBody
 
         /// \name Private function pointers used in building tree
         //@{
-        void (NBody::KDTree::*bmfunc)(Int_t , Int_t , Double_t [][], vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*bmfunc)(Int_t , Int_t , Double_t [6][2], vector<Double_t> &, KDTreeOMPThreadPool &);
         void (NBody::KDTree::*dispfunc)(Int_t, Int_t, vector<Double_t> &, vector<Double_t> &, KDTreeOMPThreadPool &);
-        void (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [][], vector<Double_t> &, KDTreeOMPThreadPool &);
-        void (NBody::KDTree::*entropyfunc)(Int_t , Int_t , Int_t, Double_t [][], vector<Double_t> &, vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*spreadfunc)(Int_t , Int_t , Double_t [6][2], vector<Double_t> &, KDTreeOMPThreadPool &);
+        void (NBody::KDTree::*entropyfunc)(Int_t , Int_t , Int_t, Double_t [6][2], vector<Double_t> &, vector<Double_t> &, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
-
         void (NBody::KDTree::*getparticlepos) (const Particle &p, vector<Double_t> &x);
         Double_t (NBody::KDTree::*getparticleithpos) (const Particle &p, int i);
 
@@ -479,10 +478,10 @@ namespace NBody
         inline Double_t GetParticleithProj(const Particle &p, int i);
 
         /// Find the dimension of which the data has the most spread
-        inline void Spreadest(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &spread,
+        inline void Spreadest(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &spread,
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and mean
-        inline void BoundaryandMean(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &mean,
+        inline void BoundaryandMean(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &mean,
             KDTreeOMPThreadPool &);
             /// Find the dispersion in a dimension
         inline void Dispersion(Int_t start, Int_t end, vector<Double_t> &mean, vector<Double_t> &disp,
@@ -490,7 +489,7 @@ namespace NBody
         /// Calculate the entropy in a given dimension. This can be used as a node splitting criterion
         /// instead of most spread dimension
         inline void Entropy(Int_t start, Int_t end, Int_t nbins,
-            Double_t **bnd, vector<Double_t> &spread, vector<Double_t> &entropy,
+            Double_t bnd[6][2], vector<Double_t> &spread, vector<Double_t> &entropy,
             KDTreeOMPThreadPool &);
         /// Determine the split dimension
         inline int DetermineSplitDim(Int_t start, Int_t end,

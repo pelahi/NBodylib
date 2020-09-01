@@ -72,7 +72,7 @@ namespace NBody
     /// \name Find most spread dimension
     //@{
 
-    inline void KDTree::Spreadest(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &spread,
+    inline void KDTree::Spreadest(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &spread,
         KDTreeOMPThreadPool &otp)
     {
         vector<Double_t> minval(ND), maxval(ND), x(ND);
@@ -107,7 +107,7 @@ num_threads(nthreads) if (nthreads>1)
 
     /// \name Find the boundary of the data and return mean
     //@{
-    inline void KDTree::BoundaryandMean(Int_t start, Int_t end, Double_t bnd[][], vector<Double_t> &mean,
+    inline void KDTree::BoundaryandMean(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &mean,
         KDTreeOMPThreadPool &otp)
     {
         vector<Double_t> minval(ND), maxval(ND), x(ND);
@@ -175,7 +175,7 @@ num_threads(nthreads) if (nthreads>1)
     /// and can be used instead of most spread dimension
     //@{
    inline void KDTree::Entropy(Int_t start, Int_t end, Int_t nbins,
-       Double_t **bnd, vector<Double_t> &spread, vector<Double_t> &entropy,
+       Double_t bnd[6][2], vector<Double_t> &spread, vector<Double_t> &entropy,
        KDTreeOMPThreadPool &otp)
    {
        vector<Double_t> low(ND), up(ND), x(ND), dx(ND);
@@ -406,14 +406,14 @@ num_threads(nthreads) if (nthreads>1)
         Double_t nbins;
         Double_t bnd[6][2];
         vector<Double_t> spread(ND), mean(ND), splitvalue(ND);
-        vector<Double_t> entropybins;
+        // vector<Double_t> entropybins;
 
         //if using shannon entropy criterion
         if(splittingcriterion==1) {
             if(end-start>8) nbins=ceil(pow((end-start),1./3.));
             else nbins=2;
-            (this->*spreadfunc)(start, end, bnd, spread, otp)
-            (this->*entropyfunc)(start, end, bnd, nbins, entropybins, spread, splitvalue, otp);
+            (this->*spreadfunc)(start, end, bnd, spread, otp);
+            (this->*entropyfunc)(start, end, nbins, bnd, spread, splitvalue, otp);
         }
         //if using dispersion
         else if (splittingcriterion==2) {
@@ -730,12 +730,12 @@ num_threads(nthreads) if (nthreads>1)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            // if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            // if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
@@ -788,11 +788,11 @@ num_threads(nthreads) if (nthreads>1)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            // if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            // if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
