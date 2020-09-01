@@ -2,8 +2,8 @@
  *  \brief header file for the Math name space
 
     \namespace Math
-    \brief A namespace for user defined math routines and classes contained in libMath 
-    
+    \brief A namespace for user defined math routines and classes contained in libMath
+
 */
 
 // NBodyMath.h
@@ -15,6 +15,7 @@
 #include <fstream>
 #include <cmath>
 #include <Precision.h>
+#include <Exceptions.h>
 #include <Coordinate.h>
 #include <Coordinate2D.h>
 #include <Matrix2D.h>
@@ -32,4 +33,3 @@ namespace Math {
 }
 
 #endif
-

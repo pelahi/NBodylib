@@ -1,5 +1,5 @@
 /*! \file Integrate.cxx
- *  \brief integration subroutines 
+ *  \brief integration subroutines
  */
 
 #include <cmath>
@@ -8,7 +8,7 @@
 using namespace std;
 namespace Math
 {
-    Double_t IntegrateData(const Double_t x[], const Double_t f[], const int lower, 
+    Double_t IntegrateData(const Double_t x[], const Double_t f[], const int lower,
                          const int upper)
     {
         Double_t  value = 0.0, cof;
@@ -71,7 +71,7 @@ namespace Math
                          const Double_t b, const int n)
     {
         int it,j;
-        Double_t  sum,s, del,x,tnm;
+        Double_t  sum, s=0, del,x,tnm;
         //cerr<<n<<" "<<a<<" "<<((Double_t *)f->params)[0]<<" "<<f->function(a,f->params)<<endl;
         if (n<=1) return (0.5*(b-a)*(f->function(a,f->params)+f->function(b,f->params)));
         /*else
@@ -180,7 +180,7 @@ namespace Math
         //stores trapezoidal approximations and stepsizes
         Double_t *s=new Double_t[n+1];
         Double_t *h=new Double_t[n+2];
-        //note that 
+        //note that
         h[0]=1.0;
         for (int j=0;j<n;j++)
         {
@@ -194,7 +194,7 @@ namespace Math
                     //if ((dss*dss)<=epsrel*epsrel*(ss*ss))return ss;
             }
             h[j+1]=0.25*h[j];
-            //factor of 0.25 even though stepsize only decreaseed by 0.5 makes polynomial in extrapolate decrease in step size 
+            //factor of 0.25 even though stepsize only decreaseed by 0.5 makes polynomial in extrapolate decrease in step size
         }
         cerr<<"Too many steps in routine, no convergence\n";
         return ss;
@@ -386,7 +386,7 @@ namespace Math
                 }
             }*/
             for (j=1;j<=ndim;j++) {
-    // Refine the grid. Consult references to understand the subtlety of this procedure. 
+    // Refine the grid. Consult references to understand the subtlety of this procedure.
     //The refinement is damped, to avoid rapid, destabilizing changes, and also compressed in range
     //by the exponent ALPH.
                 xo=d[1][j];
@@ -442,7 +442,7 @@ namespace Math
         gsl_rng_env_setup ();
         T = gsl_rng_default;
         rnd = gsl_rng_alloc (T);
-        gsl_monte_vegas_integrate (gslfm, a, b, gslfm->dim, numintervals, rnd, ws,&result, &temperror);
+        gsl_invoke(gsl_monte_vegas_integrate, gslfm, a, b, gslfm->dim, numintervals, rnd, ws,&result, &temperror);
         if (error)*error=temperror;
         if (chisq)*chisq=ws->chisq;
         gsl_rng_free (rnd);
@@ -465,7 +465,7 @@ namespace Math
             region[2*i+1+1]=b[i];
         }
 
-        //note that 
+        //note that
         h[0]=1.0;
         for (int j=0;j<n;j++)
         {
@@ -487,7 +487,7 @@ namespace Math
                     if (fabs(dss)<=epsrel*fabs(ss))return ss;
             }
             h[j+1]=0.25*h[j];
-            //factor of 0.25 even though stepsize only decreaseed by 0.5 makes polynomial in extrapolate decrease in step size 
+            //factor of 0.25 even though stepsize only decreaseed by 0.5 makes polynomial in extrapolate decrease in step size
         }
         cerr<<"Too many steps in routine, no convergence\n";
         return ss;
