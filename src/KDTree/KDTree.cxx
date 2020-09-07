@@ -84,7 +84,7 @@ namespace NBody
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) schedule(static) \
-private(x) \
+firstprivate(x) \
 reduction(vec_min:minval) reduction(vec_max:maxval) \
 num_threads(nthreads) if (nthreads>1)
 #endif
@@ -119,7 +119,7 @@ num_threads(nthreads) if (nthreads>1)
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) schedule(static) \
-private(x) \
+firstprivate(x) \
 reduction(vec_min:minval) reduction(vec_max:maxval) reduction(vec_plus:mean) \
 num_threads(nthreads) if (nthreads>1)
 #endif
@@ -155,7 +155,7 @@ num_threads(nthreads) if (nthreads>1)
         if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) schedule(static) \
-private(x) \
+firstprivate(x) \
 reduction(vec_plus:disp) \
 num_threads(nthreads) if (nthreads>1)
 #endif
@@ -195,7 +195,7 @@ num_threads(nthreads) if (nthreads>1)
        if (nthreads <1) nthreads=1;
 #pragma omp parallel for \
 default(shared) schedule(static) \
-private(x) \
+firstprivate(x) \
 reduction(+:mtot) reduction(vec_plus:nientropy) \
 num_threads(nthreads) if (nthreads>1)
 #endif
