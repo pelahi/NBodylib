@@ -471,7 +471,7 @@ num_threads(nthreads) if (nthreads>1)
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
             Int_t k = start + (size - 1) / 2;
-            int splitdim = DetermineSplitDim(start, end, otp);
+            int splitdim = DetermineSplitDim(start, end, bnd, otp);
             Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
