@@ -492,7 +492,7 @@ namespace NBody
             Double_t bnd[6][2], vector<Double_t> &spread, vector<Double_t> &entropy,
             KDTreeOMPThreadPool &);
         /// Determine the split dimension
-        inline int DetermineSplitDim(Int_t start, Int_t end,
+        inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
                 KDTreeOMPThreadPool &otp);
         //@}
 

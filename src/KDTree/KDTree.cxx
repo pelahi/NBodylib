@@ -31,13 +31,13 @@ namespace NBody
         vec_max : \
         std::vector<Double_t> : \
         std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
-        [](Double_t x, Double_t y)-> Double_t {return std::max(x,y);})) \
+        [](Double_t x, Double_t y)-> Double_t {return std::max<Double_t>(x,y);})) \
         initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
     #pragma omp declare reduction( \
         vec_min : \
         std::vector<Double_t> : \
         std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
-        [](Double_t x, Double_t y)-> Double_t {return std::min(x,y);})) \
+        [](Double_t x, Double_t y)-> Double_t {return std::min<Double_t>(x,y);})) \
         initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
     #endif
 
@@ -94,7 +94,7 @@ num_threads(nthreads) if (nthreads>1)
             for (auto j = 0; j < ND; j++)
             {
                 minval[j] = min(minval[j],x[j]);
-                maxval[j] = max(minval[j],x[j]);
+                maxval[j] = max(maxval[j],x[j]);
             }
         }
         for (auto j = 0; j < ND; j++) {
@@ -129,7 +129,7 @@ num_threads(nthreads) if (nthreads>1)
             for (auto j = 0; j < ND; j++)
             {
                 minval[j] = min(minval[j],x[j]);
-                maxval[j] = max(minval[j],x[j]);
+                maxval[j] = max(maxval[j],x[j]);
                 mean[j] += x[j];
             }
         }
@@ -398,13 +398,12 @@ num_threads(nthreads) if (nthreads>1)
         }
     }
     //@}
-    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end,
+    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
         KDTreeOMPThreadPool &otp)
     {
         int splitdim=0;
         Double_t cursplitvalue;
         Double_t nbins;
-        Double_t bnd[6][2];
         vector<Double_t> spread(ND), mean(ND), splitvalue(ND);
         // vector<Double_t> entropybins;
 
