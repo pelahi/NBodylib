@@ -43,6 +43,7 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 #include <algorithm>
 
@@ -195,14 +196,14 @@ namespace NBody
         KDTree(Particle *p, Int_t numparts,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
+            Double_t *Period=nullptr, Double_t **metric=nullptr,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false
         );
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=nullptr,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false
         );
@@ -462,37 +463,35 @@ namespace NBody
 
         private:
 
-        //-- private inline functions declarations
-
         /// \name Splitting criteria methods
         /// How to split the system
         //@{
-        inline void GetParticlePos(const Particle &p, vector<Double_t> &x);
-        inline void GetParticleVel(const Particle &p, vector<Double_t> &x);
-        inline void GetParticlePhs(const Particle &p, vector<Double_t> &x);
-        inline void GetParticleProj(const Particle &p, vector<Double_t> &x);
+        void GetParticlePos(const Particle &p, vector<Double_t> &x);
+        void GetParticleVel(const Particle &p, vector<Double_t> &x);
+        void GetParticlePhs(const Particle &p, vector<Double_t> &x);
+        void GetParticleProj(const Particle &p, vector<Double_t> &x);
 
-        inline Double_t GetParticleithPos(const Particle &p, int i);
-        inline Double_t GetParticleithVel(const Particle &p, int i);
-        inline Double_t GetParticleithPhs(const Particle &p, int i);
-        inline Double_t GetParticleithProj(const Particle &p, int i);
+        Double_t GetParticleithPos(const Particle &p, int i);
+        Double_t GetParticleithVel(const Particle &p, int i);
+        Double_t GetParticleithPhs(const Particle &p, int i);
+        Double_t GetParticleithProj(const Particle &p, int i);
 
         /// Find the dimension of which the data has the most spread
-        inline void Spreadest(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &spread,
+        void Spreadest(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &spread,
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and mean
-        inline void BoundaryandMean(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &mean,
+        void BoundaryandMean(Int_t start, Int_t end, Double_t bnd[6][2], vector<Double_t> &mean,
             KDTreeOMPThreadPool &);
             /// Find the dispersion in a dimension
-        inline void Dispersion(Int_t start, Int_t end, vector<Double_t> &mean, vector<Double_t> &disp,
+        void Dispersion(Int_t start, Int_t end, vector<Double_t> &mean, vector<Double_t> &disp,
             KDTreeOMPThreadPool &);
         /// Calculate the entropy in a given dimension. This can be used as a node splitting criterion
         /// instead of most spread dimension
-        inline void Entropy(Int_t start, Int_t end, Int_t nbins,
+        void Entropy(Int_t start, Int_t end, Int_t nbins,
             Double_t bnd[6][2], vector<Double_t> &spread, vector<Double_t> &entropy,
             KDTreeOMPThreadPool &);
         /// Determine the split dimension
-        inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
+        int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
                 KDTreeOMPThreadPool &otp);
         //@}
 
@@ -504,14 +503,14 @@ namespace NBody
         inline Double_t Median(int d, Int_t k, Int_t start, Int_t end,
             KDTreeOMPThreadPool &, bool balanced=true);
 
-        inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
-            KDTreeOMPThreadPool &, bool balanced=true);
-        /// same as above but with velocities
-        inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end,
-            KDTreeOMPThreadPool &, bool balanced=true);
-        /// same as above but with full phase-space
-        inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end,
-            KDTreeOMPThreadPool &, bool balanced=true);
+//         inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
+//             KDTreeOMPThreadPool &, bool balanced=true);
+//         /// same as above but with velocities
+//         inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end,
+//             KDTreeOMPThreadPool &, bool balanced=true);
+//         /// same as above but with full phase-space
+//         inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end,
+//             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET
         //inline Double_t MedianDim(int d, Int_t k, Int_t start, Int_t end, bool balanced=true, Double_t **metric=NULL);
