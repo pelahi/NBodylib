@@ -74,6 +74,8 @@ endmacro()
 
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
+nbody_option(OPENMPENABLEGPU "Attempt to include OpenMP GPU support through target directive in NBodyLib" ON)
+nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" OFF)
 
 # Precision options
 nbody_option(SINGLE_PRECISION  "Use single point precision to store all properties and perform all calculations" OFF)
@@ -156,12 +158,35 @@ endmacro()
 # How we find OpenMP and set it up
 #
 macro(find_openmp)
-	find_package(OpenMP COMPONENTS CXX)
-	if (OPENMP_FOUND)
+    find_package(OpenMP 3.0)
+	if (OpenMP_CXX_FOUND)
+        #store the version number in cache
+        if (DEFINED OpenMP_CXX_VERSION)
+            set(OPENMP_CXX_VERSION_FOUND ${OpenMP_CXX_VERSION} CACHE INTERNAL "OpenMP Version")
+        endif()
+        #update linking
 		list(APPEND NBODY_CXX_FLAGS ${OpenMP_CXX_FLAGS})
 		list(APPEND NBODY_LINK_FLAGS ${OpenMP_CXX_FLAGS})
-		list(APPEND NBODY_DEFINES USEOPENMP USEOMP)
-		set(NBODY_HAS_OPENMP Yes)
+        list(APPEND NBODY_DEFINES USEOPENMP USEOMP)
+        set(NBODY_HAS_OPENMP Yes)
+        if(NBODY_OPENMPENABLEGPU)
+            if (NOT ${OPENMP_CXX_VERSION_FOUND} LESS 4.0)
+                list(APPEND NBODY_DEFINES USEOPENMPGPU)
+                set(NBODY_HAS_OPENMPGPU Yes)
+            endif()
+        endif()
+	endif()
+endmacro()
+
+# How we find OpenACC and set it up
+#
+macro(find_openacc)
+	find_package(OpenACC COMPONENTS CXX)
+	if (OpenACC_CXX_FOUND)
+		list(APPEND NBODY_CXX_FLAGS ${OpenACC_CXX_FLAGS})
+		list(APPEND NBODY_LINK_FLAGS ${OpenACC_CXX_FLAGS})
+		list(APPEND NBODY_DEFINES USEOPENACC)
+		set(NBODY_HAS_OPENACC Yes)
 	endif()
 endmacro()
 
@@ -172,10 +197,19 @@ endmacro()
 find_gsl()
 
 set(NBODY_HAS_OPENMP No)
+set(NBODY_HAS_OPENMPGPU No)
 if (NBODY_OPENMP)
 	find_openmp()
 endif()
+set(NBODY_HAS_OPENACC No)
+if (NBODY_OPENACC)
+	find_openacc()
+endif()
 
+# check that either OpenMP or OpenACC enabled but not both
+if (NBODY_OPENMP AND NBODY_OPENACC)
+    message(FATAL_ERROR "NBody library configured to use both OpenMP and OpenACC. Use one or the other.")
+endif()
 
 # Add subdirectories to list of include directories
 foreach(_subdir IN ITEMS ${_subdirs})
@@ -213,15 +247,17 @@ macro(nbody_report feature)
 endmacro()
 
 message("\nNBodyLib successfully configured with the following settings:")
-nbody_report(Dependencies "OpenMP" OPENMP)
+nbody_report(Dependencies "OpenMP" OPENMP
+    "OpenMP target directive for GPU accelaration supported and active" OPENMPGPU)
+nbody_report(Dependencies "OpenACC" OPENACC)
 nbody_report(Types "All calculations/properties stored as float" SINGLE_PRECISION "All integeres are long int" LONG_INT)
 nbody_report("Particle data" "Do not store mass, all particles are the same mass" NO_MASS
              "Use single precision to store positions, velocities, other props" SINGLE_PARTICLE_PRECISION
              "Use unsigned particle PIDs" UNSIGNED_PARTICLE_PIDS "Use unsigned particle IDs" UNSIGNED_PARTICLE_IDS
-             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH 
-             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES 
+             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH
+             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES
              "Extra input info stored" USE_EXTRA_INPUT_INFO
-             "Extra FOF info stored" USE_EXTRA_FOF_INFO 
+             "Extra FOF info stored" USE_EXTRA_FOF_INFO
              "Large memory KDTree" USE_LARGE_KDTREE
              "Particle compiled for SWIFT" USE_SWIFT_INTERFACE
 		 )
@@ -243,9 +279,7 @@ macro(add_nbody_lib libname sources)
 	add_library(${libname} OBJECT ${sources})
 	target_compile_definitions(${libname} PRIVATE ${NBODY_DEFINES})
 	target_include_directories(${libname} PRIVATE ${NBODY_INCLUDE_DIRS})
-	if (NBODY_CXX_FLAGS)
-		set_target_properties(${libname} PROPERTIES COMPILE_FLAGS ${NBODY_CXX_FLAGS})
-	endif()
+    target_compile_options(${libname} PRIVATE ${NBODY_CXX_FLAGS})
 endmacro()
 
 # Include all subdirectories,
