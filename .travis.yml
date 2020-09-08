@@ -34,7 +34,7 @@ matrix:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev]
-    env: COMPILER=g++-7
+    env: COMPILER=g++-7 CXX=g++-7 CC=gcc-7
   - compiler: g++-7
     addons:
      apt:
