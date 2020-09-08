@@ -27,73 +27,71 @@ language: cpp
 sudo: false
 
 # We try with both GNU and LLVM
-# When running with gcc-6 we also collect coverage information
-# and upload it to coveralls
 matrix:
  include:
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev]
     env: COMPILER=g++-7
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7
-  - compiler: gcc
+  - compiler: g++-8
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-8, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-8
-  - compiler: gcc
+  - compiler: g++-9
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-9, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-9
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 USEGAS=1 USESTARS=1
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 USEGAS=1 USESTARS=1 USEBH=1
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 USEEXTRADM=1
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 USESWIFT=1
-  - compiler: gcc
+  - compiler: g++
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 NOMASS=1
-  - compiler: gcc
-    dist: bionic
+  - compiler: g++
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libgsl0-dev, libopenmpi-dev]
     env: COMPILER=g++-7 GSL22=1
-  - compiler: gcc
-    dist: bionic
+  - compiler: g++
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
