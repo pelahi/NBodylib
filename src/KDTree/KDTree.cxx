@@ -18,9 +18,11 @@
 namespace NBody
 {
 
-    // -- Inline functions that get called often when building the tree.
     #ifdef USEOPENMP
     // define openmp reduction operations
+    // Currently issue is that it appears that most gcc compilers have not implemented omp delcare omp 
+    // clang 9 works but not gcc-9 with the typical gomp lib
+    /*
     #pragma omp declare reduction( \
         vec_plus : \
         std::vector<Double_t> : \
@@ -39,6 +41,7 @@ namespace NBody
         std::transform(omp_in.cbegin(), omp_in.cend(), omp_out.cbegin(), omp_out.begin(), \
         [](Double_t x, Double_t y)-> Double_t {return std::min<Double_t>(x,y);})) \
         initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+    */
     #endif
 
     /// \name wrappers for gettting the desired info from particles
@@ -80,7 +83,7 @@ namespace NBody
         for (auto j=0;j<ND;j++) minval[j] = maxval[j] = x[j];
         // currently reduction of vectors using min, max seems to have issues with precision 
         // look like automatic conversion to floats, which is odd. Leaving code here 
-        // for completeness but using explicit critical section 
+        // for completeness but using explicit critical section. 
         /*
 #ifdef USEOPENMP
 #pragma omp parallel for \
@@ -142,7 +145,7 @@ firstprivate(x)
 
         #pragma omp critical
         {
-            tid = tidtoindex[omp_get_thread_num()];
+//             tid = tidtoindex[omp_get_thread_num()];
             for (auto j = 0; j < ND; j++)
             {
                 minval[j] = min(localminval[j],minval[j]);
@@ -237,7 +240,6 @@ firstprivate(x)
         if (tid == nthreads-1) localend = end;
         (this->*getparticlepos)(bucket[localstart], x);
         for (auto j=0;j<ND;j++) localminval[j] = localmaxval[j] = localmean[j] = x[j];
-
         #pragma omp for
         for (auto i = localstart + 1; i < localend; i++)
         {
@@ -252,7 +254,6 @@ firstprivate(x)
 
         #pragma omp critical
         {
-            tid = tidtoindex[omp_get_thread_num()];
             for (auto j = 0; j < ND; j++)
             {
                 minval[j] = min(localminval[j],minval[j]);
@@ -294,24 +295,78 @@ firstprivate(x)
     {
         vector<Double_t> x(ND);
         for (auto &d:disp) d=0;
+// #ifdef USEOPENMP
+//         unsigned int nthreads;
+//         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+//         if (nthreads <1) nthreads=1;
+// #pragma omp parallel for \
+// default(shared) schedule(static) \
+// firstprivate(x) \
+// reduction(vec_plus:disp) \
+// num_threads(nthreads) if (nthreads>1)
+// #endif
+//         for (auto i = start; i < end; i++) {
+//             (this->*getparticlepos)(bucket[i], x);
+//             for (auto j = 0; j < ND; j++) disp[j]+=pow(x[j]-mean[j], static_cast<Double_t>(2.0));
+//         }
 #ifdef USEOPENMP
         unsigned int nthreads;
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) schedule(static) \
-firstprivate(x) \
-reduction(vec_plus:disp) \
-num_threads(nthreads) if (nthreads>1)
-#endif
-        for (auto i = start; i < end; i++) {
-            (this->*getparticlepos)(bucket[i], x);
-            for (auto j = 0; j < ND; j++) disp[j]+=pow(x[j]-mean[j], static_cast<Double_t>(2.0));
+        Int_t delta = ceil((end-start)/(double)nthreads);
+        if (nthreads>1) {
+#pragma omp parallel \
+default(shared) \
+firstprivate(x)
+{
+        vector<Double_t> localdisp(ND,0);
+        // since this is nested thread id doesn't simply map to how 
+        // the local for loop is split so construct a tid to index map 
+        unordered_map<int, int> tidtoindex;
+        int tid, count=0;
+        #pragma omp critical
+        {
+            tid = omp_get_thread_num();
+            tidtoindex[tid] = count++;
         }
+        // determine region of for loop to process
+        tid = tidtoindex[omp_get_thread_num()];
+        auto localstart = start + delta * static_cast<Int_t>(tid);
+        auto localend = localstart + delta;
+        if (tid == nthreads-1) localend = end;
+
+        #pragma omp for
+        for (auto i = localstart; i < localend; i++)
+        {
+            (this->*getparticlepos)(bucket[i], x);
+            for (auto j = 0; j < ND; j++) localdisp[j]+=pow(x[j]-mean[j], static_cast<Double_t>(2.0));
+        }
+
+        #pragma omp critical
+        {
+            for (auto j = 0; j < ND; j++)
+            {
+                disp[j] += localdisp[j];
+            }
+        }
+}
+        }
+        else 
+#endif
+        {
+            for (auto i = start; i < end; i++)
+            {
+                (this->*getparticlepos)(bucket[i], x);
+                for (auto j = 0; j < ND; j++) disp[j]+=pow(x[j]-mean[j], static_cast<Double_t>(2.0));
+            }
+        }
+
         auto norm = 1.0/(Double_t)(end-start);
         for (auto j = 0; j < ND; j++) {
             disp[j] *= norm;
         }
+
+        
     }
     //@}
 
@@ -326,7 +381,7 @@ num_threads(nthreads) if (nthreads>1)
        vector<Double_t> low(ND), up(ND), x(ND), dx(ND);
        auto norm = 2.0/(Double_t)(end-start);
        vector<Double_t> nientropy(nbins*ND);
-       Double_t mtot =0.;
+       Double_t mtot = 0.;
        for (auto j=0;j<ND;j++)
        {
             low[j] = bnd[j][0] - spread[j]*norm;
@@ -334,37 +389,101 @@ num_threads(nthreads) if (nthreads>1)
             dx[j] = (up[j] - low[j])/(Double_t)nbins;
        }
        for (auto &ni:nientropy) ni = 0.;
+// #ifdef USEOPENMP
+//        unsigned int nthreads;
+//        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+//        if (nthreads <1) nthreads=1;
+// #pragma omp parallel for \
+// default(shared) schedule(static) \
+// firstprivate(x) \
+// reduction(+:mtot) reduction(vec_plus:nientropy) \
+// num_threads(nthreads) if (nthreads>1)
+// #endif
+//        for (auto i=start;i<end;i++)
+//        {
+//            auto mass=bucket[i].GetMass();
+//            (this->*getparticlepos)(bucket[i], x);
+//            for (auto j=0;j<ND;j++) {
+//                auto ibin=static_cast<Int_t>((x[j]-low[j])/dx[j]);
+//                nientropy[ibin+j*nbins] += mass;
+//            }
+//            mtot += mass;
+//        }
+
 #ifdef USEOPENMP
-       unsigned int nthreads;
-       nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
-       if (nthreads <1) nthreads=1;
-#pragma omp parallel for \
-default(shared) schedule(static) \
-firstprivate(x) \
-reduction(+:mtot) reduction(vec_plus:nientropy) \
-num_threads(nthreads) if (nthreads>1)
-#endif
-       for (auto i=start;i<end;i++)
-       {
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+        Int_t delta = ceil((end-start)/(double)nthreads);
+        if (nthreads>1) {
+#pragma omp parallel \
+default(shared) \
+firstprivate(x)
+{
+        vector<Double_t> localnientropy = nientropy;
+        Double_t localmtot;
+        // since this is nested thread id doesn't simply map to how 
+        // the local for loop is split so construct a tid to index map 
+        unordered_map<int, int> tidtoindex;
+        int tid, count=0;
+        #pragma omp critical
+        {
+            tid = omp_get_thread_num();
+            tidtoindex[tid] = count++;
+        }
+        // determine region of for loop to process
+        tid = tidtoindex[omp_get_thread_num()];
+        auto localstart = start + delta * static_cast<Int_t>(tid);
+        auto localend = localstart + delta;
+        if (tid == nthreads-1) localend = end;
+        (this->*getparticlepos)(bucket[localstart], x);
+        #pragma omp for
+        for (auto i = localstart; i < localend; i++)
+        {
            auto mass=bucket[i].GetMass();
            (this->*getparticlepos)(bucket[i], x);
            for (auto j=0;j<ND;j++) {
                auto ibin=static_cast<Int_t>((x[j]-low[j])/dx[j]);
-               nientropy[ibin+j*nbins] += mass;
+               localnientropy[ibin+j*nbins] += mass;
            }
-           mtot += mass;
-       }
-       mtot=1.0/mtot;
-       norm = 1.0/log10((Double_t)nbins);
-       for (auto j=0;j<ND;j++) {
-           auto offset = j*nbins;
-           for (auto i=0;i<nbins;i++) {
-               if (nientropy[i] == 0) continue;
-               auto temp=nientropy[i+offset]*mtot;
-               entropy[j] -= temp*log10(temp);
-           }
-           entropy[j] *= norm;
-       }
+           localmtot += mass;
+        }
+
+        #pragma omp critical
+        {
+            mtot += localmtot; 
+            for (auto j=0;j<nientropy.size();j++) nientropy[j] += localnientropy[j];
+        }
+}
+        }
+        else 
+#endif
+        {
+            for (auto i=start;i<end;i++)
+            {
+                auto mass=bucket[i].GetMass();
+                (this->*getparticlepos)(bucket[i], x);
+                for (auto j=0;j<ND;j++) {
+                    auto ibin=static_cast<Int_t>((x[j]-low[j])/dx[j]);
+                    nientropy[ibin+j*nbins] += mass;
+                }
+                mtot += mass;
+            }
+        }
+
+        mtot=1.0/mtot;
+        norm = 1.0/log10((Double_t)nbins);
+        for (auto j=0;j<ND;j++) 
+        {
+            auto offset = j*nbins;
+            for (auto i=0;i<nbins;i++) 
+            {
+                if (nientropy[i] == 0) continue;
+                auto temp=nientropy[i+offset]*mtot;
+                entropy[j] -= temp*log10(temp);
+            }
+            entropy[j] *= norm;
+        }
    }
 
     /// \name Determine the median coordinates in some space
