@@ -420,7 +420,7 @@ firstprivate(x)
 default(shared) \
 firstprivate(x)
 {
-        vector<Double_t> localnientropy = nientropy;
+        vector<Double_t> localnientropy(nientropy.size(),0);
         Double_t localmtot;
         // since this is nested thread id doesn't simply map to how 
         // the local for loop is split so construct a tid to index map 
