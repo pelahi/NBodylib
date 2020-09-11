@@ -11,6 +11,8 @@
 
 cmake_minimum_required(VERSION 3.0)
 
+set(default_build_type "Release")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(_subdirs Analysis Cosmology InitCond KDTree Math NBody)
 
 # We have the version here
@@ -262,10 +264,12 @@ target_sources(nbodylib_iface INTERFACE
     $<TARGET_OBJECTS:InitCond> $<TARGET_OBJECTS:KDTree>
     $<TARGET_OBJECTS:Math> $<TARGET_OBJECTS:NBody>
 )
+add_library(NBodylib::nbodylib_iface ALIAS nbodylib_iface)
 
 # The final static libnbodylib.a library, in case it's needed on its own
 add_library(nbodylib STATIC)
 target_link_libraries(nbodylib nbodylib_iface)
+add_library(NBodylib::nbodylib ALIAS nbodylib)
 
 # Export the include directories and definitions, if necessary
 # If building on our own, add the "doc" target
