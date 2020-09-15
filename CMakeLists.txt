@@ -9,9 +9,8 @@
 #
 # This file is part of VELOCIraptor.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
 
-set(default_build_type "Release")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(_subdirs Analysis Cosmology InitCond KDTree Math NBody)
 
@@ -32,32 +31,14 @@ endif()
 project(NBodyLib VERSION ${NBODY_VERSION} LANGUAGES ${NBODY_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 
+#include cmake stuff
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+# include some general cmake utility functions
+include (MyCMakeUtils)
+# complation summary
+include(CompilationMessages)
+#include(CMakeOpenMP)
 
-# Function to add a "doc" target, which will doxygen out the given
-# list of directories
-function(try_add_doc_target doc_dirs)
-	find_program(DOXYGEN_FOUND doxygen)
-	if (NOT DOXYGEN_FOUND)
-		return()
-	endif()
-
-	# Create a target for each individual doc directory, then a final one
-	# that depends on them all
-	message("-- Adding doc target for directories: ${doc_dirs}")
-	set(_dependencies "")
-	set(x 1)
-	foreach(_doc_dir IN ITEMS ${doc_dirs})
-		add_custom_command(OUTPUT ${_doc_dir}/xml/index.xml
-		                   COMMAND doxygen
-		                   WORKING_DIRECTORY ${_doc_dir})
-		add_custom_target(doc_${x}
-		                  COMMAND doxygen
-		                  WORKING_DIRECTORY ${_doc_dir})
-		list(APPEND _dependencies doc_${x})
-		math(EXPR x "${x} + 1")
-	endforeach()
-	add_custom_target(doc DEPENDS "${_dependencies}")
-endfunction()
 
 # Are we part of an outside build?
 # If so, we want to let the caller know what to include, define, etc at the end
@@ -184,59 +165,9 @@ foreach(_subdir IN ITEMS ${_subdirs})
 	list(APPEND NBODY_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/${_subdir}")
 endforeach()
 
-#
-# Tell the world what what we are doing
-#
-macro(nbody_report feature)
+# compilation state
+nbody_compilation_summary()
 
-	# Output feature name and underscore it in the next line
-	message("\n${feature}")
-	string(REGEX REPLACE "." "-" _underscores ${feature})
-	message("${_underscores}\n")
-
-	set(_args "${ARGN}")
-	list(LENGTH _args _nargs)
-	math(EXPR _nargs "${_nargs} - 1")
-	foreach(_idx RANGE 0 ${_nargs} 2)
-
-		# Items in the list come with a message first, then the variable name
-		list(GET _args ${_idx} _msg)
-		math(EXPR _idx2 "${_idx} + 1")
-		list(GET _args ${_idx2} _varname)
-
-		# We try to keep things up to 80 cols
-		string(LENGTH ${_msg} _len)
-		math(EXPR _nspaces "75 - ${_len}")
-		string(RANDOM LENGTH ${_nspaces} _spaces)
-		string(REGEX REPLACE "." " " _spaces "${_spaces}")
-		string(CONCAT _msg "${_msg}" ${_spaces})
-		message(" ${_msg} ${NBODY_HAS_${_varname}}")
-	endforeach()
-endmacro()
-
-message("\nNBodyLib successfully configured with the following settings:")
-nbody_report(Dependencies "OpenMP" OPENMP)
-nbody_report(Types "All calculations/properties stored as float" SINGLE_PRECISION "All integeres are long int" LONG_INT)
-nbody_report("Particle data" "Do not store mass, all particles are the same mass" NO_MASS
-             "Use single precision to store positions, velocities, other props" SINGLE_PARTICLE_PRECISION
-             "Use unsigned particle PIDs" UNSIGNED_PARTICLE_PIDS "Use unsigned particle IDs" UNSIGNED_PARTICLE_IDS
-             "Activate gas" USE_GAS "Activate stars" USE_STARS "Activate black holes/sinks" USE_BH 
-             "Activate extra dm properties" USE_EXTRA_DM_PROPERTIES 
-             "Extra input info stored" USE_EXTRA_INPUT_INFO
-             "Extra FOF info stored" USE_EXTRA_FOF_INFO 
-             "Large memory KDTree" USE_LARGE_KDTREE
-             "Particle compiled for SWIFT" USE_SWIFT_INTERFACE
-		 )
-message("")
-message("Compilation")
-message("-----------")
-message("")
-message(" Include directories: ${NBODY_INCLUDE_DIRS}")
-message(" Macros defined: ${NBODY_DEFINES}")
-message(" Libs: ${NBODY_LIBS}")
-message(" C++ flags: ${NBODY_CXX_FLAGS}")
-message(" Link flags: ${NBODY_LINK_FLAGS}")
-message("")
 
 #
 # Macro used by subdirectories to build each a static library
@@ -248,6 +179,7 @@ macro(add_nbody_lib libname sources)
 	if (NBODY_CXX_FLAGS)
 		set_target_properties(${libname} PROPERTIES COMPILE_FLAGS ${NBODY_CXX_FLAGS})
 	endif()
+	sanitizer_options(${libname})
 endmacro()
 
 # Include all subdirectories,
@@ -270,6 +202,7 @@ add_library(NBodylib::nbodylib_iface ALIAS nbodylib_iface)
 add_library(nbodylib STATIC)
 target_link_libraries(nbodylib nbodylib_iface)
 add_library(NBodylib::nbodylib ALIAS nbodylib)
+sanitizer_options(nbodylib)
 
 # Export the include directories and definitions, if necessary
 # If building on our own, add the "doc" target
