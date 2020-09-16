@@ -29,90 +29,90 @@ sudo: false
 # We try with both GNU and LLVM
 matrix:
  include:
-  - compiler: g++-7
+  - compiler: g++-8
     dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev]
-    env: COMPILER=g++-7 CXX=g++-7 CC=gcc-7
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7
+      packages: [g++-8, libgsl0-dev]
+    env: COMPILER=g++-8
   - compiler: g++-8
     dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-8, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-8 CXX=g++-8 CC=gcc-8
+    env: COMPILER=g++-8
   - compiler: g++-9
     dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-9, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-9 CXX=g++-9 CC=gcc-9
-  - compiler: g++-7
+    env: COMPILER=g++-9
+  - compiler: g++-10
     dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 USEGAS=1 USESTARS=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 USEGAS=1 USESTARS=1 USEBH=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 USEEXTRADM=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 USESWIFT=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 NOMASS=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 GSL22=1
-  - compiler: g++-7
-    dist: focal
-    addons:
-     apt:
-      sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7 GSL22=1 USESWIFT=1
-  - compiler: clang
+      packages: [g++-10, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-10
+  - compiler: clang-9
     dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [clang-9, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=clang-9 GSL22=1
+    env: COMPILER=clang-9
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEGAS=1 USESTARS=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEGAS=1 USESTARS=1 USEBH=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEEXTRADM=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USESWIFT=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 NOMASS=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 GSL22=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 GSL22=1 USESWIFT=1
 
 # We "source" it because it exports variables
 before_install:
