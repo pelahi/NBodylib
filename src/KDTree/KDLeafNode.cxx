@@ -278,12 +278,13 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Double_t *x, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        // Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
+        if (maxr2<fdist2) {
             for (Int_t i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
@@ -291,6 +292,7 @@ namespace NBody
                 Group[id]=iGroup;
                 pdist2[id]=dist2;
             }
+        }
         else
         for (Int_t i = bucket_start; i < bucket_end; i++)
         {
@@ -311,42 +313,48 @@ namespace NBody
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        // Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
+            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
+        if (maxr2<fdist2) {
+            for (Int_t i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+        }
+        else {
             for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged[nt++]=i;
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2) tagged[nt++]=i;
+            {
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2) tagged[nt++]=i;
+                }
             }
         }
     }
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
+            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
+        if (maxr2<fdist2) {
+            for (Int_t i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+        }
+        else {
             for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged[nt++]=i;
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
             {
-                tagged[nt++]=i;
+                Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    tagged[nt++]=i;
+                }
             }
         }
     }
@@ -357,43 +365,45 @@ namespace NBody
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
+            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
+        if (maxr2<fdist2) {
+            for (Int_t i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+        }
+        else {
             for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged.push_back(i);
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2) tagged.push_back(i);
+            {
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2) tagged.push_back(i);
+                }
             }
         }
     }
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
+        if (maxr2<fdist2) {
+            for (Int_t i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+        }
+        else {
             for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged.push_back(i);
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
             {
-                tagged.push_back(i);
+                Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    tagged.push_back(i);
+                }
             }
         }
     }
@@ -522,13 +532,13 @@ namespace NBody
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
+
         for (int j=0;j<numdim;j++){
-            maxr0+=(bucket[target].GetPhase(j)-xbnd[j][0])*(bucket[target].GetPhase(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPhase(j)-xbnd[j][1])*(bucket[target].GetPhase(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        //first check to see if entire node lies wihtin search distance
-        if (maxr0<fdist2&&maxr1<fdist2){
+        if (maxr2<fdist2) {
             Int_t id;
             for (Int_t i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();
