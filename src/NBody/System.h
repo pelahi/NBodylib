@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <NBodyMath.h>
 #include <Particle.h>
+#include <algorithm>
 
 #ifdef USEOPENMP
 #include <omp.h>
@@ -24,12 +25,12 @@ using namespace Math;
 namespace NBody
 {
 
-/*! 
+/*!
     \class NBody::System
     \brief A system of particles
-    
-    This class represents a system of particles. By default it builds an array of \ref NBody::Particle, but also can allocate 
-    memory for \ref NBody::GasParticle and \ref NBody::StarParticle. These classes are defined in \ref Particle.h. 
+
+    This class represents a system of particles. By default it builds an array of \ref NBody::Particle, but also can allocate
+    memory for \ref NBody::GasParticle and \ref NBody::StarParticle. These classes are defined in \ref Particle.h.
 */
 
   class System
@@ -83,7 +84,7 @@ namespace NBody
     //    OTHER FUNCTIONS
 
     /// \name Properties of the system
-    ///in these functions bool variable indicates whether system has already been adjust to CM 
+    ///in these functions bool variable indicates whether system has already been adjust to CM
     ///frame needed for some of the functions.
     //@{
 
@@ -112,7 +113,7 @@ namespace NBody
     Double_t MaxCircularVelocity(bool cmframe=true) const;
     ///returns the average density of the system
     Double_t AverageDensity() const;
-    ///returns the density in some radius R from some point O 
+    ///returns the density in some radius R from some point O
     Double_t RegionDensity(Double_t R, Double_t x, Double_t y, Double_t z) const;
     ///Angular Momentum (one with argument is angular momentum about a point)
     ///one without is angular momentum about center of mass
@@ -124,7 +125,7 @@ namespace NBody
 
     /// \name Sorting Functions
     //@{
-    
+
     ///Sort particles in system by radius
     void SortByID();
     ///Sort particles in system by radius
@@ -144,12 +145,12 @@ namespace NBody
     void SortByDensity();
     ///sorts from index start  n particles.
     void SortByDensity(int start, int n);
-    
+
     //@}
-    
+
     /// \name CM and reference frame functions
     //@{
-    
+
     ///returns center of mass
     Coord CM(Double_t tolerance=0.0) const;
     ///Subtract centre of mass coords
@@ -194,10 +195,10 @@ namespace NBody
 
     /// \name Manipulate particles in system
     //@{
-    
+
     ///Finds a particle and returns the indice.
     Int_t FindParticle(const Particle &p) const;
-    
+
     /// Add/remove particle to/from system, if possible.
     void AddParticle(Particle part);
     void RemoveParticle(Particle part);
@@ -212,7 +213,7 @@ namespace NBody
     //do not plan at the moment to implements this. Very tricky and also
     //not likely to be needed.
     //void RemoveSystem(const System &s);
-    
+
     //@}
 
 
@@ -242,7 +243,7 @@ namespace NBody
 
     /// \name IO functions
     //@{
-    
+
     //Read system from binary data
     // ... to a file stream ...
     //void Read(ifstream &F);
@@ -253,7 +254,7 @@ namespace NBody
     void Write(char *Filename)const;
     // ... or to the screen.  This is c-style io.
     void Write(FILE *stream = stdout)const;
-    
+
     //@}
 
   };
