@@ -12,7 +12,7 @@ namespace NBody
     //@{
     ///\name Non-periodic calls
     //@{
-    void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -26,7 +26,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void LeafNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -40,7 +40,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target)
+    void LeafNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -55,7 +55,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *metric)
+    void LeafNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, Double_t *metric)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -70,7 +70,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *m0, Double_t *m1, GMatrix gm)
+    void LeafNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, Double_t *m0, Double_t *m1, GMatrix gm)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -85,7 +85,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void LeafNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -100,7 +100,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -244,7 +244,7 @@ namespace NBody
         }
     }
 
-    void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, UInt_tree_t target, int dim)
     {
         //first check to see if entire node lies wihtin search distance
         // Double_t maxr0=0.,maxr1=0.;
@@ -315,7 +315,7 @@ namespace NBody
         SearchBallPos(rd,fdist2,iGroup,bucket,Group,pdist2,off,x.GetCoord(),dim);
     }
 
-    void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
+    void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, UInt_tree_t target, Int_t &nt, int dim)
     {
         //first check to see if entire node lies wihtin search distance
         // Double_t maxr0=0.,maxr1=0.;
@@ -366,7 +366,7 @@ namespace NBody
         SearchBallPosTagged(rd,fdist2,bucket,tagged,off,x.GetCoord(),nt,dim);
     }
 
-    void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
         Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
@@ -413,7 +413,7 @@ namespace NBody
         SearchBallPosTagged(rd,fdist2,bucket,tagged,off,x.GetCoord(),dim);
     }
 
-    void LeafNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -444,7 +444,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged,Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged,Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -468,7 +468,7 @@ namespace NBody
             }
         }
     }
-    void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged,Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged,Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -493,7 +493,7 @@ namespace NBody
         }
     }
 
-    void LeafNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, Int_t target, int dim)
+    void LeafNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, UInt_tree_t target, int dim)
     {
         for (auto i = bucket_start; i < bucket_end; i++)
         {
@@ -526,7 +526,7 @@ namespace NBody
         }
     }
 
-    void LeafNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void LeafNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
@@ -582,7 +582,7 @@ namespace NBody
         }
         if (flag) BucketFlag[nid]=1;
     }
-    void LeafNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void LeafNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
@@ -611,7 +611,7 @@ namespace NBody
         }
         if (flag) BucketFlag[nid]=1;
     }
-    void LeafNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void LeafNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
@@ -649,42 +649,42 @@ namespace NBody
     ///\name Periodic
     //@{
     //As leaf nodes should never be head node and split nodes account for periodicity, these are the same as the non-periodic case.
-    void LeafNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         FindNearestPos(rd,bucket,pq,off,target,dim);
     }
-    void LeafNode::FindNearestVelPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::FindNearestVelPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         FindNearestVel(rd,bucket,pq,off,target,dim);
     }
-    void LeafNode::FindNearestPhasePeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target)
+    void LeafNode::FindNearestPhasePeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target)
     {
         Coordinate x0,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestPhase(rd,bucket,pq,off,x0,v);
     }
-    void LeafNode::FindNearestMetricPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, Double_t *metric)
+    void LeafNode::FindNearestMetricPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, Double_t *metric)
     {
         Coordinate x0,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestMetric(rd,bucket,pq,off,x0,v,metric);
     }
-    void LeafNode::FindNearestMetricwithTensorPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, Double_t *m0, Double_t *m1, GMatrix gm)
+    void LeafNode::FindNearestMetricwithTensorPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, Double_t *m0, Double_t *m1, GMatrix gm)
     {
         Coordinate x0,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestMetricwithTensor(rd,bucket,pq,off,x0,v,m0,m1,gm);
     }
-    void LeafNode::FindNearestCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::FindNearestCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle p0;
         p0=bucket[target];
         FindNearestCriterion(rd,cmp,params,bucket,pq,off,p0,dim);
     }
-    void LeafNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle p0;
         p0=bucket[target];
@@ -745,7 +745,7 @@ namespace NBody
         FindNearestCheck(rd,check,params,bucket,pq,off,x0,dim);
     }
 
-    void LeafNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -760,7 +760,7 @@ namespace NBody
         SearchBallPosPeriodic(rd,fdist2,iGroup,bucket,Group,pdist2,off,p,x.GetCoord(),dim);
     }
 
-    void LeafNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t *off, Double_t *p, Int_t target, Int_t &nt, int dim)
+    void LeafNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t *off, Double_t *p, UInt_tree_t target, Int_t &nt, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -775,7 +775,7 @@ namespace NBody
         SearchBallPosTagged(rd,fdist2,bucket,tagged,off,x.GetCoord(),nt,dim);
     }
 
-    void LeafNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -790,13 +790,13 @@ namespace NBody
         SearchBallPosTagged(rd,fdist2,bucket,tagged,off,x.GetCoord(),dim);
     }
 
-    void LeafNode::SearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
         SearchCriterion(rd,cmp,params,iGroup,bucket,Group,pdist2,off,x0,dim);
     }
-    void LeafNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -807,7 +807,7 @@ namespace NBody
         SearchCriterionTagged(rd,cmp,params,bucket,nt,tagged,off,target,dim);
     }
 
-    void LeafNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -818,7 +818,7 @@ namespace NBody
         SearchCriterionTagged(rd,cmp,params,bucket,tagged,off,target,dim);
     }
 
-    void LeafNode::SearchCriterionNoDistPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *off, Double_t *p, Int_t target, int dim)
+    void LeafNode::SearchCriterionNoDistPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -832,17 +832,17 @@ namespace NBody
     {
         SearchCriterionNoDist(rd,cmp,params,iGroup,bucket,Group,off,p0,dim);
     }
-    void LeafNode::FOFSearchBallPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, Int_t target)
+    void LeafNode::FOFSearchBallPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, UInt_tree_t target)
     {
         FOFSearchBall(rd, fdist2, iGroup, nActive, bucket, Group, Len, Head, Tail, Next, BucketFlag, Fifo, iTail, off, target);
     }
 
-    void LeafNode::FOFSearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, Int_t target)
+    void LeafNode::FOFSearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, UInt_tree_t target)
     {
         FOFSearchCriterion(rd, cmp, params, iGroup, nActive, bucket, Group, Len, Head, Tail, Next, BucketFlag, Fifo, iTail, off, target);
     }
 
-    void LeafNode::FOFSearchCriterionSetBasisForLinksPeriodic(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, Int_t target)
+    void LeafNode::FOFSearchCriterionSetBasisForLinksPeriodic(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t *off, Double_t *p, UInt_tree_t target)
     {
         FOFSearchCriterionSetBasisForLinks(rd, cmp, check, params, iGroup, nActive, bucket, Group, Len, Head, Tail, Next, BucketFlag, Fifo, iTail, off, target);
     }
