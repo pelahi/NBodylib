@@ -14,7 +14,7 @@ namespace NBody
     //@{
     void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -28,7 +28,7 @@ namespace NBody
     }
     void LeafNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = VelDistSqd(bucket[target].GetVelocity(),bucket[i].GetVelocity(), dim);
@@ -42,7 +42,7 @@ namespace NBody
     }
     void LeafNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = PhaseDistSqd(bucket[target].GetPosition(),bucket[i].GetPosition(),
@@ -57,7 +57,7 @@ namespace NBody
     }
     void LeafNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *metric)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = MetricDistSqd(bucket[target].GetPosition(),bucket[i].GetPosition(),
@@ -72,7 +72,7 @@ namespace NBody
     }
     void LeafNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *m0, Double_t *m1, GMatrix gm)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = MetricwithTensorDistSqd(bucket[target].GetPosition(),bucket[i].GetPosition(),
@@ -87,7 +87,7 @@ namespace NBody
     }
     void LeafNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -102,7 +102,7 @@ namespace NBody
     }
     void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -118,7 +118,7 @@ namespace NBody
 
     void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
             if (dist2 < pq->TopPriority())
@@ -130,7 +130,7 @@ namespace NBody
     }
     void LeafNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *v, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = VelDistSqd(v,bucket[i].GetVelocity(), dim);
             if (dist2 < pq->TopPriority())
@@ -142,7 +142,7 @@ namespace NBody
     }
     void LeafNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, Double_t *v)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = PhaseDistSqd(x,bucket[i].GetPosition(),v,bucket[i].GetVelocity());
             if (dist2 < pq->TopPriority())
@@ -167,7 +167,7 @@ namespace NBody
 
     void LeafNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, Double_t *v, Double_t *metric)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = MetricDistSqd(x,bucket[i].GetPosition(),
                 v,bucket[i].GetVelocity(),metric);
@@ -180,7 +180,7 @@ namespace NBody
     }
     void LeafNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, Double_t *v, Double_t *m0, Double_t *m1, GMatrix gm)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = MetricwithTensorDistSqd(x,bucket[i].GetPosition(),
                 v,bucket[i].GetVelocity(),m0,m1,gm);
@@ -201,7 +201,7 @@ namespace NBody
     }
     void LeafNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==p)){
             Double_t dist2 = DistanceSqd(p.GetPosition(),bucket[i].GetPosition(), dim);
@@ -216,7 +216,7 @@ namespace NBody
     }
     void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==p)){
             Double_t dist2 = DistanceSqd(p.GetPosition(),bucket[i].GetPosition(), dim);
@@ -232,7 +232,7 @@ namespace NBody
 
     void LeafNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Coordinate &x, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = DistanceSqd(x.GetCoord(),bucket[i].GetPosition(), dim);
             int checkval=check(bucket[i],params);
@@ -247,30 +247,35 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Int_t target, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        // Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j) - xbnd[j][0]), std::abs(bucket[target].GetPosition(j) - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
+            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
                 Group[id]=iGroup;
                 pdist2[id]=dist2;
             }
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
-                Int_t id=bucket[i].GetID();
-                Group[id]=iGroup;
-                pdist2[id]=dist2;
-            }
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    Int_t id=bucket[i].GetID();
+                    Group[id]=iGroup;
+                    pdist2[id]=dist2;
+                }
+                }
             }
         }
     }
@@ -279,13 +284,13 @@ namespace NBody
     {
         //first check to see if entire node lies wihtin search distance
         // Double_t maxr0=0.,maxr1=0.;
-        Double_t maxr2;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
             maxr2 += maxdist*maxdist;
         }
         if (maxr2<fdist2) {
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
                 Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
@@ -294,7 +299,7 @@ namespace NBody
             }
         }
         else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
             if (dist2 < fdist2)
@@ -314,7 +319,7 @@ namespace NBody
     {
         //first check to see if entire node lies wihtin search distance
         // Double_t maxr0=0.,maxr1=0.;
-        Double_t maxr2 = 0;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
             maxr2 += maxdist*maxdist;
@@ -322,10 +327,10 @@ namespace NBody
             // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
         if (maxr2<fdist2) {
-            for (Int_t i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
         }
         else {
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 if (i!=target){
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -341,14 +346,12 @@ namespace NBody
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
             maxr2 += maxdist*maxdist;
-            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
         if (maxr2<fdist2) {
-            for (Int_t i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
         }
         else {
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
                 if (dist2 < fdist2)
@@ -369,14 +372,12 @@ namespace NBody
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
             maxr2 += maxdist*maxdist;
-            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
         if (maxr2<fdist2) {
-            for (Int_t i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
         }
         else {
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 if (i!=target){
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -394,10 +395,10 @@ namespace NBody
             maxr2 += maxdist*maxdist;
         }
         if (maxr2<fdist2) {
-            for (Int_t i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
         }
         else {
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
                 if (dist2 < fdist2)
@@ -414,7 +415,7 @@ namespace NBody
 
     void LeafNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target&&(Group[bucket[i].GetID()]>iGroup||Group[bucket[i].GetID()]==0)){
 //            if (i!=target&&Group[bucket[i].GetID()]!=iGroup){
@@ -430,7 +431,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Particle &target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==target)&&(Group[bucket[i].GetID()]>iGroup||Group[bucket[i].GetID()]==0)){
             if (cmp(target,bucket[i],params))
@@ -445,7 +446,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged,Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             if (cmp(bucket[target],bucket[i],params))
@@ -457,7 +458,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t* off, Particle &target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==target)){
             if (cmp(target,bucket[i],params))
@@ -469,7 +470,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged,Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target){
             if (cmp(bucket[target],bucket[i],params))
@@ -481,7 +482,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Particle &target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==target)){
             if (cmp(target,bucket[i],params))
@@ -494,7 +495,7 @@ namespace NBody
 
     void LeafNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, Int_t target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target) if (Group[bucket[i].GetID()]>-1)
             if ((Group[bucket[i].GetID()]>iGroup||Group[bucket[i].GetID()]==0)){
@@ -510,7 +511,7 @@ namespace NBody
     }
     void LeafNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, Particle &target, int dim)
     {
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (!(bucket[i]==target)) if (Group[bucket[i].GetID()]>-1)
             if ((Group[bucket[i].GetID()]>iGroup||Group[bucket[i].GetID()]==0)){
@@ -540,7 +541,7 @@ namespace NBody
         }
         if (maxr2<fdist2) {
             Int_t id;
-            for (Int_t i = bucket_start; i < bucket_end; i++){
+            for (auto i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();
                 if (Group[id]) continue;
                 Group[id]=iGroup;
@@ -558,7 +559,7 @@ namespace NBody
         else {
             Int_t id;
             Double_t dist2;
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 if (flag!=Head[i])flag=0;
                 id=bucket[i].GetID();
@@ -588,7 +589,7 @@ namespace NBody
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (flag!=Head[i])flag=0;
             Int_t id=bucket[i].GetID();
@@ -617,7 +618,7 @@ namespace NBody
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (flag!=Head[i])flag=0;
             Int_t id=bucket[i].GetID();
