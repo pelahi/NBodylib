@@ -969,7 +969,7 @@ firstprivate(x)
         }
         ompthreadpool.nactivethreads = ompthreadpool.nthreads;
         ompthreadpool.activethreadids.resize(ompthreadpool.nactivethreads);
-        for (auto i=0;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
+        for (auto i=0u;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
 #endif
         return ompthreadpool;
     }
@@ -985,9 +985,9 @@ firstprivate(x)
             newthreadpool[1].nactivethreads = ompthreadpool.nactivethreads - newthreadpool[0].nactivethreads;
             newthreadpool[0].activethreadids.resize(newthreadpool[0].nactivethreads);
             newthreadpool[1].activethreadids.resize(newthreadpool[1].nactivethreads);
-            for (auto i=0;i<newthreadpool[0].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[0].nactivethreads;i++)
                 newthreadpool[0].activethreadids[i] = ompthreadpool.activethreadids[i];
-            for (auto i=0;i<newthreadpool[1].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[1].nactivethreads;i++)
                 newthreadpool[1].activethreadids[i] = ompthreadpool.activethreadids[i+newthreadpool[0].nactivethreads];
         }
 #endif
