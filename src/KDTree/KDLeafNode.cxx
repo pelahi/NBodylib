@@ -247,13 +247,10 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, UInt_tree_t target, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        // Double_t maxr0=0.,maxr1=0.;
         Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(bucket[target].GetPosition(j) - xbnd[j][0]), std::abs(bucket[target].GetPosition(j) - xbnd[j][1]));
             maxr2 += maxdist*maxdist;
-            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
         if (maxr2<fdist2) {
             for (auto i = bucket_start; i < bucket_end; i++)
@@ -283,7 +280,6 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Double_t *x, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        // Double_t maxr0=0.,maxr1=0.;
         Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));

@@ -454,6 +454,22 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, UInt_tree_t target, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<numdim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                Int_t id=bucket[i].GetID();
+                Double_t dist2val = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                Group[id]=iGroup;
+                dist2[id]=dist2val;
+            }
+            return;
+        }
+
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -482,6 +498,22 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Double_t *x, int dim)
     {
+        //first check to see if entire node lies wihtin search distance
+        Double_t maxr2 = 0.0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                Int_t id=bucket[i].GetID();
+                Double_t dist2val = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                Group[id]=iGroup;
+                dist2[id]=dist2val;
+            }
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -515,6 +547,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, UInt_tree_t target, Int_t &nt, int dim)
     {
+        Double_t maxr2 = 0.0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -543,6 +584,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -575,6 +625,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -603,6 +662,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -864,6 +932,31 @@ namespace NBody
 
     void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        Double_t maxr2 = 0;
+        for (int j=0;j<numdim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            Int_t id;
+            for (auto i = bucket_start; i < bucket_end; i++){
+                id=bucket[i].GetID();
+                if (Group[id]) continue;
+                Group[id]=iGroup;
+                Fifo[iTail++]=i;
+                Len[iGroup]++;
+
+                Next[Tail[Head[target]]]=Head[i];
+                Tail[Head[target]]=Tail[Head[i]];
+                Head[i]=Head[target];
+
+                if(iTail==nActive)iTail=0;
+            }
+            BucketFlag[nid]=1;
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -1422,11 +1515,6 @@ namespace NBody
             SearchCriterionTagged(rd,cmp,params,bucket,nt,tagged,off,pp,dim);
         }
     }
-
-
-
-
-
 
     void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
