@@ -586,7 +586,7 @@ typedef Int_t PARTPIDTYPE;
         {
             HydroProperties *h = hydro.release();
             h=nullptr;
-            hydro.reset(nullptr);
+            hydro.reset(h);
         };
 #endif
 #ifdef STARON
@@ -606,7 +606,7 @@ typedef Int_t PARTPIDTYPE;
         {
             StarProperties *s = star.release();
             s=nullptr;
-            star.reset(nullptr);
+            star.reset(s);
         };
 #endif
 #ifdef BHON
@@ -626,7 +626,7 @@ typedef Int_t PARTPIDTYPE;
         {
             BHProperties *b = bh.release();
             b=nullptr;
-            bh.reset(nullptr);
+            bh.reset(b);
         };
 #endif
 
@@ -647,7 +647,7 @@ typedef Int_t PARTPIDTYPE;
         {
             ExtraDMProperties *d = dm.release();
             d=nullptr;
-            dm.reset(nullptr);
+            dm.reset(d);
         };
 #endif
         //@}

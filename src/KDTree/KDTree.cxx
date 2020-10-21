@@ -20,7 +20,7 @@ namespace NBody
 
     #ifdef USEOPENMP
     // define openmp reduction operations
-    // Currently issue is that it appears that most gcc compilers have not implemented omp delcare omp 
+    // Currently issue is that it appears that most gcc compilers have not implemented omp delcare omp
     // clang 9 works but not gcc-9 with the typical gomp lib
     /*
     #pragma omp declare reduction( \
@@ -81,9 +81,9 @@ namespace NBody
         vector<Double_t> minval(ND), maxval(ND), x(ND);
         (this->*getparticlepos)(bucket[start], x);
         for (auto j=0;j<ND;j++) minval[j] = maxval[j] = x[j];
-        // currently reduction of vectors using min, max seems to have issues with precision 
-        // look like automatic conversion to floats, which is odd. Leaving code here 
-        // for completeness but using explicit critical section. 
+        // currently reduction of vectors using min, max seems to have issues with precision
+        // look like automatic conversion to floats, which is odd. Leaving code here
+        // for completeness but using explicit critical section.
         /*
 #ifdef USEOPENMP
 #pragma omp parallel for \
@@ -102,7 +102,7 @@ num_threads(nthreads) if (nthreads>1)
             }
         }
         */
-        // using critical sections and local min/max 
+        // using critical sections and local min/max
 #ifdef USEOPENMP
         unsigned int nthreads;
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
@@ -115,10 +115,10 @@ firstprivate(x)
 {
         vector<Double_t> localminval(ND);
         vector<Double_t> localmaxval(ND);
-        // since this is nested thread id doesn't simply map to how 
-        // the local for loop is split so construct a tid to index map 
+        // since this is nested thread id doesn't simply map to how
+        // the local for loop is split so construct a tid to index map
         unordered_map<int, int> tidtoindex;
-        int tid, count=0;
+        unsigned int tid, count=0;
         #pragma omp critical
         {
             tid = omp_get_thread_num();
@@ -154,7 +154,7 @@ firstprivate(x)
         }
 }
         }
-        else 
+        else
 #endif
         {
             for (auto i = start + 1; i < end; i++)
@@ -167,7 +167,7 @@ firstprivate(x)
                 }
             }
         }
-        
+
         // use min max to set boundaries and spread
         for (auto j = 0; j < ND; j++) {
             bnd[j][0] = minval[j];
@@ -186,9 +186,9 @@ firstprivate(x)
         (this->*getparticlepos)(bucket[start], x);
         for (auto j=0;j<ND;j++) {minval[j] = maxval[j] = x[j]; mean[j] = 0;}
 
-        // currently reduction of vectors using min, max seems to have issues with precision 
-        // look like automatic conversion to floats, which is odd. Mean which is vector sum reduction seems fine. 
-        // Leaving code here for completeness but using explicit critical section 
+        // currently reduction of vectors using min, max seems to have issues with precision
+        // look like automatic conversion to floats, which is odd. Mean which is vector sum reduction seems fine.
+        // Leaving code here for completeness but using explicit critical section
         /*
 #ifdef USEOPENMP
         unsigned int nthreads;
@@ -224,10 +224,10 @@ default(shared) \
 firstprivate(x)
 {
         vector<Double_t> localminval(ND), localmaxval(ND), localmean(ND,0);
-        // since this is nested thread id doesn't simply map to how 
-        // the local for loop is split so construct a tid to index map 
+        // since this is nested thread id doesn't simply map to how
+        // the local for loop is split so construct a tid to index map
         unordered_map<int, int> tidtoindex;
-        int tid, count=0;
+        unsigned int tid, count=0;
         #pragma omp critical
         {
             tid = omp_get_thread_num();
@@ -263,7 +263,7 @@ firstprivate(x)
         }
 }
         }
-        else 
+        else
 #endif
         {
             for (auto i = start; i < end; i++)
@@ -320,10 +320,10 @@ default(shared) \
 firstprivate(x)
 {
         vector<Double_t> localdisp(ND,0);
-        // since this is nested thread id doesn't simply map to how 
-        // the local for loop is split so construct a tid to index map 
+        // since this is nested thread id doesn't simply map to how
+        // the local for loop is split so construct a tid to index map
         unordered_map<int, int> tidtoindex;
-        int tid, count=0;
+        unsigned int tid, count=0;
         #pragma omp critical
         {
             tid = omp_get_thread_num();
@@ -351,7 +351,7 @@ firstprivate(x)
         }
 }
         }
-        else 
+        else
 #endif
         {
             for (auto i = start; i < end; i++)
@@ -365,8 +365,6 @@ firstprivate(x)
         for (auto j = 0; j < ND; j++) {
             disp[j] *= norm;
         }
-
-        
     }
     //@}
 
@@ -421,11 +419,11 @@ default(shared) \
 firstprivate(x)
 {
         vector<Double_t> localnientropy = nientropy;
-        Double_t localmtot;
-        // since this is nested thread id doesn't simply map to how 
-        // the local for loop is split so construct a tid to index map 
+        Double_t localmtot=0;
+        // since this is nested thread id doesn't simply map to how
+        // the local for loop is split so construct a tid to index map
         unordered_map<int, int> tidtoindex;
-        int tid, count=0;
+        unsigned int tid, count=0;
         #pragma omp critical
         {
             tid = omp_get_thread_num();
@@ -451,12 +449,12 @@ firstprivate(x)
 
         #pragma omp critical
         {
-            mtot += localmtot; 
-            for (auto j=0;j<nientropy.size();j++) nientropy[j] += localnientropy[j];
+            mtot += localmtot;
+            for (auto j=0u;j<nientropy.size();j++) nientropy[j] += localnientropy[j];
         }
 }
         }
-        else 
+        else
 #endif
         {
             for (auto i=start;i<end;i++)
@@ -473,10 +471,10 @@ firstprivate(x)
 
         mtot=1.0/mtot;
         norm = 1.0/log10((Double_t)nbins);
-        for (auto j=0;j<ND;j++) 
+        for (auto j=0;j<ND;j++)
         {
             auto offset = j*nbins;
-            for (auto i=0;i<nbins;i++) 
+            for (auto i=0;i<nbins;i++)
             {
                 if (nientropy[i] == 0) continue;
                 auto temp=nientropy[i+offset]*mtot;
@@ -532,7 +530,7 @@ firstprivate(x)
         }
     }
     //@}
-    int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
+    int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp)
     {
         int splitdim=0;
