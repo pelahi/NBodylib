@@ -864,32 +864,95 @@ namespace NBody
 
     void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
-        Double_t old_off = off[cut_dim];
-        Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
-        if (new_off < 0)
-        {
-            left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            rd += -old_off*old_off + new_off*new_off;
-            if (rd < fdist2)
-            {
-                off[cut_dim] = new_off;
-                right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                off[cut_dim] = old_off;
-            }
-        }
-        else
-        {
-            right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            rd += -old_off*old_off + new_off*new_off;
-            if (rd < fdist2)
-            {
-                off[cut_dim] = new_off;
-                left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                off[cut_dim] = old_off;
-            }
-        }
+	if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+	int flag=Head[bucket_start];
 
-	if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+        Double_t js_pos[6], js_dist, js_rr;
+        for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
+        js_dist = DistanceSqd(js_pos, js_center, numdim);
+        js_rr = js_farthest;
+
+	if (sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)){
+		//SKIP This Node
+		flag=0;
+	}
+	else if (sqrt(js_dist) <= abs(sqrt(js_rr) - sqrt(fdist2)) && fdist2 > js_rr){
+		//This node is entirely enclosed
+                Int_t id;
+
+                for (Int_t i = bucket_start; i < bucket_end; i++){
+                        id=bucket[i].GetID();
+                        if (Group[id]) continue;
+                        Group[id]=iGroup;
+                        Fifo[iTail++]=i;
+                        Len[iGroup]++;
+
+                        Next[Tail[Head[target]]]=Head[i];
+                        Tail[Head[target]]=Tail[Head[i]];
+                        Head[i]=Head[target];
+
+                        if(iTail==nActive)iTail=0;
+                }
+	}
+	else{
+		flag = 0;
+
+        	Double_t old_off = off[cut_dim];
+        	Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        	if (new_off < 0)
+        	{
+        	    left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        	    rd += -old_off*old_off + new_off*new_off;
+        	    if (rd < fdist2)
+        	    {
+        	        off[cut_dim] = new_off;
+        	        right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        	        off[cut_dim] = old_off;
+        	    }
+        	}
+        	else
+        	{
+        	    right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        	    rd += -old_off*old_off + new_off*new_off;
+        	    if (rd < fdist2)
+        	    {
+        	        off[cut_dim] = new_off;
+        	        left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        	        off[cut_dim] = old_off;
+        	    }
+        	}
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+	}
+
+	if (flag) BucketFlag[nid]=1;
+
+	///
+        //Double_t old_off = off[cut_dim];
+        //Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        //if (new_off < 0)
+        //{
+        //    left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        //    rd += -old_off*old_off + new_off*new_off;
+        //    if (rd < fdist2)
+        //    {
+        //        off[cut_dim] = new_off;
+        //        right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        //        off[cut_dim] = old_off;
+        //    }
+        //}
+        //else
+        //{
+        //    right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        //    rd += -old_off*old_off + new_off*new_off;
+        //    if (rd < fdist2)
+        //    {
+        //        off[cut_dim] = new_off;
+        //        left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+        //        off[cut_dim] = old_off;
+        //    }
+        //}
+
+	//if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
