@@ -525,7 +525,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         {
             if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-            return new LeafNode(id ,start, end,  bnd, ND);
+
+	    LeafNode *js_LN;
+	    js_LN = new LeafNode(id ,start, end,  bnd, ND);
+	    js_LN->SetLeaf(1);
+
+	    return js_LN;
         }
         else
         {
