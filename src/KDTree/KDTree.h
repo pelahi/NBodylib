@@ -166,6 +166,8 @@ namespace NBody
         //@{
         ///uses prviate function pointers to recursive build the tree
         Node* BuildNodes(Int_t start, Int_t end, KDTreeOMPThreadPool&);
+	// For building OMP domains
+        Node* BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool&);
         //set node ids
         void BuildNodeIDs();
         //recursive setting of ids
@@ -551,6 +553,9 @@ namespace NBody
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
+	
+	/// \name Qsort for building adaptive KDTree
+	inline void js_qsort(int js_start, int js_end, int js_dim);
     };
 
 }

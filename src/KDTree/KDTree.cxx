@@ -502,6 +502,26 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         return splitdim;
     }
 
+    inline void KDTree::js_qsort(int js_start, int js_end, int js_dim)
+    {
+	    int js_ind = (js_start + js_end)/2;
+	    int js_i = js_start;
+	    int js_j = js_end;
+	    Double_t js_xx = bucket[js_ind].GetPhase(js_dim);
+	    while(1)
+	    {
+		    while(bucket[js_i].GetPhase(js_dim) < js_xx) js_i++;
+		    while(bucket[js_j].GetPhase(js_dim) > js_xx) js_j--;
+
+		    if(js_i >= js_j) break;
+		    swap(bucket[js_i],bucket[js_j]);
+		    js_i++;
+		    js_j--;
+	    }
+	    if(js_start < js_i - 1) js_qsort(js_start, js_i-1, js_dim);
+	    if(js_j +1 < js_end) js_qsort(js_j + 1, js_end, js_dim);
+    }
+
     //-- End of inline functions
 
     //-- Private functions used to build tree
@@ -565,6 +585,113 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             }
         }
     }
+
+    ///--JS--
+    /// Build OMP Domains by using Adaptive KDTree. OMP domains are decomposed by considering
+    /// interparticle distances to avoid an overhead when linking across OMP domains
+    Node *KDTree::BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
+    {
+	    Double_t bnd[6][2];
+	    Int_t size = end - start, k;
+	    Int_tree_t id = 0;
+	    int splitdim;
+	    Double_t splitvalue;
+	    int js_ind0 = start;
+	    int js_ind1 = end-1;
+	    int js_ompskip=-1;
+
+        
+	    //if not building in parallel can set ids here and update number of nodes
+	    //otherwise, must set after construction
+	    if (ibuildinparallel == false) {
+		    id = numnodes;
+		    numnodes++;
+	    }
+
+	    //See whether this OMP region is further decomposed or not.
+	    //If the maximum interparticle distance is quite larger than the linking length,
+	    // decompose the domain further.
+	    if (size <= b){
+		    js_ompskip=1;
+		    if(size > 1000000){ // Minimum size of OMP domain (arbitrary chosen)
+			    double js_dx=0., js_dx2;
+			    int js_nn = (end - start) / 8; // Buffer for splitting
+			    for(int js_dim=0; js_dim<ND; js_dim++){
+				    js_qsort(js_ind0, js_ind1, js_dim);
+				    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+					    js_dx2 = abs(bucket[js_ind+1].GetPhase(js_dim) - bucket[js_ind].GetPhase(js_dim));
+					    if(js_dx2 > js_dx) js_dx = js_dx2;
+				    }
+
+				    if(js_dx > 2.0*js_rdist){js_ompskip=-1; break;}
+				    js_dx = 0.;
+			    }
+		    }
+
+	    }
+
+	    //Leaf Node Construction
+	    if (js_ompskip>0){
+		    if (ibuildinparallel == false) numleafnodes++;
+		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
+
+		    LeafNode *js_LN;
+		    js_LN = new LeafNode(id, start, end, bnd, ND);
+		    js_LN->SetLeaf(1);
+
+		    return js_LN;
+	    }
+	    else
+	    {
+		    bool irearrangeandbalance=true;
+		    if (ikeepinputorder) irearrangeandbalance=false;
+
+		    splitdim = DetermineSplitDim(start, end, bnd, otp);
+		    js_qsort(js_ind0, js_ind1, splitdim);
+
+		    double js_dx=0., js_dx2;
+		    int js_nn = (end - start) / 8;
+
+		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
+			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
+		    }
+	    }
+
+	    //Now Split the node
+	    //run the node construction in parallel
+	    if (ibuildinparallel && otp.nactivethreads > 1) {
+		    //note that if OpenMP not defined then ibuildinparallel is false
+#ifdef USEOPENMP
+		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
+		    Node *left, *right;
+
+		    #pragma omp parallel default(shared) num_threads(2)
+		    #pragma omp single
+		    {
+			    #pragma omp task
+			    left = BuildNodes_OMP(start, k+1, newotp[0]);
+			    #pragma omp task
+			    right = BuildNodes_OMP(k+1, end, newotp[1]);
+			    #pragma omp taskwait
+		    }
+
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                        left, right);
+#endif
+	    }
+	    else {
+		    Node *left, *right;
+
+		    left = BuildNodes_OMP(start, k+1, otp);
+		    right = BuildNodes_OMP(k+1, end, otp);
+
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                        left, right);
+	    }	    
+    }
+    
+    
 
     ///scales the space and calculates the corrected volumes
     ///note here this is not mass weighted which may lead to issues later on.
