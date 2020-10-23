@@ -583,7 +583,8 @@ namespace NBody
             if (flag!=Head[i])flag=0;
             Int_t id=bucket[i].GetID();
             //if already linked don't do anything
-            if (Group[id]==iGroup) continue;
+            //if (Group[id]==iGroup) continue;
+	    if (Group[id]) continue;
             //if tag below zero then don't do anything
             if (Group[id]<0) continue;
             if (cmp(bucket[target],bucket[i],params)) {
@@ -612,7 +613,8 @@ namespace NBody
             if (flag!=Head[i])flag=0;
             Int_t id=bucket[i].GetID();
             //if already linked don't do anything
-            if (Group[id]==iGroup) continue;
+            //if (Group[id]==iGroup) continue;
+	    if (Group[id]) continue;
             //if tag below zero then don't do anything
             if (Group[id]<0) continue;
             if (cmp(bucket[target],bucket[i],params)) {
