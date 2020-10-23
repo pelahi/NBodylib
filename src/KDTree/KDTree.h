@@ -173,6 +173,8 @@ namespace NBody
         Node* BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool&);
 	// For normal Adaptive KDTree
         Node* BuildNodes_ADT(Int_t start, Int_t end, KDTreeOMPThreadPool&);
+	// For FOFSearchCriterion
+        Node* BuildNodes_CRIT(Int_t start, Int_t end, KDTreeOMPThreadPool&, Double_t *param);
         //set node ids
         void BuildNodeIDs();
         //recursive setting of ids

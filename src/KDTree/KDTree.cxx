@@ -859,6 +859,227 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    }	    
     }
     
+    ///--JS--
+    /// Build Normal Adaptive KDTree for FOFSearchCriterion
+    Node *KDTree::BuildNodes_CRIT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp, Double_t *param)
+    {
+	    Double_t bnd[6][2];
+	    Int_t size = end - start, k;
+	    Int_tree_t id = 0;
+	    int splitdim;
+	    Double_t splitvalue;
+	    int js_ind0 = start;
+	    int js_ind1 = end-1;
+
+        
+	    //if not building in parallel can set ids here and update number of nodes
+	    //otherwise, must set after construction
+	    if (ibuildinparallel == false) {
+		    id = numnodes;
+		    numnodes++;
+	    }
+
+	    //Leaf Node Construction
+	    if (size <= b){
+		    if (ibuildinparallel == false) numleafnodes++;
+		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
+
+		    LeafNode *js_LN;
+		    js_LN = new LeafNode(id, start, end, bnd, ND);
+		    js_LN->SetLeaf(1);
+
+		    return js_LN;
+	    }
+	    else
+	    {
+		    bool irearrangeandbalance=true;
+		    if (ikeepinputorder) irearrangeandbalance=false;
+
+		    //--JS--
+		    //Should scale phase-space coordinates first otherwise the split dimension
+		    // incorrectly chosen, which results in very poor performance in the core 
+		    // search.
+		    Double_t js_xc = 1.0/sqrt(param[1]);
+		    Double_t js_vc = 1.0/sqrt(param[2]);
+
+		    for(Int_t js_i=start; js_i<end; js_i++) bucket[js_i].ScalePhase(js_xc, js_vc);
+		    splitdim = DetermineSplitDim(start, end, bnd, otp);
+
+		    js_xc = 1.0/js_xc;
+		    js_vc = 1.0/js_vc;
+		    for(Int_t js_i=start; js_i<end; js_i++) bucket[js_i].ScalePhase(js_xc, js_vc);
+
+		    js_qsort(js_ind0, js_ind1, splitdim);
+
+		    double js_dx=0., js_dx2;
+		    int js_nn = (end - start) / 8;
+
+		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
+			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
+		    }
+	    }
+
+	    //Now Split the node
+	    //run the node construction in parallel
+	    if (ibuildinparallel && otp.nactivethreads > 1) {
+		    //note that if OpenMP not defined then ibuildinparallel is false
+#ifdef USEOPENMP
+		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
+		    Node *left, *right;
+
+		    #pragma omp parallel default(shared) num_threads(2)
+		    #pragma omp single
+		    {
+			    #pragma omp task
+			    left = BuildNodes_CRIT(start, k+1, newotp[0], param);
+			    #pragma omp task
+			    right = BuildNodes_CRIT(k+1, end, newotp[1], param);
+			    #pragma omp taskwait
+		    }
+
+		    //Now save the largest distance from the center of this node
+		    //Here, the center is just defined as the mean coordinates of the included particles
+		    //TO DO LIST
+		    //	Define center by using the 'finding the smallest sphere' algorithm
+		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
+
+		    //Left
+		    Double_t js_center[ND], js_centertmp, js_pos[3], js_vel[3];
+		    Double_t js_cenPos[3], js_cenVel[3];
+		    Double_t js_dd=-1, js_dd2;
+
+		    //Left - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(Int_t js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
+		    }
+
+		    for(int js_i=0; js_i<ND; js_i++){
+			    left->SetCenter(js_center[js_i], js_i);
+			    js_cenPos[js_i] = js_center[js_i];
+			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+		    }
+
+		    //Left - Largest Distance
+		    for(Int_t js_i=start; js_i<k+1; js_i++){
+			    js_dd2 = 0.;
+			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
+			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
+			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
+			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
+
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    left->SetFarthest(js_dd);
+
+		    //Right
+		    js_dd = -1.;
+		    //Right - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(Int_t js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
+		    }
+
+		    for(int js_i=0; js_i<ND; js_i++){
+			    right->SetCenter(js_center[js_i], js_i);
+			    js_cenPos[js_i] = js_center[js_i];
+			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+		    }
+
+		    //Right - largest distance
+		    for(Int_t js_i=k+1; js_i<end; js_i++){
+			    js_dd2 = 0.;
+			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
+			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
+
+			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
+			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
+
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    right->SetFarthest(js_dd);
+
+		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+
+#endif
+	    }
+	    else {
+		    Node *left, *right;
+
+		    left = BuildNodes_CRIT(start, k+1, otp, param);
+		    right = BuildNodes_CRIT(k+1, end, otp, param);
+
+		    //Now save the largest distance from the center of this node
+		    //Here, the center is just defined as the mean coordinates of the included particles
+		    //TO DO LIST
+		    //	Define center by using the 'finding the smallest sphere' algorithm
+		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
+
+		    //Left
+		    Double_t js_center[ND], js_centertmp, js_pos[3], js_vel[3];
+		    Double_t js_cenPos[3], js_cenVel[3];
+		    Double_t js_dd=-1, js_dd2;
+
+		    //Left - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(Int_t js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
+		    }
+
+		    for(int js_i=0; js_i<ND; js_i++){
+			    left->SetCenter(js_center[js_i], js_i);
+			    js_cenPos[js_i] = js_center[js_i];
+			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+		    }
+
+		    //Left - Largest Distance
+		    for(Int_t js_i=start; js_i<k+1; js_i++){
+			    js_dd2 = 0.;
+			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
+			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
+			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
+			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
+
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    left->SetFarthest(js_dd);
+
+		    //Right
+		    js_dd = -1.;
+		    //Right - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(Int_t js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
+		    }
+
+		    for(int js_i=0; js_i<ND; js_i++){
+			    right->SetCenter(js_center[js_i], js_i);
+			    js_cenPos[js_i] = js_center[js_i];
+			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+		    }
+
+		    //Right - largest distance
+		    for(Int_t js_i=k+1; js_i<end; js_i++){
+			    js_dd2 = 0.;
+			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
+			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
+
+			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
+			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
+
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    right->SetFarthest(js_dd);
+
+
+		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+	    }	    
+    }
 
     ///scales the space and calculates the corrected volumes
     ///note here this is not mass weighted which may lead to issues later on.
