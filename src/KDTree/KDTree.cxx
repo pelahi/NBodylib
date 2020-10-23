@@ -1491,6 +1491,70 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
     }
 
+    //KDTree for the FOFSearchCriterion routine (specified by the first two Double_t)
+    KDTree::KDTree(Double_t rdist, Double_t *param, Particle *p, Int_t nparts, Int_t bucket_size,
+      int ttype, int smfunctype, int smres,
+      int criterion, int aniso, int scale,
+      Double_t *Period, Double_t **m,
+      bool iBuildInParallel,
+      bool iKeepInputOrder)
+    {
+        iresetorder=true;
+        ikeepinputorder = iKeepInputOrder;
+        ibuildinparallel = false;
+#ifdef USEOPENMP
+        ibuildinparallel = iBuildInParallel;
+        bool inested = omp_get_nested();
+        int nthreads;
+        #pragma omp parallel
+        #pragma omp single
+        {
+            nthreads = omp_get_num_threads();
+        }
+        if (nthreads == 1) ibuildinparallel = false;
+        if (inested == false) omp_set_nested(int(ibuildinparallel));
+#endif
+        numparts = nparts;
+        numleafnodes=numnodes=0;
+        bucket = p;
+        b = bucket_size;
+        treetype = ttype;
+        kernfunctype = smfunctype;
+        kernres = smres;
+        splittingcriterion = criterion;
+        anisotropic=aniso;
+        scalespace = scale;
+        metric = m;
+	js_rdist = rdist;
+
+        if (Period!=NULL)
+        {
+            period=new Double_t[3];
+            for (int k=0;k<3;k++) period[k]=Period[k];
+        }
+        else period=NULL;
+        if (TreeTypeCheck()) {
+            KernelConstruction();
+            for (Int_t i = 0; i < numparts; i++) bucket[i].SetID(i);
+            vol=1.0;ivol=1.0;
+            for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
+            if (scalespace) ScaleSpace();
+            for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
+            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            KDTreeOMPThreadPool otp = OMPInitThreadPool();
+            root=BuildNodes_CRIT(0,numparts, otp, param);
+	    root->SetFarthest(1e31);
+	    for(int js_i=0; js_i<ND; js_i++) root->SetCenter(0., js_i);
+
+            if (ibuildinparallel) BuildNodeIDs();
+            //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
+            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+        }
+#ifdef USEOPENMP
+        omp_set_nested(inested);
+#endif
+    }
+
     KDTree::~KDTree()
     {
 	    if (root!=NULL) {
