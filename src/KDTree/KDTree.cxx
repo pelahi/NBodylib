@@ -701,7 +701,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         node->SetID(numnodes++);
         //walk tree increasing
-        if (node->GetCount() <= b) {
+        //if (node->GetCount() <= b) {
+	if(node->GetLeaf() > 0){
             numleafnodes++;
             return;
         }
@@ -727,7 +728,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         cout<<"At node "<<" "<<id<<" "<<start<<" "<<end<<" ";
         for (auto j=0;j<ND;j++)  cout<<"("<<node->GetBoundary(j,0)<<", "<<node->GetBoundary(j,1)<<")";
         cout<<endl;
-        if (node->GetCount() > b) {
+        //if (node->GetCount() > b) {
+	if(node->GetLeaf() < 0){
             WalkNode(((SplitNode*)node)->GetLeft());
             WalkNode(((SplitNode*)node)->GetRight());
         }
