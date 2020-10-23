@@ -102,6 +102,8 @@ namespace NBody
         Int_t b;
         ///max number of dimensions of tree
         const static int MAXND=6;
+	///Linking length for building OMP domains
+	Double_t js_rdist;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -197,6 +199,14 @@ namespace NBody
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
+            bool iBuildInParallel = true,
+            bool iKeepInputOrder = false
+        );
+	///KDTree for OMP building
+        KDTree(Double_t js_rdist, Particle *p, Int_t numparts,
+            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
+            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
+            Double_t *Period=NULL, Double_t **metric=NULL,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false
         );
