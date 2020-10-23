@@ -888,6 +888,8 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+
+	if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
@@ -924,6 +926,8 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+
+	if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
