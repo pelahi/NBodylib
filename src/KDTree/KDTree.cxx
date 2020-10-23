@@ -691,6 +691,173 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    }	    
     }
     
+    ///--JS--
+    /// Build Normal Adaptive KDTree
+    Node *KDTree::BuildNodes_ADT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
+    {
+	    Double_t bnd[6][2];
+	    Int_t size = end - start, k;
+	    Int_tree_t id = 0;
+	    int splitdim;
+	    Double_t splitvalue;
+	    int js_ind0 = start;
+	    int js_ind1 = end-1;
+
+        
+	    //if not building in parallel can set ids here and update number of nodes
+	    //otherwise, must set after construction
+	    if (ibuildinparallel == false) {
+		    id = numnodes;
+		    numnodes++;
+	    }
+
+	    //Leaf Node Construction
+	    if (size <= b){
+		    if (ibuildinparallel == false) numleafnodes++;
+		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
+
+		    LeafNode *js_LN;
+		    js_LN = new LeafNode(id, start, end, bnd, ND);
+		    js_LN->SetLeaf(1);
+
+		    return js_LN;
+	    }
+	    else
+	    {
+		    bool irearrangeandbalance=true;
+		    if (ikeepinputorder) irearrangeandbalance=false;
+
+		    splitdim = DetermineSplitDim(start, end, bnd, otp);
+		    js_qsort(js_ind0, js_ind1, splitdim);
+
+		    double js_dx=0., js_dx2;
+		    int js_nn = (end - start) / 8;
+
+		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
+			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
+		    }
+	    }
+
+	    //Now Split the node
+	    //run the node construction in parallel
+	    if (ibuildinparallel && otp.nactivethreads > 1) {
+		    //note that if OpenMP not defined then ibuildinparallel is false
+#ifdef USEOPENMP
+		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
+		    Node *left, *right;
+
+		    #pragma omp parallel default(shared) num_threads(2)
+		    #pragma omp single
+		    {
+			    #pragma omp task
+			    left = BuildNodes_ADT(start, k+1, newotp[0]);
+			    #pragma omp task
+			    right = BuildNodes_ADT(k+1, end, newotp[1]);
+			    #pragma omp taskwait
+		    }
+
+		    //Now save the largest distance from the center of this node
+		    //Here, the center is just defined as the mean coordinates of the included particles
+		    //TO DO LIST
+		    //	Define center by using the 'finding the smallest sphere' algorithm
+		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
+
+		    //Left
+		    Double_t js_center[ND], js_centertmp, js_pos[ND];
+		    Double_t js_dd=-1, js_dd2;
+
+		    //Left - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(int js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
+		    }
+		    for(int js_i=0; js_i<ND; js_i++) left->SetCenter(js_center[js_i],js_i);
+
+		    //Left - largest distance
+		    for(int js_i=start; js_i<k+1; js_i++){
+			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
+			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    left->SetFarthest(js_dd);
+
+		    //Right
+		    js_dd = -1.;
+		    //Right - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(int js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
+		    }
+		    for(int js_i=0; js_i<ND; js_i++) right->SetCenter(js_center[js_i],js_i);
+
+		    //Right - largest distance
+		    for(int js_i=k+1; js_i<end; js_i++){
+			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
+			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    right->SetFarthest(js_dd);
+
+		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+
+#endif
+	    }
+	    else {
+		    Node *left, *right;
+
+		    left = BuildNodes_ADT(start, k+1, otp);
+		    right = BuildNodes_ADT(k+1, end, otp);
+
+		    //Now save the largest distance from the center of this node
+		    //Here, the center is just defined as the mean coordinates of the included particles
+		    //TO DO LIST
+		    //	Define center by using the 'finding the smallest sphere' algorithm
+		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
+
+		    //Left
+		    Double_t js_center[ND], js_centertmp, js_pos[ND];
+		    Double_t js_dd=-1, js_dd2;
+
+		    //Left - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(int js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
+		    }
+		    for(int js_i=0; js_i<ND; js_i++) left->SetCenter(js_center[js_i],js_i);
+
+		    //Left - largest distance
+		    for(int js_i=start; js_i<k+1; js_i++){
+			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
+			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    left->SetFarthest(js_dd);
+
+		    //Right
+		    js_dd = -1.;
+		    //Right - Define Center
+		    for(int js_j=0; js_j<ND; js_j++){
+			    js_centertmp=0.;
+			    for(int js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
+			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
+		    }
+		    for(int js_i=0; js_i<ND; js_i++) right->SetCenter(js_center[js_i],js_i);
+
+		    //Right - largest distance
+		    for(int js_i=k+1; js_i<end; js_i++){
+			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
+			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
+			    if(js_dd2 > js_dd) js_dd = js_dd2;
+		    }
+		    right->SetFarthest(js_dd);
+
+		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+	    }	    
+    }
     
 
     ///scales the space and calculates the corrected volumes

@@ -170,6 +170,8 @@ namespace NBody
         Node* BuildNodes(Int_t start, Int_t end, KDTreeOMPThreadPool&);
 	// For building OMP domains
         Node* BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool&);
+	// For normal Adaptive KDTree
+        Node* BuildNodes_ADT(Int_t start, Int_t end, KDTreeOMPThreadPool&);
         //set node ids
         void BuildNodeIDs();
         //recursive setting of ids

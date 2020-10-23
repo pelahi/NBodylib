@@ -57,6 +57,8 @@ namespace NBody
         unsigned short numdim;
 
 	Int_t js_leaf=-1;
+	Double_t js_center[6];
+	Double_t js_farthest=-1.;
         public:
         virtual ~Node() {};
 
@@ -74,6 +76,10 @@ namespace NBody
         virtual Int_t GetEnd(){return bucket_end;}
 	///Get Leaf node tag
 	virtual Int_t GetLeaf(){return js_leaf;}
+	///Get Farthest distance
+	virtual Double_t GEtFarthest(){return js_farthest;}
+	///Get Center
+	virtual Double_t GetCenter(int i){return js_center[i];}
         //@}
 
         /// \name Simple Set functions
@@ -81,6 +87,8 @@ namespace NBody
         /// set Id --- use with caution
         virtual void SetID(Int_tree_t id){nid=id;}
 	virtual void SetLeaf(Int_t js_leaftmp){js_leaf=js_leaftmp;}
+	virtual void SetFarthest(Double_t js_fartmp){js_farthest=js_fartmp;}
+	virtual void SetCenter(Double_t centertmp, int i){js_center[i]=centertmp;}
         //@}
 
         /// \name Find Nearest routines:
