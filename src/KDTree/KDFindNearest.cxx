@@ -370,7 +370,7 @@ namespace NBody
 
         if (period==NULL) root->FindNearestPos(0.0,bucket,pq,off,tt);
         else root->FindNearestPosPeriodic(0.0,bucket,pq,off,period,tt);
-        if (period!=NULL) {pq->Pop();Nsearch-1;}
+        if (period!=NULL) {pq->Pop();Nsearch-=1;}
         LoadNN(Nsearch,pq,nn,dist2);
         delete pq;
     }

@@ -154,7 +154,7 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
         GMatrix *W, Double_t error, Double_t cl,
         int *fixparam, int binned, int maxiit, int iestimateerror)
     {
-        int iit=0,iflag,npar=0;
+        int npar=0;
         int parlist[nparams];
         double chi2, xtol, gtol, ftol;
         int info_gsl;
@@ -168,7 +168,6 @@ Double_t FitNonLinLSNoGSL(const math_function fitfunc, const math_function *diff
             npar=nparams;
             for (int i=0;i<nparams;i++) parlist[i]=i;
         }
-        int dof=npoints-npar-(binned==1);
         //store information in gsl desired format
         gsl_multifit_nlinear_fdf fdf;
         const gsl_multifit_nlinear_type *T_gsl = gsl_multifit_nlinear_trust;
