@@ -208,30 +208,7 @@ namespace NBody
             bool iKeepInputOrder = false,
             Double_t Rdist2adapt = -1
         );
-	///KDTree for OMP building
-        KDTree(Double_t js_rdist, Particle *p, Int_t numparts,
-            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
-            bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
-        );
-	//KDTree for normal adaptive KDTree
-        KDTree(Int_t js_adt, Particle *p, Int_t numparts,
-            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
-            bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
-        );
-	//KDTree for the FOFSearchCriterion routine
-        KDTree(Double_t js_rdist, Double_t *param, Particle *p, Int_t numparts,
-            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
-            bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
-        );
+
         ///resets particle order
         ~KDTree();
         //@}
