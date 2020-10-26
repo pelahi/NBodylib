@@ -539,13 +539,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         UInt_tree_t delta = ceil((localend - localstart)/(double)nthreads);
         unordered_map<int, int> tidtoindex;
         vector<UInt_tree_t> threadlocalstart, threadlocalend;
-#endif 
+#endif
         if (nthreads>1) {
 #ifdef USEOPENMP
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
-        // since this is nested thread id doesn't simply map to how 
-        // the local for loop is split so construct a tid to index map 
+        // since this is nested thread id doesn't simply map to how
+        // the local for loop is split so construct a tid to index map
         int tid, count=0;
         #pragma omp critical
         {
@@ -571,7 +571,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 }
 #endif
         }
-        else 
+        else
         {
             for(auto i=localstart; i<localend;i++)
             {
@@ -582,7 +582,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
         if (nthreads>1) {
 #ifdef USEOPENMP
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
         int tid, count=0;
         tid = tidtoindex[omp_get_thread_num()];
@@ -591,7 +591,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
         {
             for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
+            Double_t r2=0;
+            for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
             localmaxr2 = std::max(localmaxr2, r2);
         }
         #pragma omp critical
@@ -599,15 +600,16 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             maxr2 = std::max(maxr2, localmaxr2);
         }
 }
-#endif 
+#endif
         }
-        else 
+        else
         {
         //get largest distance
         for(auto i=localstart; i<localend;i++)
         {
             for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
+            Double_t r2=0;
+            for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
             maxr2 = std::max(maxr2, r2);
         }
         }
