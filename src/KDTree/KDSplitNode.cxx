@@ -1017,123 +1017,8 @@ namespace NBody
     //key here is params which tell one how to search the tree
     void SplitNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
-	    if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
-	    int flag = Head[bucket_start];
-
-	    Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;
-	    Double_t js_posCen[3], js_velCen[3];
-	    for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = center[js_j];}
-	    if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = center[js_j];}
-	    js_dist += DistanceSqd(js_pos, js_posCen, 3)/params[1];
-	    if(numdim==6) js_dist += DistanceSqd(js_vel, js_velCen, 3)/params[2];
-	    js_rr = farthest;
-
-	    if(sqrt(js_dist) >= sqrt(js_rr) + 1.0){
-		    flag=0;
-	    }
-	    else if(sqrt(js_dist) <= abs(sqrt(js_rr) - 1.0) && 1.0 > js_rr){
-		    for(Int_t i=bucket_start; i < bucket_end; i++){
-			    Int_t id = bucket[i].GetID();
-			    //if(Group[id]==iGroup) continue;       // Skip already linked
-			    if(Group[id]) continue; // Skip already linked
-			    if(Group[id]<0) continue;       // Skip Background
-			    Group[id]=iGroup;
-			    Fifo[iTail++]=i;
-			    Len[iGroup]++;
-
-			    Next[Tail[Head[target]]]=Head[i];
-			    Tail[Head[target]]=Tail[Head[i]];
-			    Head[i]=Head[target];
-			    if(iTail==nActive)iTail=0;
-		    }
-	    }
-	    else{
-		    flag = 0;
-
-                    Double_t old_off = off[cut_dim];
-                    Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
-                    //types of trees
-                    const int TPHYS=0,TPROJ=1,TVEL=2,TPHS=3,TMETRIC=4;
-                    double invscaling;
-                    if ((int)params[0]==TPHYS) invscaling = 1.0/params[1];
-                    else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
-                    else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
-                    else invscaling=1.0;
-
-	            new_off *= sqrt(invscaling);
-
-                    if (new_off < 0)
-                    {
-                        left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                        //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-                        rd += -old_off*old_off + new_off*new_off;
-                        if (rd < 1)
-                        {
-                            off[cut_dim] = new_off;
-                            right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                            off[cut_dim] = old_off;
-                        }
-                    }
-                    else
-                    {
-                        right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                        //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-                        rd += -old_off*old_off + new_off*new_off;
-                        if (rd < 1)
-                        {
-                            off[cut_dim] = new_off;
-                            left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-                            off[cut_dim] = old_off;
-                        }
-                    }
-
-		    if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
-	    }
-	    if (flag) BucketFlag[nid]=1;
-
-        //Double_t old_off = off[cut_dim];
-        //Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
-        ////types of trees
-        //const int TPHYS=0,TPROJ=1,TVEL=2,TPHS=3,TMETRIC=4;
-        //double invscaling;
-        //if ((int)params[0]==TPHYS) invscaling = 1.0/params[1];
-        //else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
-        //else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
-        //else invscaling=1.0;
-
-	//new_off *= sqrt(invscaling);
-
-        //if (new_off < 0)
-        //{
-        //    left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //    //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-        //    rd += -old_off*old_off + new_off*new_off;
-        //    if (rd < 1)
-        //    {
-        //        off[cut_dim] = new_off;
-        //        right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //        off[cut_dim] = old_off;
-        //    }
-        //}
-        //else
-        //{
-        //    right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //    //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-        //    rd += -old_off*old_off + new_off*new_off;
-        //    if (rd < 1)
-        //    {
-        //        off[cut_dim] = new_off;
-        //        left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //        off[cut_dim] = old_off;
-        //    }
-        //}
-
-	//if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
-    }
-
-    //key here is params which tell one how to search the tree
-    void SplitNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
-    {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         //types of trees
@@ -1143,14 +1028,50 @@ namespace NBody
         else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
         else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
         else invscaling=1.0;
+        if (new_off < 0)
+        {
+            left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
+            if (rd < 1)
+            {
+                off[cut_dim] = new_off;
+                right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
+            if (rd < 1)
+            {
+                off[cut_dim] = new_off;
+                left->FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+                off[cut_dim] = old_off;
+            }
+        }
+        // once left and right have been checked, see if they have been closed. If so, update.
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+    }
 
-	new_off *= sqrt(invscaling);
-
+    //key here is params which tell one how to search the tree
+    void SplitNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        //types of trees
+        const int TPHYS=0,TPROJ=1,TVEL=2,TPHS=3,TMETRIC=4;
+        double invscaling;
+        if ((int)params[0]==TPHYS) invscaling = 1.0/params[1];
+        else if ((int)params[0]==TVEL) invscaling = 1.0/params[2];
+        else if ((int)params[0]==TPHS) invscaling = 1.0/(params[(cut_dim<3)*1+(cut_dim>=3)*2]);
+        else invscaling=1.0;
         if (new_off < 0)
         {
             left->FOFSearchCriterionSetBasisForLinks(rd,cmp,check,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-            rd += -old_off*old_off + new_off*new_off;
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;
@@ -1161,8 +1082,7 @@ namespace NBody
         else
         {
             right->FOFSearchCriterionSetBasisForLinks(rd,cmp,check,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-            //rd += (-old_off*old_off + new_off*new_off)*invscaling;
-            rd += -old_off*old_off + new_off*new_off;
+            rd += (-old_off*old_off + new_off*new_off)*invscaling;
             if (rd < 1)
             {
                 off[cut_dim] = new_off;
@@ -1170,6 +1090,8 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+        // once left and right have been checked, see if they have been closed. If so, update.
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //@}

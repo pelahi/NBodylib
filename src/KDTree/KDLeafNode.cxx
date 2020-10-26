@@ -247,30 +247,32 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Int_t target, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j) - xbnd[j][0]), std::abs(bucket[target].GetPosition(j) - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
                 Group[id]=iGroup;
                 pdist2[id]=dist2;
             }
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
-                Int_t id=bucket[i].GetID();
-                Group[id]=iGroup;
-                pdist2[id]=dist2;
-            }
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    Int_t id=bucket[i].GetID();
+                    Group[id]=iGroup;
+                    pdist2[id]=dist2;
+                }
+                }
             }
         }
     }
@@ -278,21 +280,22 @@ namespace NBody
     void LeafNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, Double_t *x, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
                 Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
                 Group[id]=iGroup;
                 pdist2[id]=dist2;
             }
+        }
         else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
             if (dist2 < fdist2)
@@ -311,42 +314,46 @@ namespace NBody
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        // Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
+            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged[nt++]=i;
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2) tagged[nt++]=i;
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2) tagged[nt++]=i;
+                }
             }
         }
     }
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged[nt++]=i;
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
-                tagged[nt++]=i;
+                Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    tagged[nt++]=i;
+                }
             }
         }
     }
@@ -357,43 +364,43 @@ namespace NBody
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged.push_back(i);
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            if (i!=target){
-            Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2) tagged.push_back(i);
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                if (i!=target){
+                Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2) tagged.push_back(i);
+                }
             }
         }
     }
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
-        //first check to see if entire node lies wihtin search distance
-        Double_t maxr0=0.,maxr1=0.;
+        Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
-            maxr0+=(x[j]-xbnd[j][0])*(x[j]-xbnd[j][0]);
-            maxr1+=(x[j]-xbnd[j][1])*(x[j]-xbnd[j][1]);
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
         }
-        if (maxr0<fdist2&&maxr1<fdist2)
-            for (Int_t i = bucket_start; i < bucket_end; i++)
-                tagged.push_back(i);
-        else
-        for (Int_t i = bucket_start; i < bucket_end; i++)
-        {
-            Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
-            if (dist2 < fdist2)
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+        }
+        else {
+            for (auto i = bucket_start; i < bucket_end; i++)
             {
-                tagged.push_back(i);
+                Double_t dist2 = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                if (dist2 < fdist2)
+                {
+                    tagged.push_back(i);
+                }
             }
         }
     }
@@ -631,82 +638,27 @@ namespace NBody
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
-	int flag=Head[bucket_start];
+        int flag=Head[bucket_start];
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            if (flag!=Head[i])flag=0;
+            Int_t id=bucket[i].GetID();
+            //if already linked don't do anything
+            if (Group[id]==iGroup) continue;
+            //if tag below zero then don't do anything
+            if (Group[id]<0) continue;
+            if (cmp(bucket[target],bucket[i],params)) {
+                Group[id]=iGroup;
+                Fifo[iTail++]=i;
+                Len[iGroup]++;
 
-
-	Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;
-	Double_t js_posCen[3], js_velCen[3];
-	for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = center[js_j];}
-	if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = center[js_j];}
-
-	js_dist += DistanceSqd(js_pos, js_posCen, 3)/params[1];
-	if(numdim==6) js_dist += DistanceSqd(js_vel, js_velCen, 3)/params[2];
-	js_rr = farthest;
-
-	if(sqrt(js_dist) >= sqrt(js_rr) + 1.0){
-		flag=0;
-	}
-	else if(sqrt(js_dist) <= abs(sqrt(js_rr) - 1.0) && 1.0 > js_rr){
-		for(Int_t i=bucket_start; i < bucket_end; i++){
-			Int_t id = bucket[i].GetID();
-			//if(Group[id]==iGroup) continue;
-			if(Group[id]<0) continue;
-			if(Group[id]) continue;
-			Group[id]=iGroup;
-			Fifo[iTail++]=i;
-			Len[iGroup]++;
-
-			Next[Tail[Head[target]]]=Head[i];
-			Tail[Head[target]]=Tail[Head[i]];
-			Head[i]=Head[target];
-			if(iTail==nActive)iTail=0;
-		}
-	}
-	else{
-        	for (Int_t i = bucket_start; i < bucket_end; i++)
-        	{
-        	    if (flag!=Head[i])flag=0;
-        	    Int_t id=bucket[i].GetID();
-        	    //if already linked don't do anything
-        	    //if (Group[id]==iGroup) continue;
-		    if (Group[id]) continue;
-        	    //if tag below zero then don't do anything
-        	    if (Group[id]<0) continue;
-        	    if (cmp(bucket[target],bucket[i],params)) {
-        	        Group[id]=iGroup;
-        	        Fifo[iTail++]=i;
-        	        Len[iGroup]++;
-
-        	        Next[Tail[Head[target]]]=Head[i];
-        	        Tail[Head[target]]=Tail[Head[i]];
-        	        Head[i]=Head[target];
-        	        if(iTail==nActive)iTail=0;
-        	        flag=0;
-        	    }
-        	}
-	}
-
-        //for (Int_t i = bucket_start; i < bucket_end; i++)
-        //{
-        //    if (flag!=Head[i])flag=0;
-        //    Int_t id=bucket[i].GetID();
-        //    //if already linked don't do anything
-        //    //if (Group[id]==iGroup) continue;
-	//    if (Group[id]) continue;
-        //    //if tag below zero then don't do anything
-        //    if (Group[id]<0) continue;
-        //    if (cmp(bucket[target],bucket[i],params)) {
-        //        Group[id]=iGroup;
-        //        Fifo[iTail++]=i;
-        //        Len[iGroup]++;
-
-        //        Next[Tail[Head[target]]]=Head[i];
-        //        Tail[Head[target]]=Tail[Head[i]];
-        //        Head[i]=Head[target];
-        //        if(iTail==nActive)iTail=0;
-        //        flag=0;
-        //    }
-        //}
+                Next[Tail[Head[target]]]=Head[i];
+                Tail[Head[target]]=Tail[Head[i]];
+                Head[i]=Head[target];
+                if(iTail==nActive)iTail=0;
+                flag=0;
+            }
+        }
         if (flag) BucketFlag[nid]=1;
     }
     void LeafNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
@@ -716,13 +668,12 @@ namespace NBody
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
-        for (Int_t i = bucket_start; i < bucket_end; i++)
+        for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (flag!=Head[i])flag=0;
             Int_t id=bucket[i].GetID();
             //if already linked don't do anything
-            //if (Group[id]==iGroup) continue;
-	    if (Group[id]) continue;
+            if (Group[id]==iGroup) continue;
             //if tag below zero then don't do anything
             if (Group[id]<0) continue;
             if (cmp(bucket[target],bucket[i],params)) {
