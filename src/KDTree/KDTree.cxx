@@ -526,25 +526,91 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         KDTreeOMPThreadPool &otp
         )
     {
-	    //Calculate center and largest sqaured distance for node
+        //Calculate center and largest sqaured distance for node
 
         // get center
-	    vector<Double_t> center(ND,0), pos(ND);
+        vector<Double_t> center(ND,0), pos(ND);
         Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
-	    Double_t maxr2 = 0.0;
-	    for(auto i=localstart; i<localend;i++)
+        Double_t maxr2 = 0.0;
+        unsigned int nthreads = 1;
+#ifdef USEOPENMP
+        nthreads = min((unsigned int)(floor((localend - localstart)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+        UInt_tree_t delta = ceil((localend - localstart)/(double)nthreads);
+        unordered_map<int, int> tidtoindex;
+        vector<UInt_tree_t> threadlocalstart, threadlocalend;
+#endif 
+        if (nthreads>1) {
+#ifdef USEOPENMP
+#pragma omp parallel default(shared) 
+{
+        // since this is nested thread id doesn't simply map to how 
+        // the local for loop is split so construct a tid to index map 
+        int tid, count=0;
+        #pragma omp critical
         {
-		    for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
-	    }
-	    for (auto &c:center) c*= norm;
+            tid = omp_get_thread_num();
+            tidtoindex[tid] = count++;
+        }
+        // determine region of for loop to process
+        tid = tidtoindex[omp_get_thread_num()];
+        threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
+        threadlocalend[tid] = threadlocalstart[tid] + delta;
+        if (tid == nthreads-1) threadlocalend[tid] = localend;
+        vector<Double_t> localcenter(ND,0);
+        #pragma omp for
+        for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+        {
+            for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
+        }
 
-	    //get largest distance
-	    for(auto i=localstart; i<localend;i++)
+        #pragma omp critical
         {
-		    for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+            for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
+        }
+}
+#endif
+        }
+        else 
+        {
+            for(auto i=localstart; i<localend;i++)
+            {
+                for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
+            }
+        }
+        for (auto &c:center) c*= norm;
+
+        if (nthreads>1) {
+#ifdef USEOPENMP
+#pragma omp parallel default(shared) 
+{
+        int tid, count=0;
+        tid = tidtoindex[omp_get_thread_num()];
+        Double_t localmaxr2 = 0 ;
+        #pragma omp for
+        for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+        {
+            for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
             auto r2 = DistanceSqd(pos.data(), center.data(), ND);
-		    maxr2 = std::max(maxr2, r2);
-	    }
+            localmaxr2 = std::max(localmaxr2, r2);
+        }
+        #pragma omp critical
+        {
+            maxr2 = std::max(maxr2, localmaxr2);
+        }
+}
+#endif 
+        }
+        else 
+        {
+        //get largest distance
+        for(auto i=localstart; i<localend;i++)
+        {
+            for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
+            maxr2 = std::max(maxr2, r2);
+        }
+        }
         farthest = maxr2;
         return center;
     }
@@ -555,30 +621,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         KDTreeOMPThreadPool &otp
     )
     {
-	    //Calculate center and largest sqaured distance for node
-        //Idea for adaptive tree is that if this distance is
-        //smaller than a desired minimum size then the node should
-        //then subsequent child nodes are leaf nodes
-
-        // get center
-	    vector<Double_t> center(ND,0), pos(ND);
-        Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
-	    Double_t maxr2 = 0.0;
-	    for(auto i=localstart; i<localend;i++)
-        {
-		    for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
-	    }
-	    for (auto &c:center) c*= norm;
-	    for(auto j=0;j<ND;j++) node->SetCenter(center[j],j);
-
-	    //get largest distance
-	    for(auto i=localstart; i<localend;i++)
-        {
-		    for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
-		    maxr2 = std::max(maxr2, r2);
-	    }
-	    node->SetFarthest(maxr2);
+        Double_t maxr2;
+        vector<Double_t> center = DetermineCentreAndSmallestSphere(localstart, localend, maxr2, otp);
+        for(auto j=0;j<ND;j++) node->SetCenter(center[j],j);
+        node->SetFarthest(maxr2);
     }
     //-- End of inline functions
 
