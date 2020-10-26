@@ -864,6 +864,64 @@ namespace NBody
 
     void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        // get distance from particle to first point enclose node
+        // this could be updated to use farthest particle from centre
+        // instead of boundaries
+        Double_t maxr2 = 0;
+        for (int j=0;j<numdim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        // if node entirely enclosed, link and flag
+        if (maxr2<fdist2) {
+            Int_t id;
+            for (auto i = bucket_start; i < bucket_end; i++){
+                id=bucket[i].GetID();
+                if (Group[id]) continue;
+                Group[id]=iGroup;
+                Fifo[iTail++]=i;
+                Len[iGroup]++;
+
+                Next[Tail[Head[target]]]=Head[i];
+                Tail[Head[target]]=Tail[Head[i]];
+                Head[i]=Head[target];
+
+                if(iTail==nActive)iTail=0;
+            }
+            BucketFlag[nid]=1;
+            return;
+        }
+        // otherwise check left and right
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < fdist2)
+            {
+                off[cut_dim] = new_off;
+                right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < fdist2)
+            {
+                off[cut_dim] = new_off;
+                left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
+                off[cut_dim] = old_off;
+            }
+        }
+        // once left and right have been checked, see if they have been closed. If so, update.
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+
+    /*
 	if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
 	int flag=Head[bucket_start];
 
@@ -953,6 +1011,7 @@ namespace NBody
         //}
 
 	//if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+        */
     }
 
     //key here is params which tell one how to search the tree
@@ -963,11 +1022,11 @@ namespace NBody
 
 	    Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;
 	    Double_t js_posCen[3], js_velCen[3];
-	    for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = js_center[js_j];}
-	    if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = js_center[js_j];}
+	    for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = center[js_j];}
+	    if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = center[js_j];}
 	    js_dist += DistanceSqd(js_pos, js_posCen, 3)/params[1];
 	    if(numdim==6) js_dist += DistanceSqd(js_vel, js_velCen, 3)/params[2];
-	    js_rr = js_farthest;
+	    js_rr = farthest;
 
 	    if(sqrt(js_dist) >= sqrt(js_rr) + 1.0){
 		    flag=0;
@@ -1573,11 +1632,6 @@ namespace NBody
             SearchCriterionTagged(rd,cmp,params,bucket,nt,tagged,off,pp,dim);
         }
     }
-
-
-
-
-
 
     void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, Int_t target, int dim)
     {

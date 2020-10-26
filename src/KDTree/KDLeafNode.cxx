@@ -527,8 +527,8 @@ namespace NBody
 	//Node Skip by using trigonometric inequalities
 	Double_t js_pos[6], js_dist, js_rr;
 	for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
-	js_dist = DistanceSqd(js_pos, js_center, numdim);
-	js_rr = js_farthest;
+	js_dist = DistanceSqd(js_pos, center, numdim);
+	js_rr = farthest;
 
 	if(sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)){
 		flag=0;
@@ -636,12 +636,12 @@ namespace NBody
 
 	Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;
 	Double_t js_posCen[3], js_velCen[3];
-	for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = js_center[js_j];}
-	if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = js_center[js_j];}
+	for(int js_j=0; js_j<3; js_j++) {js_pos[js_j] = bucket[target].GetPosition(js_j); js_posCen[js_j] = center[js_j];}
+	if(numdim==6) for(int js_j=3; js_j<6; js_j++) {js_vel[js_j-3] = bucket[target].GetVelocity(js_j-3); js_velCen[js_j-3] = center[js_j];}
 
 	js_dist += DistanceSqd(js_pos, js_posCen, 3)/params[1];
 	if(numdim==6) js_dist += DistanceSqd(js_vel, js_velCen, 3)/params[2];
-	js_rr = js_farthest;
+	js_rr = farthest;
 
 	if(sqrt(js_dist) >= sqrt(js_rr) + 1.0){
 		flag=0;
@@ -685,7 +685,7 @@ namespace NBody
         	    }
         	}
 	}
-	
+
         //for (Int_t i = bucket_start; i < bucket_end; i++)
         //{
         //    if (flag!=Head[i])flag=0;

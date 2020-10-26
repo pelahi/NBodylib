@@ -520,6 +520,66 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    if(js_j +1 < js_end) js_qsort(js_j + 1, js_end, js_dim);
     }
 
+    inline vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
+        UInt_tree_t localstart, UInt_tree_t localend,
+        Double_t &farthest,
+        KDTreeOMPThreadPool &otp
+        )
+    {
+	    //Calculate center and largest sqaured distance for node
+
+        // get center
+	    vector<Double_t> center(ND,0), pos(ND);
+        Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
+	    Double_t maxr2 = 0.0;
+	    for(auto i=localstart; i<localend;i++)
+        {
+		    for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
+	    }
+	    for (auto &c:center) c*= norm;
+
+	    //get largest distance
+	    for(auto i=localstart; i<localend;i++)
+        {
+		    for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
+		    maxr2 = std::max(maxr2, r2);
+	    }
+        farthest = maxr2;
+        return center;
+    }
+
+    inline void KDTree::DetermineCentreAndSmallestSphere(
+        UInt_tree_t localstart, UInt_tree_t localend,
+        Node *&node,
+        KDTreeOMPThreadPool &otp
+    )
+    {
+	    //Calculate center and largest sqaured distance for node
+        //Idea for adaptive tree is that if this distance is
+        //smaller than a desired minimum size then the node should
+        //then subsequent child nodes are leaf nodes
+
+        // get center
+	    vector<Double_t> center(ND,0), pos(ND);
+        Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
+	    Double_t maxr2 = 0.0;
+	    for(auto i=localstart; i<localend;i++)
+        {
+		    for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
+	    }
+	    for (auto &c:center) c*= norm;
+	    for(auto j=0;j<ND;j++) node->SetCenter(center[j],j);
+
+	    //get largest distance
+	    for(auto i=localstart; i<localend;i++)
+        {
+		    for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+            auto r2 = DistanceSqd(pos.data(), center.data(), ND);
+		    maxr2 = std::max(maxr2, r2);
+	    }
+	    node->SetFarthest(maxr2);
+    }
     //-- End of inline functions
 
     //-- Private functions used to build tree
@@ -539,16 +599,23 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             id = numnodes;
             numnodes++;
         }
-        if (size <= b)
+        // PJE:: addition to check whether tree is adaptively constructured
+        //
+        bool isleafflag;
+        if (rdist2adapt >0) {
+            vector<Double_t> center;
+            Double_t localfarthest;
+            center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
+            isleafflag = (localfarthest < rdist2adapt);
+        }
+        else {
+            isleafflag = (size <= b);
+        }
+        if (isleafflag)
         {
             if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-	    LeafNode *js_LN;
-	    js_LN = new LeafNode(id ,start, end,  bnd, ND);
-	    js_LN->SetLeaf(1);
-
-	    return js_LN;
+            return new LeafNode(id, start, end,  bnd, ND);
         }
         else
         {
@@ -569,8 +636,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 {
                     #pragma omp task
                     left = BuildNodes(start, k+1, newotp[0]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(start, k+1, left, newotp[0]);
                     #pragma omp task
                     right = BuildNodes(k+1, end, newotp[1]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(k+1, end, right, newotp[1]);
                     #pragma omp taskwait
                 }
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
@@ -578,8 +647,19 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
             }
             else {
-                return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                    BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
+                if (rdist2adapt > 0) {
+                    Node *left, *right;
+                    left = BuildNodes(start, k+1, otp);
+                    DetermineCentreAndSmallestSphere(start, k+1, left, otp);
+                    right = BuildNodes(k+1, end, otp);
+                    DetermineCentreAndSmallestSphere(k+1, end, right, otp);
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                    left, right);
+                }
+                else {
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                        BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
+                }
             }
         }
     }
@@ -587,6 +667,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     ///--JS--
     /// Build OMP Domains by using Adaptive KDTree. OMP domains are decomposed by considering
     /// interparticle distances to avoid an overhead when linking across OMP domains
+    /// PJE:: This seems an odd way to implement this?
+    /// I don't think a tree should know whether it is being built
+    /// for OpenMP FOF linking so I would remove this and just make sure
+    /// that the functionality of the adaptive tree accounts for this.
     Node *KDTree::BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
     {
 	    Double_t bnd[6][2];
@@ -598,7 +682,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    int js_ind1 = end-1;
 	    int js_ompskip=-1;
 
-        
+
 	    //if not building in parallel can set ids here and update number of nodes
 	    //otherwise, must set after construction
 	    if (ibuildinparallel == false) {
@@ -609,6 +693,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    //See whether this OMP region is further decomposed or not.
 	    //If the maximum interparticle distance is quite larger than the linking length,
 	    // decompose the domain further.
+        // PJE:: how does this decompose the domain further??
 	    if (size <= b){
 		    js_ompskip=1;
 		    if(size > 1000000){ // Minimum size of OMP domain (arbitrary chosen)
@@ -621,23 +706,17 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 					    if(js_dx2 > js_dx) js_dx = js_dx2;
 				    }
 
-				    if(js_dx > 2.0*js_rdist){js_ompskip=-1; break;}
+				    if(js_dx > 2.0*rdist2adapt){js_ompskip=-1; break;}
 				    js_dx = 0.;
 			    }
 		    }
-
 	    }
 
 	    //Leaf Node Construction
 	    if (js_ompskip>0){
 		    if (ibuildinparallel == false) numleafnodes++;
 		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-		    LeafNode *js_LN;
-		    js_LN = new LeafNode(id, start, end, bnd, ND);
-		    js_LN->SetLeaf(1);
-
-		    return js_LN;
+		    return new LeafNode(id, start, end, bnd, ND);
 	    }
 	    else
 	    {
@@ -686,9 +765,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
                     return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                         left, right);
-	    }	    
+	    }
     }
-    
+
     ///--JS--
     /// Build Normal Adaptive KDTree
     Node *KDTree::BuildNodes_ADT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
@@ -701,7 +780,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    int js_ind0 = start;
 	    int js_ind1 = end-1;
 
-        
+
 	    //if not building in parallel can set ids here and update number of nodes
 	    //otherwise, must set after construction
 	    if (ibuildinparallel == false) {
@@ -854,9 +933,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    right->SetFarthest(js_dd);
 
 		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-	    }	    
+	    }
     }
-    
+
     ///--JS--
     /// Build Normal Adaptive KDTree for FOFSearchCriterion
     Node *KDTree::BuildNodes_CRIT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp, Double_t *param)
@@ -869,7 +948,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    int js_ind0 = start;
 	    int js_ind1 = end-1;
 
-        
+
 	    //if not building in parallel can set ids here and update number of nodes
 	    //otherwise, must set after construction
 	    if (ibuildinparallel == false) {
@@ -895,7 +974,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
 		    //--JS--
 		    //Should scale phase-space coordinates first otherwise the split dimension
-		    // incorrectly chosen, which results in very poor performance in the core 
+		    // incorrectly chosen, which results in very poor performance in the core
 		    // search.
 		    Double_t js_xc = 1.0/sqrt(param[1]);
 		    Double_t js_vc = 1.0/sqrt(param[2]);
@@ -1076,7 +1155,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
 
 		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-	    }	    
+	    }
     }
 
     ///scales the space and calculates the corrected volumes
@@ -1214,8 +1293,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         node->SetID(numnodes++);
         //walk tree increasing
-        //if (node->GetCount() <= b) {
-	if(node->GetLeaf() > 0){
+	    if(node->GetLeaf() > 0){
             numleafnodes++;
             return;
         }
@@ -1241,8 +1319,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         cout<<"At node "<<" "<<id<<" "<<start<<" "<<end<<" ";
         for (auto j=0;j<ND;j++)  cout<<"("<<node->GetBoundary(j,0)<<", "<<node->GetBoundary(j,1)<<")";
         cout<<endl;
-        //if (node->GetCount() > b) {
-	if(node->GetLeaf() < 0){
+	    if(node->GetLeaf() < 0){
             WalkNode(((SplitNode*)node)->GetLeft());
             WalkNode(((SplitNode*)node)->GetRight());
         }
@@ -1257,7 +1334,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       int criterion, int aniso, int scale,
       Double_t *Period, Double_t **m,
       bool iBuildInParallel,
-      bool iKeepInputOrder)
+      bool iKeepInputOrder,
+      double Rdist2adapt
+)
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
@@ -1285,6 +1364,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
+        rdist2adapt = Rdist2adapt;
         if (Period!=NULL)
         {
             period=new Double_t[3];
@@ -1314,7 +1394,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       int ttype, int smfunctype, int smres, int criterion, int aniso, int scale,
       Double_t **m,
       bool iBuildInParallel,
-      bool iKeepInputOrder
+      bool iKeepInputOrder,
+      double Rdist2adapt
     )
     {
 
@@ -1344,6 +1425,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
+        rdist2adapt = Rdist2adapt;
         if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];
@@ -1400,7 +1482,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
-	js_rdist = rdist;
+        rdist2adapt = rdist;
         if (Period!=NULL)
         {
             period=new Double_t[3];
@@ -1523,7 +1605,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
-	js_rdist = rdist;
+	    rdist2adapt = rdist;
 
         if (Period!=NULL)
         {
@@ -1560,7 +1642,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             delete[] Kernel;
             delete[] derKernel;
             if (period!=NULL) delete[] period;
-            if (iresetorder) qsort(bucket, numparts, sizeof(Particle), IDCompare);
+            if (iresetorder) std::sort(bucket, bucket + numparts, IDCompareVec);
             if (scalespace) {
             for (Int_t i=0;i<numparts;i++)
                 for (int j=0;j<3;j++) {
@@ -1595,7 +1677,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         ompthreadpool.nactivethreads = ompthreadpool.nthreads;
         ompthreadpool.activethreadids.resize(ompthreadpool.nactivethreads);
-        for (auto i=0;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
+        for (auto i=0u;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
 #endif
         return ompthreadpool;
     }
@@ -1611,9 +1693,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             newthreadpool[1].nactivethreads = ompthreadpool.nactivethreads - newthreadpool[0].nactivethreads;
             newthreadpool[0].activethreadids.resize(newthreadpool[0].nactivethreads);
             newthreadpool[1].activethreadids.resize(newthreadpool[1].nactivethreads);
-            for (auto i=0;i<newthreadpool[0].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[0].nactivethreads;i++)
                 newthreadpool[0].activethreadids[i] = ompthreadpool.activethreadids[i];
-            for (auto i=0;i<newthreadpool[1].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[1].nactivethreads;i++)
                 newthreadpool[1].activethreadids[i] = ompthreadpool.activethreadids[i+newthreadpool[0].nactivethreads];
         }
 #endif

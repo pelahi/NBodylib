@@ -102,9 +102,8 @@ namespace NBody
         Int_t b;
         ///max number of dimensions of tree
         const static int MAXND=6;
-	///Linking length for building OMP domains
-	Double_t js_rdist;
-	Int_t js_adt;
+	    ///max squared distance size of a leaf node for building adaptive trees
+    	Double_t rdist2adapt;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -198,14 +197,16 @@ namespace NBody
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
             Double_t *Period=NULL, Double_t **metric=NULL,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdist2adapt = -1
         );
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdist2adapt = -1
         );
 	///KDTree for OMP building
         KDTree(Double_t js_rdist, Particle *p, Int_t numparts,
@@ -584,9 +585,16 @@ namespace NBody
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
-	
-	/// \name Qsort for building adaptive KDTree
-	inline void js_qsort(int js_start, int js_end, int js_dim);
+
+        /// \name Adaptive Tree related functions
+    	/// Qsort for building adaptive KDTree
+    	inline void js_qsort(int js_start, int js_end, int js_dim);
+        /// for calculating the centre and distance to furtherts in a bucket
+        inline vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+            Double_t &farthest, KDTreeOMPThreadPool &);
+        inline void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+             Node *&node, KDTreeOMPThreadPool &);
+
     };
 
 }
