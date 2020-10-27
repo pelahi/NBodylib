@@ -454,6 +454,22 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Int_t target, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<numdim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                Int_t id=bucket[i].GetID();
+                Double_t dist2val = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
+                Group[id]=iGroup;
+                dist2[id]=dist2val;
+            }
+            return;
+        }
+
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -482,6 +498,22 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Double_t *x, int dim)
     {
+        //first check to see if entire node lies wihtin search distance
+        Double_t maxr2 = 0.0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++)
+            {
+                Int_t id=bucket[i].GetID();
+                Double_t dist2val = DistanceSqd(x,bucket[i].GetPosition(), dim);
+                Group[id]=iGroup;
+                dist2[id]=dist2val;
+            }
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -515,6 +547,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
+        Double_t maxr2 = 0.0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -543,6 +584,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -575,6 +625,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -603,6 +662,15 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
+        Double_t maxr2 = 0;
+        for (int j=0;j<dim;j++){
+            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
+            maxr2 += maxdist*maxdist;
+        }
+        if (maxr2<fdist2) {
+            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            return;
+        }
         Double_t old_off = off[cut_dim];
         Double_t new_off = x[cut_dim] - cut_val;
         if (new_off < 0)
@@ -866,16 +934,37 @@ namespace NBody
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
-        // get distance from particle to first point enclose node
-        // this could be updated to use farthest particle from centre
-        // instead of boundaries
+        //now check if either search distance from particle fully encloses node
+        //or if farthest initialized, then that particle is within linking length
+        //of center and all other particles in the node are within this linking length
+        //from the center
+        bool inodeflagged = false;
         Double_t maxr2 = 0;
-        for (int j=0;j<numdim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
+        if (farthest > 0)
+        {
+            // get distance from particle to center
+            // instead of boundaries
+            for (int j=0;j<numdim;j++)
+            {
+                auto dist = bucket[target].GetPhase(j)-center[j];
+                maxr2 += dist*dist;
+            }
+            inodeflagged = (maxr2 < fdist2 && farthest < fdist2);
+        }
+        else
+        {
+            // get distance from particle to first point enclose node
+            // this could be updated to use farthest particle from centre
+            // instead of boundaries
+            for (int j=0;j<numdim;j++)
+            {
+                auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
+                maxr2 += maxdist*maxdist;
+            }
+            inodeflagged = (maxr2<fdist2);
         }
         // if node entirely enclosed, link and flag
-        if (maxr2<fdist2) {
+        if (inodeflagged) {
             Int_t id;
             for (auto i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();

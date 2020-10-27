@@ -650,9 +650,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         // PJE:: addition to check whether tree is adaptively constructured
         //
         bool isleafflag;
-        if (rdist2adapt >0) {
-            vector<Double_t> center;
-            Double_t localfarthest;
+        vector<Double_t> center;
+        Double_t localfarthest;
+        if (rdist2adapt > 0) {
             center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
             isleafflag = (localfarthest < rdist2adapt);
         }
@@ -663,7 +663,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         {
             if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-            return new LeafNode(id, start, end,  bnd, ND);
+            Node * leaf = new LeafNode(id, start, end,  bnd, ND);
+            if (rdist2adapt > 0)
+            {
+                leaf->SetFarthest(localfarthest);
+                for (int j=0;j<ND;j++) leaf->SetCenter(j,center[j]);
+            }
+            return leaf;
         }
         else
         {
