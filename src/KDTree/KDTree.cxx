@@ -323,7 +323,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
     /// \name Determine the median coordinates in some space
     //@{
-    inline Double_t KDTree::MedianPos(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianPos(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -366,7 +366,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    inline Double_t KDTree::MedianVel(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianVel(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -409,7 +409,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    inline Double_t KDTree::MedianPhs(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianPhs(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -507,12 +507,14 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     ///but approximative and splits at the particle with the largest distance
     ///between particles. This search is limited to a buffer region around
     ///the median index
-    void KDTree::AdjustMedianToMaximalDistancePos(int d,
-        Int_t &splitindex, Double_t &splitvalue,
-        Int_t bufferwidth, Int_t minbuffersize,
-        KDTreeOMPThreadPool &otp)
+    Double_t KDTree::AdjustMedianToMaximalDistancePos(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
     {
-        if (bufferwidth<minbuffersize) return;
+        Double_t splitvalue = MedianPos(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
@@ -534,16 +536,18 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 newsplitindex = i+left;
             }
         }
-        splitvalue = x[newsplitindex-left];
         splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
     }
-
-    void KDTree::AdjustMedianToMaximalDistanceVel(int d,
-        Int_t &splitindex, Double_t &splitvalue,
-        Int_t bufferwidth, Int_t minbuffersize,
-        KDTreeOMPThreadPool &otp)
+    Double_t KDTree::AdjustMedianToMaximalDistanceVel(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
     {
-        if (bufferwidth<minbuffersize) return;
+        Double_t splitvalue = MedianVel(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
@@ -565,15 +569,18 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 newsplitindex = i+left;
             }
         }
-        splitvalue = x[newsplitindex-left];
         splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
     }
-    void KDTree::AdjustMedianToMaximalDistancePhase(int d,
-        Int_t &splitindex, Double_t &splitvalue,
-        Int_t bufferwidth, Int_t minbuffersize,
-        KDTreeOMPThreadPool &otp)
+    Double_t KDTree::AdjustMedianToMaximalDistancePhs(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
     {
-        if (bufferwidth<minbuffersize) return;
+        Double_t splitvalue = MedianPhs(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
@@ -595,8 +602,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 newsplitindex = i+left;
             }
         }
-        splitvalue = x[newsplitindex-left];
         splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
     }
 
     ///Calculate center and largest sqaured distance for node
@@ -754,9 +762,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
-            Int_t k = start + (size - 1) / 2;
             int splitdim = DetermineSplitDim(start, end, bnd, otp);
-            Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
+            Int_t splitindex = start + (size - 1) / 2;
+            Double_t splitvalue = (this->*medianfunc)(splitdim, splitindex, start, end, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
@@ -767,11 +775,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 #pragma omp single
                 {
                     #pragma omp task
-                    left = BuildNodes(start, k+1, newotp[0]);
-                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(start, k+1, left, newotp[0]);
+                    left = BuildNodes(start, splitindex+1, newotp[0]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(start, splitindex+1, left, newotp[0]);
                     #pragma omp task
-                    right = BuildNodes(k+1, end, newotp[1]);
-                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(k+1, end, right, newotp[1]);
+                    right = BuildNodes(splitindex+1, end, newotp[1]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(splitindex+1, end, right, newotp[1]);
                     #pragma omp taskwait
                 }
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
@@ -781,16 +789,16 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             else {
                 if (rdist2adapt > 0) {
                     Node *left, *right;
-                    left = BuildNodes(start, k+1, otp);
-                    DetermineCentreAndSmallestSphere(start, k+1, left, otp);
-                    right = BuildNodes(k+1, end, otp);
-                    DetermineCentreAndSmallestSphere(k+1, end, right, otp);
+                    left = BuildNodes(start, splitindex+1, otp);
+                    DetermineCentreAndSmallestSphere(start, splitindex+1, left, otp);
+                    right = BuildNodes(splitindex+1, end, otp);
+                    DetermineCentreAndSmallestSphere(splitindex+1, end, right, otp);
                     return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
                     left, right);
                 }
                 else {
                     return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                        BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
+                        BuildNodes(start, splitindex+1, otp), BuildNodes(splitindex+1, end, otp));
                 }
             }
         }
@@ -852,28 +860,32 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             dispfunc=&NBody::KDTree::DispersionPos;
             spreadfunc=&NBody::KDTree::SpreadestPos;
             entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePos;
+            else medianfunc=&NBody::KDTree::MedianPos;
         }
         else if (treetype==TVEL) {
             bmfunc=&NBody::KDTree::BoundaryandMeanVel;
             dispfunc=&NBody::KDTree::DispersionVel;
             spreadfunc=&NBody::KDTree::SpreadestVel;
             entropyfunc=&NBody::KDTree::EntropyVel;
-            medianfunc=&NBody::KDTree::MedianVel;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistanceVel;
+            else medianfunc=&NBody::KDTree::MedianVel;
         }
         else if (treetype==TPHS) {
             bmfunc=&NBody::KDTree::BoundaryandMeanPhs;
             dispfunc=&NBody::KDTree::DispersionPhs;
             spreadfunc=&NBody::KDTree::SpreadestPhs;
             entropyfunc=&NBody::KDTree::EntropyPhs;
-            medianfunc=&NBody::KDTree::MedianPhs;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePhs;
+            else medianfunc=&NBody::KDTree::MedianPhs;
         }
         else if (treetype==TPROJ) {
             bmfunc=&NBody::KDTree::BoundaryandMeanPos;
             dispfunc=&NBody::KDTree::DispersionPos;
             spreadfunc=&NBody::KDTree::SpreadestPos;
             entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePos;
+            else medianfunc=&NBody::KDTree::MedianPos;
         }
         return 1;
         }
@@ -973,8 +985,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       Double_t *Period, Double_t **m,
       bool iBuildInParallel,
       bool iKeepInputOrder,
-      double Rdist2adapt
-)
+      double Rdist2adapt,
+      Double_t AdaptiveMedianFac
+    )
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
@@ -1003,6 +1016,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         scalespace = scale;
         metric = m;
         rdist2adapt = Rdist2adapt;
+        adaptivemedianfac = AdaptiveMedianFac;
         if (Period!=NULL)
         {
             period=new Double_t[3];
@@ -1033,7 +1047,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       Double_t **m,
       bool iBuildInParallel,
       bool iKeepInputOrder,
-      double Rdist2adapt
+      double Rdist2adapt,
+      Double_t AdaptiveMedianFac
     )
     {
 
@@ -1064,6 +1079,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         scalespace = scale;
         metric = m;
         rdist2adapt = Rdist2adapt;
+        adaptivemedianfac = AdaptiveMedianFac;
         if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];
