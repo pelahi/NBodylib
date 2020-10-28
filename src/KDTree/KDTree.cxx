@@ -508,34 +508,97 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     ///between particles. This search is limited to a buffer region around
     ///the median index
     void KDTree::AdjustMedianToMaximalDistancePos(int d,
-        Int_t &split_index, Double_t &splitvalue,
+        Int_t &splitindex, Double_t &splitvalue,
         Int_t bufferwidth, Int_t minbuffersize,
         KDTreeOMPThreadPool &otp)
     {
         if (bufferwidth<minbuffersize) return;
-        UInt_tree_t left = split_index - bufferwidth/2;
-        UInt_tree_t right = split_index + bufferwidth/2;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
         vector<Double_t> x(size);
-        vector<Double_t> indices(size);
         //sort buffer region
         std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
             return a.GetPosition(d) < b.GetPosition(d);
         });
-        UInt_tree_t newsplit_index = left;
-        auto dist = bucket[left+1].GetPosition(d) - bucket[left].GetPosition(d);
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPosition(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
         auto maxdist = dist;
-        for (auto i=left+1; i<right; i++)
+        for (auto i=1; i<size; i++)
         {
-            dist = bucket[i+1].GetPosition(d) - bucket[i].GetPosition(d);
+            dist = x[i+1] - x[i];
             if (dist > maxdist)
             {
                 maxdist = dist;
-                newsplit_index = i;
+                newsplitindex = i+left;
             }
         }
-        splitvalue = bucket[split_index].GetPosition(d);
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
     }
+
+    void KDTree::AdjustMedianToMaximalDistanceVel(int d,
+        Int_t &splitindex, Double_t &splitvalue,
+        Int_t bufferwidth, Int_t minbuffersize,
+        KDTreeOMPThreadPool &otp)
+    {
+        if (bufferwidth<minbuffersize) return;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetVelocity(d) < b.GetVelocity(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetVelocity(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
+    }
+    void KDTree::AdjustMedianToMaximalDistancePhase(int d,
+        Int_t &splitindex, Double_t &splitvalue,
+        Int_t bufferwidth, Int_t minbuffersize,
+        KDTreeOMPThreadPool &otp)
+    {
+        if (bufferwidth<minbuffersize) return;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetPhase(d) < b.GetPhase(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPhase(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
+    }
+
     ///Calculate center and largest sqaured distance for node
     vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
         UInt_tree_t localstart, UInt_tree_t localend,

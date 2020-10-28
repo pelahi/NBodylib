@@ -570,7 +570,15 @@ namespace NBody
         /// is adjust from the median to the point of largest separation
         /// between adjacent particles
         void AdjustMedianToMaximalDistancePos(int d,
-            Int_t &split_index, Double_t &splitvalue,
+            Int_t &splitindex, Double_t &splitvalue,
+            Int_t bufferwidth, Int_t minbuffersize,
+            KDTreeOMPThreadPool &otp);
+        void AdjustMedianToMaximalDistanceVel(int d,
+            Int_t &splitindex, Double_t &splitvalue,
+            Int_t bufferwidth, Int_t minbuffersize,
+            KDTreeOMPThreadPool &otp);
+        void AdjustMedianToMaximalDistancePhase(int d,
+            Int_t &splitindex, Double_t &splitvalue,
             Int_t bufferwidth, Int_t minbuffersize,
             KDTreeOMPThreadPool &otp);
         /// for calculating the centre and distance to furtherts in a bucket
