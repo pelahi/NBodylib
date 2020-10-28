@@ -565,13 +565,20 @@ namespace NBody
         //@}
 
         /// \name Adaptive Tree related functions
-    	/// Qsort for building adaptive KDTree
-    	inline void js_qsort(int js_start, int js_end, int js_dim);
+        //@{
+        /// allow for an approximative binary tree where the split
+        /// is adjust from the median to the point of largest separation
+        /// between adjacent particles
+        void AdjustMedianToMaximalDistancePos(int d,
+            Int_t &split_index, Double_t &splitvalue,
+            Int_t bufferwidth, Int_t minbuffersize,
+            KDTreeOMPThreadPool &otp);
         /// for calculating the centre and distance to furtherts in a bucket
-        inline vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+        vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
             Double_t &farthest, KDTreeOMPThreadPool &);
-        inline void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+        void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
              Node *&node, KDTreeOMPThreadPool &);
+        //@}
 
     };
 
