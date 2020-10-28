@@ -453,7 +453,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
     //@}
-    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+
+    int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp) {
         int splitdim=0;
         Double_t cursplitvalue;
@@ -500,34 +501,111 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         return splitdim;
     }
 
-    inline void KDTree::js_qsort(int js_start, int js_end, int js_dim)
-    {
-	    int js_ind = (js_start + js_end)/2;
-	    int js_i = js_start;
-	    int js_j = js_end;
-	    Double_t js_xx = bucket[js_ind].GetPhase(js_dim);
-	    while(1)
-	    {
-		    while(bucket[js_i].GetPhase(js_dim) < js_xx) js_i++;
-		    while(bucket[js_j].GetPhase(js_dim) > js_xx) js_j--;
 
-		    if(js_i >= js_j) break;
-		    swap(bucket[js_i],bucket[js_j]);
-		    js_i++;
-		    js_j--;
-	    }
-	    if(js_start < js_i - 1) js_qsort(js_start, js_i-1, js_dim);
-	    if(js_j +1 < js_end) js_qsort(js_j + 1, js_end, js_dim);
+    //@{
+    ///adjust the sorted particle array so that the split is not at the median
+    ///but approximative and splits at the particle with the largest distance
+    ///between particles. This search is limited to a buffer region around
+    ///the median index
+    void KDTree::AdjustMedianToMaximalDistancePos(int d,
+        Int_t &splitindex, Double_t &splitvalue,
+        Int_t bufferwidth, Int_t minbuffersize,
+        KDTreeOMPThreadPool &otp)
+    {
+        if (bufferwidth<minbuffersize) return;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetPosition(d) < b.GetPosition(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPosition(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
     }
 
-    inline vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
+    void KDTree::AdjustMedianToMaximalDistanceVel(int d,
+        Int_t &splitindex, Double_t &splitvalue,
+        Int_t bufferwidth, Int_t minbuffersize,
+        KDTreeOMPThreadPool &otp)
+    {
+        if (bufferwidth<minbuffersize) return;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetVelocity(d) < b.GetVelocity(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetVelocity(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
+    }
+    void KDTree::AdjustMedianToMaximalDistancePhase(int d,
+        Int_t &splitindex, Double_t &splitvalue,
+        Int_t bufferwidth, Int_t minbuffersize,
+        KDTreeOMPThreadPool &otp)
+    {
+        if (bufferwidth<minbuffersize) return;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetPhase(d) < b.GetPhase(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPhase(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitvalue = x[newsplitindex-left];
+        splitindex = newsplitindex;
+    }
+
+    ///Calculate center and largest sqaured distance for node
+    vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
         UInt_tree_t localstart, UInt_tree_t localend,
         Double_t &farthest,
         KDTreeOMPThreadPool &otp
         )
     {
-        //Calculate center and largest sqaured distance for node
-
         // get center
         vector<Double_t> center(ND,0), pos(ND);
         Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
@@ -544,30 +622,30 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #ifdef USEOPENMP
 #pragma omp parallel default(shared)
 {
-        // since this is nested thread id doesn't simply map to how
-        // the local for loop is split so construct a tid to index map
-        int tid, count=0;
-        #pragma omp critical
-        {
-            tid = omp_get_thread_num();
-            tidtoindex[tid] = count++;
-        }
-        // determine region of for loop to process
-        tid = tidtoindex[omp_get_thread_num()];
-        threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
-        threadlocalend[tid] = threadlocalstart[tid] + delta;
-        if (tid == nthreads-1) threadlocalend[tid] = localend;
-        vector<Double_t> localcenter(ND,0);
-        #pragma omp for
-        for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
-        {
-            for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
-        }
+            // since this is nested thread id doesn't simply map to how
+            // the local for loop is split so construct a tid to index map
+            int tid, count=0;
+            #pragma omp critical
+            {
+                tid = omp_get_thread_num();
+                tidtoindex[tid] = count++;
+            }
+            // determine region of for loop to process
+            tid = tidtoindex[omp_get_thread_num()];
+            threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
+            threadlocalend[tid] = threadlocalstart[tid] + delta;
+            if (tid == nthreads-1) threadlocalend[tid] = localend;
+            vector<Double_t> localcenter(ND,0);
+            #pragma omp for
+            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            {
+                for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
+            }
 
-        #pragma omp critical
-        {
-            for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
-        }
+            #pragma omp critical
+            {
+                for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
+            }
 }
 #endif
         }
@@ -579,45 +657,45 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             }
         }
         for (auto &c:center) c*= norm;
-
+        //now find most distant particle
         if (nthreads>1) {
 #ifdef USEOPENMP
 #pragma omp parallel default(shared)
 {
-        int tid, count=0;
-        tid = tidtoindex[omp_get_thread_num()];
-        Double_t localmaxr2 = 0 ;
-        #pragma omp for
-        for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
-        {
-            for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-            Double_t r2=0;
-            for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
-            localmaxr2 = std::max(localmaxr2, r2);
-        }
-        #pragma omp critical
-        {
-            maxr2 = std::max(maxr2, localmaxr2);
-        }
+            int tid, count=0;
+            tid = tidtoindex[omp_get_thread_num()];
+            Double_t localmaxr2 = 0 ;
+            #pragma omp for
+            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            {
+                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                Double_t r2=0;
+                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
+                localmaxr2 = std::max(localmaxr2, r2);
+            }
+            #pragma omp critical
+            {
+                maxr2 = std::max(maxr2, localmaxr2);
+            }
 }
 #endif
         }
         else
         {
-        //get largest distance
-        for(auto i=localstart; i<localend;i++)
-        {
-            for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-            Double_t r2=0;
-            for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
-            maxr2 = std::max(maxr2, r2);
-        }
+            //get largest distance
+            for(auto i=localstart; i<localend;i++)
+            {
+                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                Double_t r2=0;
+                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
+                maxr2 = std::max(maxr2, r2);
+            }
         }
         farthest = maxr2;
         return center;
     }
 
-    inline void KDTree::DetermineCentreAndSmallestSphere(
+    void KDTree::DetermineCentreAndSmallestSphere(
         UInt_tree_t localstart, UInt_tree_t localend,
         Node *&node,
         KDTreeOMPThreadPool &otp
@@ -628,7 +706,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         for(auto j=0;j<ND;j++) node->SetCenter(center[j],j);
         node->SetFarthest(maxr2);
     }
-    //-- End of inline functions
+    //@}
 
     //-- Private functions used to build tree
 
