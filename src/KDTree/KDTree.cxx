@@ -732,7 +732,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t localfarthest;
         if (rdist2adapt > 0) {
             center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
-            isleafflag = (localfarthest < rdist2adapt);
+            isleafflag = (localfarthest < rdist2adapt || size <= b);
         }
         else {
             isleafflag = (size <= b);
