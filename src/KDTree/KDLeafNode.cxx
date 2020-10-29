@@ -535,6 +535,7 @@ namespace NBody
         //of center and all other particles in the node are within this linking length
         //from the center
         bool inodeflagged = false;
+	bool snodeflagged = false;
         Double_t maxr2 = 0;
         if (farthest > 0)
         {
@@ -545,7 +546,9 @@ namespace NBody
                 auto dist = bucket[target].GetPhase(j)-center[j];
                 maxr2 += dist*dist;
             }
-            inodeflagged = (maxr2 < fdist2 && farthest < fdist2);
+            //inodeflagged = (maxr2 < fdist2 && farthest < fdist2);
+	    inodeflagged = (abs(sqrt(fdist2) - sqrt(farthest)) >= sqrt(maxr2) && farthest < fdist2);
+	    snodeflagged = sqrt(maxr2) > sqrt(farthest) + sqrt(fdist2);
         }
         else
         {
@@ -559,6 +562,9 @@ namespace NBody
             }
             inodeflagged = (maxr2<fdist2);
         }
+	// if node is outside the search radius, skip this node
+	if (snodeflagged) return;
+
         // if node entirely enclosed, link and flag
         if (inodeflagged)
         {
