@@ -55,10 +55,12 @@ namespace NBody
         UInt_tree_t bucket_start;
         UInt_tree_t bucket_end;
         unsigned short numdim;
-
-	Int_t js_leaf=-1;
-	Double_t js_center[6];
-	Double_t js_farthest=-1.;
+        // stores whether a node is leaf node or not
+	    bool isleaf;
+        // stores the centre of the node
+	    Double_t center[6];
+        // stores the maximum squared distance from the centre of the node to particle contained in a node
+	    Double_t farthest;
         public:
         virtual ~Node() {};
 
@@ -74,21 +76,21 @@ namespace NBody
         virtual Int_t GetStart(){return bucket_start;}
         ///Get end index in particle array of particles enclosed by node
         virtual Int_t GetEnd(){return bucket_end;}
-	///Get Leaf node tag
-	virtual Int_t GetLeaf(){return js_leaf;}
-	///Get Farthest distance
-	virtual Double_t GEtFarthest(){return js_farthest;}
-	///Get Center
-	virtual Double_t GetCenter(int i){return js_center[i];}
+	    ///Get Leaf node tag
+	    virtual bool GetLeaf(){return isleaf;}
+	    ///Get Farthest distance
+	    virtual Double_t GetFarthest(){return farthest;}
+	    ///Get Center
+	    virtual Double_t GetCenter(int i){return center[i];}
         //@}
 
         /// \name Simple Set functions
         //@{
         /// set Id --- use with caution
         virtual void SetID(Int_tree_t id){nid=id;}
-	virtual void SetLeaf(Int_t js_leaftmp){js_leaf=js_leaftmp;}
-	virtual void SetFarthest(Double_t js_fartmp){js_farthest=js_fartmp;}
-	virtual void SetCenter(Double_t centertmp, int i){js_center[i]=centertmp;}
+	    virtual void SetLeaf(bool IsLeaf){isleaf = IsLeaf;}
+	    virtual void SetFarthest(Double_t x){farthest = x;}
+	    virtual void SetCenter(int i, Double_t x){center[i]=x;}
         //@}
 
         /// \name Find Nearest routines:
@@ -267,7 +269,10 @@ namespace NBody
             bucket_end = new_bucket_end;
             left = initial_left;
             right = initial_right;
-            numdim=ndim;
+            numdim = ndim;
+            isleaf = false;
+            farthest = -1;
+            // where is farthest and centre calculated?
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~SplitNode() { delete left; delete right; }
@@ -394,11 +399,13 @@ namespace NBody
         public:
         LeafNode(Int_t id, Int_t new_bucket_start, Int_t new_bucket_end, Double_t bnd[6][2], unsigned short ndim)
         {
-            nid=id;
+            nid = id;
             bucket_start = new_bucket_start;
             bucket_end = new_bucket_end;
-            count=bucket_end-bucket_start;
-            numdim=ndim;
+            count = bucket_end-bucket_start;
+            numdim = ndim;
+            isleaf = true;
+            farthest = -1;
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~LeafNode() { }

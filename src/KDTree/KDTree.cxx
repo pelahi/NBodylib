@@ -323,7 +323,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
     /// \name Determine the median coordinates in some space
     //@{
-    inline Double_t KDTree::MedianPos(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianPos(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -366,7 +366,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    inline Double_t KDTree::MedianVel(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianVel(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -409,7 +409,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    inline Double_t KDTree::MedianPhs(int d, Int_t k, Int_t start, Int_t end,
+    Double_t KDTree::MedianPhs(int d, Int_t &k, Int_t start, Int_t end,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -453,7 +453,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
     }
     //@}
-    inline int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+
+    int KDTree::DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
         KDTreeOMPThreadPool &otp) {
         int splitdim=0;
         Double_t cursplitvalue;
@@ -500,27 +501,220 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         return splitdim;
     }
 
-    inline void KDTree::js_qsort(int js_start, int js_end, int js_dim)
-    {
-	    int js_ind = (js_start + js_end)/2;
-	    int js_i = js_start;
-	    int js_j = js_end;
-	    Double_t js_xx = bucket[js_ind].GetPhase(js_dim);
-	    while(1)
-	    {
-		    while(bucket[js_i].GetPhase(js_dim) < js_xx) js_i++;
-		    while(bucket[js_j].GetPhase(js_dim) > js_xx) js_j--;
 
-		    if(js_i >= js_j) break;
-		    swap(bucket[js_i],bucket[js_j]);
-		    js_i++;
-		    js_j--;
-	    }
-	    if(js_start < js_i - 1) js_qsort(js_start, js_i-1, js_dim);
-	    if(js_j +1 < js_end) js_qsort(js_j + 1, js_end, js_dim);
+    //@{
+    ///adjust the sorted particle array so that the split is not at the median
+    ///but approximative and splits at the particle with the largest distance
+    ///between particles. This search is limited to a buffer region around
+    ///the median index
+    Double_t KDTree::AdjustMedianToMaximalDistancePos(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
+    {
+        Double_t splitvalue = MedianPos(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetPosition(d) < b.GetPosition(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPosition(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
+    }
+    Double_t KDTree::AdjustMedianToMaximalDistanceVel(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
+    {
+        Double_t splitvalue = MedianVel(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetVelocity(d) < b.GetVelocity(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetVelocity(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
+    }
+    Double_t KDTree::AdjustMedianToMaximalDistancePhs(int d,
+        Int_t &splitindex, Int_t trueleft, Int_t trueright,
+        KDTreeOMPThreadPool &otp, bool balanced)
+    {
+        Double_t splitvalue = MedianPhs(d, splitindex, trueleft, trueright, otp, balanced);
+        UInt_tree_t truesize = trueright - trueleft;
+        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
+        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
+        UInt_tree_t left = splitindex - bufferwidth/2;
+        UInt_tree_t right = splitindex + bufferwidth/2;
+        UInt_tree_t size = right - left;
+        vector<Double_t> x(size);
+        //sort buffer region
+        std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
+            return a.GetPhase(d) < b.GetPhase(d);
+        });
+        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPhase(d);
+        UInt_tree_t newsplitindex = left;
+        auto dist = x[1] - x[0];
+        auto maxdist = dist;
+        for (auto i=1; i<size; i++)
+        {
+            dist = x[i+1] - x[i];
+            if (dist > maxdist)
+            {
+                maxdist = dist;
+                newsplitindex = i+left;
+            }
+        }
+        splitindex = newsplitindex;
+        splitvalue = x[newsplitindex-left];
+        return splitvalue;
     }
 
-    //-- End of inline functions
+    ///Calculate center and largest sqaured distance for node
+    vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
+        UInt_tree_t localstart, UInt_tree_t localend,
+        Double_t &farthest,
+        KDTreeOMPThreadPool &otp
+        )
+    {
+        // get center
+        vector<Double_t> center(ND,0), pos(ND);
+        Double_t norm = 1.0/(static_cast<Double_t>(localend-localstart));
+        Double_t maxr2 = 0.0;
+        unsigned int nthreads = 1;
+#ifdef USEOPENMP
+        nthreads = min((unsigned int)(floor((localend - localstart)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+        UInt_tree_t delta = ceil((localend - localstart)/(double)nthreads);
+        unordered_map<int, int> tidtoindex;
+        vector<UInt_tree_t> threadlocalstart, threadlocalend;
+#endif
+        if (nthreads>1) {
+#ifdef USEOPENMP
+#pragma omp parallel default(shared)
+{
+            // since this is nested thread id doesn't simply map to how
+            // the local for loop is split so construct a tid to index map
+            int tid, count=0;
+            #pragma omp critical
+            {
+                tid = omp_get_thread_num();
+                tidtoindex[tid] = count++;
+            }
+            // determine region of for loop to process
+            tid = tidtoindex[omp_get_thread_num()];
+            threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
+            threadlocalend[tid] = threadlocalstart[tid] + delta;
+            if (tid == nthreads-1) threadlocalend[tid] = localend;
+            vector<Double_t> localcenter(ND,0);
+            #pragma omp for
+            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            {
+                for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
+            }
+
+            #pragma omp critical
+            {
+                for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
+            }
+}
+#endif
+        }
+        else
+        {
+            for(auto i=localstart; i<localend;i++)
+            {
+                for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
+            }
+        }
+        for (auto &c:center) c*= norm;
+        //now find most distant particle
+        if (nthreads>1) {
+#ifdef USEOPENMP
+#pragma omp parallel default(shared)
+{
+            int tid, count=0;
+            tid = tidtoindex[omp_get_thread_num()];
+            Double_t localmaxr2 = 0 ;
+            #pragma omp for
+            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            {
+                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                Double_t r2=0;
+                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
+                localmaxr2 = std::max(localmaxr2, r2);
+            }
+            #pragma omp critical
+            {
+                maxr2 = std::max(maxr2, localmaxr2);
+            }
+}
+#endif
+        }
+        else
+        {
+            //get largest distance
+            for(auto i=localstart; i<localend;i++)
+            {
+                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                Double_t r2=0;
+                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
+                maxr2 = std::max(maxr2, r2);
+            }
+        }
+        farthest = maxr2;
+        return center;
+    }
+
+    void KDTree::DetermineCentreAndSmallestSphere(
+        UInt_tree_t localstart, UInt_tree_t localend,
+        Node *&node,
+        KDTreeOMPThreadPool &otp
+    )
+    {
+        Double_t maxr2;
+        vector<Double_t> center = DetermineCentreAndSmallestSphere(localstart, localend, maxr2, otp);
+        for(auto j=0;j<ND;j++) node->SetCenter(center[j],j);
+        node->SetFarthest(maxr2);
+    }
+    //@}
 
     //-- Private functions used to build tree
 
@@ -539,25 +733,38 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             id = numnodes;
             numnodes++;
         }
-        if (size <= b)
+        // PJE:: addition to check whether tree is adaptively constructured
+        //
+        bool isleafflag;
+        vector<Double_t> center;
+        Double_t localfarthest;
+        if (rdist2adapt > 0) {
+            center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
+            isleafflag = (localfarthest < rdist2adapt || size <= b);
+        }
+        else {
+            isleafflag = (size <= b);
+        }
+        if (isleafflag)
         {
             if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-	    LeafNode *js_LN;
-	    js_LN = new LeafNode(id ,start, end,  bnd, ND);
-	    js_LN->SetLeaf(1);
-
-	    return js_LN;
+            Node * leaf = new LeafNode(id, start, end,  bnd, ND);
+            if (rdist2adapt > 0)
+            {
+                leaf->SetFarthest(localfarthest);
+                for (int j=0;j<ND;j++) leaf->SetCenter(j,center[j]);
+            }
+            return leaf;
         }
         else
         {
 
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
-            Int_t k = start + (size - 1) / 2;
             int splitdim = DetermineSplitDim(start, end, bnd, otp);
-            Double_t splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
+            Int_t splitindex = start + (size - 1) / 2;
+            Double_t splitvalue = (this->*medianfunc)(splitdim, splitindex, start, end, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
@@ -568,9 +775,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 #pragma omp single
                 {
                     #pragma omp task
-                    left = BuildNodes(start, k+1, newotp[0]);
+                    left = BuildNodes(start, splitindex+1, newotp[0]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(start, splitindex+1, left, newotp[0]);
                     #pragma omp task
-                    right = BuildNodes(k+1, end, newotp[1]);
+                    right = BuildNodes(splitindex+1, end, newotp[1]);
+                    if (rdist2adapt>0) DetermineCentreAndSmallestSphere(splitindex+1, end, right, newotp[1]);
                     #pragma omp taskwait
                 }
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
@@ -578,505 +787,21 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
             }
             else {
-                return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                    BuildNodes(start, k+1, otp), BuildNodes(k+1, end, otp));
+                if (rdist2adapt > 0) {
+                    Node *left, *right;
+                    left = BuildNodes(start, splitindex+1, otp);
+                    DetermineCentreAndSmallestSphere(start, splitindex+1, left, otp);
+                    right = BuildNodes(splitindex+1, end, otp);
+                    DetermineCentreAndSmallestSphere(splitindex+1, end, right, otp);
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                    left, right);
+                }
+                else {
+                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                        BuildNodes(start, splitindex+1, otp), BuildNodes(splitindex+1, end, otp));
+                }
             }
         }
-    }
-
-    ///--JS--
-    /// Build OMP Domains by using Adaptive KDTree. OMP domains are decomposed by considering
-    /// interparticle distances to avoid an overhead when linking across OMP domains
-    Node *KDTree::BuildNodes_OMP(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
-    {
-	    Double_t bnd[6][2];
-	    Int_t size = end - start, k;
-	    Int_tree_t id = 0;
-	    int splitdim;
-	    Double_t splitvalue;
-	    int js_ind0 = start;
-	    int js_ind1 = end-1;
-	    int js_ompskip=-1;
-
-        
-	    //if not building in parallel can set ids here and update number of nodes
-	    //otherwise, must set after construction
-	    if (ibuildinparallel == false) {
-		    id = numnodes;
-		    numnodes++;
-	    }
-
-	    //See whether this OMP region is further decomposed or not.
-	    //If the maximum interparticle distance is quite larger than the linking length,
-	    // decompose the domain further.
-	    if (size <= b){
-		    js_ompskip=1;
-		    if(size > 1000000){ // Minimum size of OMP domain (arbitrary chosen)
-			    double js_dx=0., js_dx2;
-			    int js_nn = (end - start) / 8; // Buffer for splitting
-			    for(int js_dim=0; js_dim<ND; js_dim++){
-				    js_qsort(js_ind0, js_ind1, js_dim);
-				    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-					    js_dx2 = abs(bucket[js_ind+1].GetPhase(js_dim) - bucket[js_ind].GetPhase(js_dim));
-					    if(js_dx2 > js_dx) js_dx = js_dx2;
-				    }
-
-				    if(js_dx > 2.0*js_rdist){js_ompskip=-1; break;}
-				    js_dx = 0.;
-			    }
-		    }
-
-	    }
-
-	    //Leaf Node Construction
-	    if (js_ompskip>0){
-		    if (ibuildinparallel == false) numleafnodes++;
-		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-		    LeafNode *js_LN;
-		    js_LN = new LeafNode(id, start, end, bnd, ND);
-		    js_LN->SetLeaf(1);
-
-		    return js_LN;
-	    }
-	    else
-	    {
-		    bool irearrangeandbalance=true;
-		    if (ikeepinputorder) irearrangeandbalance=false;
-
-		    splitdim = DetermineSplitDim(start, end, bnd, otp);
-		    js_qsort(js_ind0, js_ind1, splitdim);
-
-		    double js_dx=0., js_dx2;
-		    int js_nn = (end - start) / 8;
-
-		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
-			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
-		    }
-	    }
-
-	    //Now Split the node
-	    //run the node construction in parallel
-	    if (ibuildinparallel && otp.nactivethreads > 1) {
-		    //note that if OpenMP not defined then ibuildinparallel is false
-#ifdef USEOPENMP
-		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
-		    Node *left, *right;
-
-		    #pragma omp parallel default(shared) num_threads(2)
-		    #pragma omp single
-		    {
-			    #pragma omp task
-			    left = BuildNodes_OMP(start, k+1, newotp[0]);
-			    #pragma omp task
-			    right = BuildNodes_OMP(k+1, end, newotp[1]);
-			    #pragma omp taskwait
-		    }
-
-                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                        left, right);
-#endif
-	    }
-	    else {
-		    Node *left, *right;
-
-		    left = BuildNodes_OMP(start, k+1, otp);
-		    right = BuildNodes_OMP(k+1, end, otp);
-
-                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                        left, right);
-	    }	    
-    }
-    
-    ///--JS--
-    /// Build Normal Adaptive KDTree
-    Node *KDTree::BuildNodes_ADT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp)
-    {
-	    Double_t bnd[6][2];
-	    Int_t size = end - start, k;
-	    Int_tree_t id = 0;
-	    int splitdim;
-	    Double_t splitvalue;
-	    int js_ind0 = start;
-	    int js_ind1 = end-1;
-
-        
-	    //if not building in parallel can set ids here and update number of nodes
-	    //otherwise, must set after construction
-	    if (ibuildinparallel == false) {
-		    id = numnodes;
-		    numnodes++;
-	    }
-
-	    //Leaf Node Construction
-	    if (size <= b){
-		    if (ibuildinparallel == false) numleafnodes++;
-		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-		    LeafNode *js_LN;
-		    js_LN = new LeafNode(id, start, end, bnd, ND);
-		    js_LN->SetLeaf(1);
-
-		    return js_LN;
-	    }
-	    else
-	    {
-		    bool irearrangeandbalance=true;
-		    if (ikeepinputorder) irearrangeandbalance=false;
-
-		    splitdim = DetermineSplitDim(start, end, bnd, otp);
-		    js_qsort(js_ind0, js_ind1, splitdim);
-
-		    double js_dx=0., js_dx2;
-		    int js_nn = (end - start) / 8;
-
-		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
-			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
-		    }
-	    }
-
-	    //Now Split the node
-	    //run the node construction in parallel
-	    if (ibuildinparallel && otp.nactivethreads > 1) {
-		    //note that if OpenMP not defined then ibuildinparallel is false
-#ifdef USEOPENMP
-		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
-		    Node *left, *right;
-
-		    #pragma omp parallel default(shared) num_threads(2)
-		    #pragma omp single
-		    {
-			    #pragma omp task
-			    left = BuildNodes_ADT(start, k+1, newotp[0]);
-			    #pragma omp task
-			    right = BuildNodes_ADT(k+1, end, newotp[1]);
-			    #pragma omp taskwait
-		    }
-
-		    //Now save the largest distance from the center of this node
-		    //Here, the center is just defined as the mean coordinates of the included particles
-		    //TO DO LIST
-		    //	Define center by using the 'finding the smallest sphere' algorithm
-		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
-
-		    //Left
-		    Double_t js_center[ND], js_centertmp, js_pos[ND];
-		    Double_t js_dd=-1, js_dd2;
-
-		    //Left - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(int js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
-		    }
-		    for(int js_i=0; js_i<ND; js_i++) left->SetCenter(js_center[js_i],js_i);
-
-		    //Left - largest distance
-		    for(int js_i=start; js_i<k+1; js_i++){
-			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
-			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    left->SetFarthest(js_dd);
-
-		    //Right
-		    js_dd = -1.;
-		    //Right - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(int js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
-		    }
-		    for(int js_i=0; js_i<ND; js_i++) right->SetCenter(js_center[js_i],js_i);
-
-		    //Right - largest distance
-		    for(int js_i=k+1; js_i<end; js_i++){
-			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
-			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    right->SetFarthest(js_dd);
-
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-
-#endif
-	    }
-	    else {
-		    Node *left, *right;
-
-		    left = BuildNodes_ADT(start, k+1, otp);
-		    right = BuildNodes_ADT(k+1, end, otp);
-
-		    //Now save the largest distance from the center of this node
-		    //Here, the center is just defined as the mean coordinates of the included particles
-		    //TO DO LIST
-		    //	Define center by using the 'finding the smallest sphere' algorithm
-		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
-
-		    //Left
-		    Double_t js_center[ND], js_centertmp, js_pos[ND];
-		    Double_t js_dd=-1, js_dd2;
-
-		    //Left - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(int js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
-		    }
-		    for(int js_i=0; js_i<ND; js_i++) left->SetCenter(js_center[js_i],js_i);
-
-		    //Left - largest distance
-		    for(int js_i=start; js_i<k+1; js_i++){
-			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
-			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    left->SetFarthest(js_dd);
-
-		    //Right
-		    js_dd = -1.;
-		    //Right - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(int js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
-		    }
-		    for(int js_i=0; js_i<ND; js_i++) right->SetCenter(js_center[js_i],js_i);
-
-		    //Right - largest distance
-		    for(int js_i=k+1; js_i<end; js_i++){
-			    for(int js_j=0; js_j<ND; js_j++) js_pos[js_j] = bucket[js_i].GetPhase(js_j);
-			    js_dd2 = DistanceSqd(js_pos, js_center, ND);
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    right->SetFarthest(js_dd);
-
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-	    }	    
-    }
-    
-    ///--JS--
-    /// Build Normal Adaptive KDTree for FOFSearchCriterion
-    Node *KDTree::BuildNodes_CRIT(Int_t start, Int_t end, KDTreeOMPThreadPool &otp, Double_t *param)
-    {
-	    Double_t bnd[6][2];
-	    Int_t size = end - start, k;
-	    Int_tree_t id = 0;
-	    int splitdim;
-	    Double_t splitvalue;
-	    int js_ind0 = start;
-	    int js_ind1 = end-1;
-
-        
-	    //if not building in parallel can set ids here and update number of nodes
-	    //otherwise, must set after construction
-	    if (ibuildinparallel == false) {
-		    id = numnodes;
-		    numnodes++;
-	    }
-
-	    //Leaf Node Construction
-	    if (size <= b){
-		    if (ibuildinparallel == false) numleafnodes++;
-		    for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-
-		    LeafNode *js_LN;
-		    js_LN = new LeafNode(id, start, end, bnd, ND);
-		    js_LN->SetLeaf(1);
-
-		    return js_LN;
-	    }
-	    else
-	    {
-		    bool irearrangeandbalance=true;
-		    if (ikeepinputorder) irearrangeandbalance=false;
-
-		    //--JS--
-		    //Should scale phase-space coordinates first otherwise the split dimension
-		    // incorrectly chosen, which results in very poor performance in the core 
-		    // search.
-		    Double_t js_xc = 1.0/sqrt(param[1]);
-		    Double_t js_vc = 1.0/sqrt(param[2]);
-
-		    for(Int_t js_i=start; js_i<end; js_i++) bucket[js_i].ScalePhase(js_xc, js_vc);
-		    splitdim = DetermineSplitDim(start, end, bnd, otp);
-
-		    js_xc = 1.0/js_xc;
-		    js_vc = 1.0/js_vc;
-		    for(Int_t js_i=start; js_i<end; js_i++) bucket[js_i].ScalePhase(js_xc, js_vc);
-
-		    js_qsort(js_ind0, js_ind1, splitdim);
-
-		    double js_dx=0., js_dx2;
-		    int js_nn = (end - start) / 8;
-
-		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
-			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
-		    }
-	    }
-
-	    //Now Split the node
-	    //run the node construction in parallel
-	    if (ibuildinparallel && otp.nactivethreads > 1) {
-		    //note that if OpenMP not defined then ibuildinparallel is false
-#ifdef USEOPENMP
-		    vector<KDTreeOMPThreadPool> newotp = OMPSplitThreadPool(otp);
-		    Node *left, *right;
-
-		    #pragma omp parallel default(shared) num_threads(2)
-		    #pragma omp single
-		    {
-			    #pragma omp task
-			    left = BuildNodes_CRIT(start, k+1, newotp[0], param);
-			    #pragma omp task
-			    right = BuildNodes_CRIT(k+1, end, newotp[1], param);
-			    #pragma omp taskwait
-		    }
-
-		    //Now save the largest distance from the center of this node
-		    //Here, the center is just defined as the mean coordinates of the included particles
-		    //TO DO LIST
-		    //	Define center by using the 'finding the smallest sphere' algorithm
-		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
-
-		    //Left
-		    Double_t js_center[ND], js_centertmp, js_pos[3], js_vel[3];
-		    Double_t js_cenPos[3], js_cenVel[3];
-		    Double_t js_dd=-1, js_dd2;
-
-		    //Left - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(Int_t js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
-		    }
-
-		    for(int js_i=0; js_i<ND; js_i++){
-			    left->SetCenter(js_center[js_i], js_i);
-			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
-		    }
-
-		    //Left - Largest Distance
-		    for(Int_t js_i=start; js_i<k+1; js_i++){
-			    js_dd2 = 0.;
-			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
-			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
-			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
-			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
-
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    left->SetFarthest(js_dd);
-
-		    //Right
-		    js_dd = -1.;
-		    //Right - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(Int_t js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
-		    }
-
-		    for(int js_i=0; js_i<ND; js_i++){
-			    right->SetCenter(js_center[js_i], js_i);
-			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
-		    }
-
-		    //Right - largest distance
-		    for(Int_t js_i=k+1; js_i<end; js_i++){
-			    js_dd2 = 0.;
-			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
-			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
-
-			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
-			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
-
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    right->SetFarthest(js_dd);
-
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-
-#endif
-	    }
-	    else {
-		    Node *left, *right;
-
-		    left = BuildNodes_CRIT(start, k+1, otp, param);
-		    right = BuildNodes_CRIT(k+1, end, otp, param);
-
-		    //Now save the largest distance from the center of this node
-		    //Here, the center is just defined as the mean coordinates of the included particles
-		    //TO DO LIST
-		    //	Define center by using the 'finding the smallest sphere' algorithm
-		    //	(https://en.wikipedia.org/wiki/Smallest-circle_problem)
-
-		    //Left
-		    Double_t js_center[ND], js_centertmp, js_pos[3], js_vel[3];
-		    Double_t js_cenPos[3], js_cenVel[3];
-		    Double_t js_dd=-1, js_dd2;
-
-		    //Left - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(Int_t js_i=start; js_i<k+1; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (k+1 - start));
-		    }
-
-		    for(int js_i=0; js_i<ND; js_i++){
-			    left->SetCenter(js_center[js_i], js_i);
-			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
-		    }
-
-		    //Left - Largest Distance
-		    for(Int_t js_i=start; js_i<k+1; js_i++){
-			    js_dd2 = 0.;
-			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
-			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
-			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
-			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
-
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    left->SetFarthest(js_dd);
-
-		    //Right
-		    js_dd = -1.;
-		    //Right - Define Center
-		    for(int js_j=0; js_j<ND; js_j++){
-			    js_centertmp=0.;
-			    for(Int_t js_i=k+1; js_i<end; js_i++) js_centertmp += bucket[js_i].GetPhase(js_j);
-			    js_center[js_j] = js_centertmp / (Double_t (end - (k+1)));
-		    }
-
-		    for(int js_i=0; js_i<ND; js_i++){
-			    right->SetCenter(js_center[js_i], js_i);
-			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
-		    }
-
-		    //Right - largest distance
-		    for(Int_t js_i=k+1; js_i<end; js_i++){
-			    js_dd2 = 0.;
-			    for(int js_j=0; js_j<3; js_j++) js_pos[js_j] = bucket[js_i].GetPosition(js_j);
-			    if(ND==6) for(int js_j=0; js_j<3; js_j++) js_vel[js_j] = bucket[js_i].GetVelocity(js_j);
-
-			    js_dd2 += DistanceSqd(js_pos, js_cenPos, 3)/param[1];
-			    if(ND==6) js_dd2 += DistanceSqd(js_vel, js_cenVel, 3)/param[2];
-
-			    if(js_dd2 > js_dd) js_dd = js_dd2;
-		    }
-		    right->SetFarthest(js_dd);
-
-
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
-	    }	    
     }
 
     ///scales the space and calculates the corrected volumes
@@ -1135,28 +860,32 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             dispfunc=&NBody::KDTree::DispersionPos;
             spreadfunc=&NBody::KDTree::SpreadestPos;
             entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePos;
+            else medianfunc=&NBody::KDTree::MedianPos;
         }
         else if (treetype==TVEL) {
             bmfunc=&NBody::KDTree::BoundaryandMeanVel;
             dispfunc=&NBody::KDTree::DispersionVel;
             spreadfunc=&NBody::KDTree::SpreadestVel;
             entropyfunc=&NBody::KDTree::EntropyVel;
-            medianfunc=&NBody::KDTree::MedianVel;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistanceVel;
+            else medianfunc=&NBody::KDTree::MedianVel;
         }
         else if (treetype==TPHS) {
             bmfunc=&NBody::KDTree::BoundaryandMeanPhs;
             dispfunc=&NBody::KDTree::DispersionPhs;
             spreadfunc=&NBody::KDTree::SpreadestPhs;
             entropyfunc=&NBody::KDTree::EntropyPhs;
-            medianfunc=&NBody::KDTree::MedianPhs;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePhs;
+            else medianfunc=&NBody::KDTree::MedianPhs;
         }
         else if (treetype==TPROJ) {
             bmfunc=&NBody::KDTree::BoundaryandMeanPos;
             dispfunc=&NBody::KDTree::DispersionPos;
             spreadfunc=&NBody::KDTree::SpreadestPos;
             entropyfunc=&NBody::KDTree::EntropyPos;
-            medianfunc=&NBody::KDTree::MedianPos;
+            if (adaptivemedianfac > 0) medianfunc=&NBody::KDTree::AdjustMedianToMaximalDistancePos;
+            else medianfunc=&NBody::KDTree::MedianPos;
         }
         return 1;
         }
@@ -1214,8 +943,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     {
         node->SetID(numnodes++);
         //walk tree increasing
-        //if (node->GetCount() <= b) {
-	if(node->GetLeaf() > 0){
+	    if(node->GetLeaf() > 0){
             numleafnodes++;
             return;
         }
@@ -1241,8 +969,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         cout<<"At node "<<" "<<id<<" "<<start<<" "<<end<<" ";
         for (auto j=0;j<ND;j++)  cout<<"("<<node->GetBoundary(j,0)<<", "<<node->GetBoundary(j,1)<<")";
         cout<<endl;
-        //if (node->GetCount() > b) {
-	if(node->GetLeaf() < 0){
+	    if(node->GetLeaf() < 0){
             WalkNode(((SplitNode*)node)->GetLeft());
             WalkNode(((SplitNode*)node)->GetRight());
         }
@@ -1257,7 +984,10 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       int criterion, int aniso, int scale,
       Double_t *Period, Double_t **m,
       bool iBuildInParallel,
-      bool iKeepInputOrder)
+      bool iKeepInputOrder,
+      double Rdist2adapt,
+      Double_t AdaptiveMedianFac
+    )
     {
         iresetorder=true;
         ikeepinputorder = iKeepInputOrder;
@@ -1285,6 +1015,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
+        rdist2adapt = Rdist2adapt;
+        adaptivemedianfac = AdaptiveMedianFac;
         if (Period!=NULL)
         {
             period=new Double_t[3];
@@ -1314,7 +1046,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       int ttype, int smfunctype, int smres, int criterion, int aniso, int scale,
       Double_t **m,
       bool iBuildInParallel,
-      bool iKeepInputOrder
+      bool iKeepInputOrder,
+      double Rdist2adapt,
+      Double_t AdaptiveMedianFac
     )
     {
 
@@ -1344,6 +1078,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         anisotropic=aniso;
         scalespace = scale;
         metric = m;
+        rdist2adapt = Rdist2adapt;
+        adaptivemedianfac = AdaptiveMedianFac;
         if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];
@@ -1366,192 +1102,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         omp_set_nested(inested);
 #endif
     }
-    //KDTree for OMP building (specified by the first Double_t)
-    KDTree::KDTree(Double_t rdist, Particle *p, Int_t nparts, Int_t bucket_size,
-      int ttype, int smfunctype, int smres,
-      int criterion, int aniso, int scale,
-      Double_t *Period, Double_t **m,
-      bool iBuildInParallel,
-      bool iKeepInputOrder)
-    {
-        iresetorder=true;
-        ikeepinputorder = iKeepInputOrder;
-        ibuildinparallel = false;
-#ifdef USEOPENMP
-        ibuildinparallel = iBuildInParallel;
-        bool inested = omp_get_nested();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
-        }
-        if (nthreads == 1) ibuildinparallel = false;
-        if (inested == false) omp_set_nested(int(ibuildinparallel));
-#endif
-        numparts = nparts;
-        numleafnodes=numnodes=0;
-        bucket = p;
-        b = bucket_size;
-        treetype = ttype;
-        kernfunctype = smfunctype;
-        kernres = smres;
-        splittingcriterion = criterion;
-        anisotropic=aniso;
-        scalespace = scale;
-        metric = m;
-	js_rdist = rdist;
-        if (Period!=NULL)
-        {
-            period=new Double_t[3];
-            for (int k=0;k<3;k++) period[k]=Period[k];
-        }
-        else period=NULL;
-        if (TreeTypeCheck()) {
-            KernelConstruction();
-            for (Int_t i = 0; i < numparts; i++) bucket[i].SetID(i);
-            vol=1.0;ivol=1.0;
-            for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
-            if (scalespace) ScaleSpace();
-            for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
-            KDTreeOMPThreadPool otp = OMPInitThreadPool();
-            root=BuildNodes_OMP(0,numparts, otp);
-            if (ibuildinparallel) BuildNodeIDs();
-            //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
-        }
-#ifdef USEOPENMP
-        omp_set_nested(inested);
-#endif
-    }
-
-    //KDTree for normal adaptive KDTree building (specified by the first interger)
-    KDTree::KDTree(Int_t js_int, Particle *p, Int_t nparts, Int_t bucket_size,
-      int ttype, int smfunctype, int smres,
-      int criterion, int aniso, int scale,
-      Double_t *Period, Double_t **m,
-      bool iBuildInParallel,
-      bool iKeepInputOrder)
-    {
-        iresetorder=true;
-        ikeepinputorder = iKeepInputOrder;
-        ibuildinparallel = false;
-#ifdef USEOPENMP
-        ibuildinparallel = iBuildInParallel;
-        bool inested = omp_get_nested();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
-        }
-        if (nthreads == 1) ibuildinparallel = false;
-        if (inested == false) omp_set_nested(int(ibuildinparallel));
-#endif
-        numparts = nparts;
-        numleafnodes=numnodes=0;
-        bucket = p;
-        b = bucket_size;
-        treetype = ttype;
-        kernfunctype = smfunctype;
-        kernres = smres;
-        splittingcriterion = criterion;
-        anisotropic=aniso;
-        scalespace = scale;
-        metric = m;
-
-        if (Period!=NULL)
-        {
-            period=new Double_t[3];
-            for (int k=0;k<3;k++) period[k]=Period[k];
-        }
-        else period=NULL;
-        if (TreeTypeCheck()) {
-            KernelConstruction();
-            for (Int_t i = 0; i < numparts; i++) bucket[i].SetID(i);
-            vol=1.0;ivol=1.0;
-            for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
-            if (scalespace) ScaleSpace();
-            for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
-            KDTreeOMPThreadPool otp = OMPInitThreadPool();
-            root=BuildNodes_ADT(0,numparts, otp);
-	    root->SetFarthest(1e31);
-	    for(int js_i=0; js_i<ND; js_i++) root->SetCenter(0., js_i);
-
-            if (ibuildinparallel) BuildNodeIDs();
-            //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
-        }
-#ifdef USEOPENMP
-        omp_set_nested(inested);
-#endif
-    }
-
-    //KDTree for the FOFSearchCriterion routine (specified by the first two Double_t)
-    KDTree::KDTree(Double_t rdist, Double_t *param, Particle *p, Int_t nparts, Int_t bucket_size,
-      int ttype, int smfunctype, int smres,
-      int criterion, int aniso, int scale,
-      Double_t *Period, Double_t **m,
-      bool iBuildInParallel,
-      bool iKeepInputOrder)
-    {
-        iresetorder=true;
-        ikeepinputorder = iKeepInputOrder;
-        ibuildinparallel = false;
-#ifdef USEOPENMP
-        ibuildinparallel = iBuildInParallel;
-        bool inested = omp_get_nested();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
-        }
-        if (nthreads == 1) ibuildinparallel = false;
-        if (inested == false) omp_set_nested(int(ibuildinparallel));
-#endif
-        numparts = nparts;
-        numleafnodes=numnodes=0;
-        bucket = p;
-        b = bucket_size;
-        treetype = ttype;
-        kernfunctype = smfunctype;
-        kernres = smres;
-        splittingcriterion = criterion;
-        anisotropic=aniso;
-        scalespace = scale;
-        metric = m;
-	js_rdist = rdist;
-
-        if (Period!=NULL)
-        {
-            period=new Double_t[3];
-            for (int k=0;k<3;k++) period[k]=Period[k];
-        }
-        else period=NULL;
-        if (TreeTypeCheck()) {
-            KernelConstruction();
-            for (Int_t i = 0; i < numparts; i++) bucket[i].SetID(i);
-            vol=1.0;ivol=1.0;
-            for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
-            if (scalespace) ScaleSpace();
-            for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
-            KDTreeOMPThreadPool otp = OMPInitThreadPool();
-            root=BuildNodes_CRIT(0,numparts, otp, param);
-	    root->SetFarthest(1e31);
-	    for(int js_i=0; js_i<ND; js_i++) root->SetCenter(0., js_i);
-
-            if (ibuildinparallel) BuildNodeIDs();
-            //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
-        }
-#ifdef USEOPENMP
-        omp_set_nested(inested);
-#endif
-    }
 
     KDTree::~KDTree()
     {
@@ -1560,7 +1110,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             delete[] Kernel;
             delete[] derKernel;
             if (period!=NULL) delete[] period;
-            if (iresetorder) qsort(bucket, numparts, sizeof(Particle), IDCompare);
+            if (iresetorder) std::sort(bucket, bucket + numparts, IDCompareVec);
             if (scalespace) {
             for (Int_t i=0;i<numparts;i++)
                 for (int j=0;j<3;j++) {
@@ -1595,7 +1145,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         ompthreadpool.nactivethreads = ompthreadpool.nthreads;
         ompthreadpool.activethreadids.resize(ompthreadpool.nactivethreads);
-        for (auto i=0;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
+        for (auto i=0u;i<ompthreadpool.nactivethreads;i++) ompthreadpool.activethreadids[i]=i;
 #endif
         return ompthreadpool;
     }
@@ -1611,9 +1161,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             newthreadpool[1].nactivethreads = ompthreadpool.nactivethreads - newthreadpool[0].nactivethreads;
             newthreadpool[0].activethreadids.resize(newthreadpool[0].nactivethreads);
             newthreadpool[1].activethreadids.resize(newthreadpool[1].nactivethreads);
-            for (auto i=0;i<newthreadpool[0].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[0].nactivethreads;i++)
                 newthreadpool[0].activethreadids[i] = ompthreadpool.activethreadids[i];
-            for (auto i=0;i<newthreadpool[1].nactivethreads;i++)
+            for (auto i=0u;i<newthreadpool[1].nactivethreads;i++)
                 newthreadpool[1].activethreadids[i] = ompthreadpool.activethreadids[i+newthreadpool[0].nactivethreads];
         }
 #endif
