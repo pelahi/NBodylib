@@ -523,11 +523,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
             return a.GetPosition(d) < b.GetPosition(d);
         });
-        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPosition(d);
+        for (auto i=0;i<size;i++) x[i] = bucket[left+i].GetPosition(d);
         UInt_tree_t newsplitindex = left;
-        auto dist = x[1] - x[0];
+	auto indbuf = size / 8; 
+        auto dist = x[indbuf+1] - x[indbuf];
         auto maxdist = dist;
-        for (auto i=1; i<size; i++)
+        for (auto i=indbuf; i<size-indbuf; i++)
         {
             dist = x[i+1] - x[i];
             if (dist > maxdist)
@@ -556,11 +557,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
             return a.GetVelocity(d) < b.GetVelocity(d);
         });
-        for (auto i=0;i<size;i++) x[i] = bucket[left].GetVelocity(d);
+        for (auto i=0;i<size;i++) x[i] = bucket[left+i].GetVelocity(d);
         UInt_tree_t newsplitindex = left;
-        auto dist = x[1] - x[0];
+	auto indbuf = size / 8;
+        auto dist = x[indbuf+1] - x[indbuf];
         auto maxdist = dist;
-        for (auto i=1; i<size; i++)
+        for (auto i=indbuf; i<size-indbuf; i++)
         {
             dist = x[i+1] - x[i];
             if (dist > maxdist)
@@ -589,11 +591,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         std::sort(&bucket[left], &bucket[left] + size, [&d](const Particle &a, const Particle &b) {
             return a.GetPhase(d) < b.GetPhase(d);
         });
-        for (auto i=0;i<size;i++) x[i] = bucket[left].GetPhase(d);
+        for (auto i=0;i<size;i++) x[i] = bucket[left+i].GetPhase(d);
         UInt_tree_t newsplitindex = left;
-        auto dist = x[1] - x[0];
+	auto indbuf = size / 8;
+        auto dist = x[indbuf+1] - x[indbuf];
         auto maxdist = dist;
-        for (auto i=1; i<size; i++)
+        for (auto i=indbuf; i<size-indbuf; i++)
         {
             dist = x[i+1] - x[i];
             if (dist > maxdist)
@@ -663,11 +666,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             {
                 for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
             }
-	    cout<<"	"<<center[0]<<endl;
 //        }
         for (auto &c:center) c*= norm;
 
-	    cout<<"	"<<center[0]<<endl;
         //now find most distant particle
 //        if (nthreads>1) {
 //#ifdef USEOPENMP
@@ -743,7 +744,28 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t localfarthest;
         if (rdist2adapt > 0) {
             center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
-            isleafflag = (localfarthest < rdist2adapt || size <= b);
+            //isleafflag = (localfarthest < rdist2adapt || size <= b);
+	    // -- Jinsu --
+	    //
+	    // This is not what I intended previously. 'localfarthest' distance is the farthest
+	    // distance from the center and it's only to check whether a search node is inside
+	    // search distance or not.
+	    //
+	    // What I previously intend is that if there is a position where single interparticle
+	    // distance is larger than the linking legnth then split that domain further.
+	    // So I add it below
+
+
+	    // Get maximum single interparticle distance	    
+	    int splitdim = DetermineSplitDim(start, end, bnd, otp);
+	    Double_t singleinterdist = -1.;
+	    Int_t adaptbuf = (end - start) / 8 ;
+	    for(auto i=start + adaptbuf; i<end - adaptbuf; i++) 
+	    {
+		Double_t checkdist = (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim)) * (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim));
+		singleinterdist = std::max(singleinterdist, checkdist);
+	    }
+	    isleafflag = (size <= b && singleinterdist < rdist2adapt);
         }
         else {
             isleafflag = (size <= b);
