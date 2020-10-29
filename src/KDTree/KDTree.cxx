@@ -626,70 +626,73 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         unordered_map<int, int> tidtoindex;
         vector<UInt_tree_t> threadlocalstart, threadlocalend;
 #endif
-        if (nthreads>1) {
-#ifdef USEOPENMP
-#pragma omp parallel default(shared)
-{
-            // since this is nested thread id doesn't simply map to how
-            // the local for loop is split so construct a tid to index map
-            int tid, count=0;
-            #pragma omp critical
-            {
-                tid = omp_get_thread_num();
-                tidtoindex[tid] = count++;
-            }
-            // determine region of for loop to process
-            tid = tidtoindex[omp_get_thread_num()];
-            threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
-            threadlocalend[tid] = threadlocalstart[tid] + delta;
-            if (tid == nthreads-1) threadlocalend[tid] = localend;
-            vector<Double_t> localcenter(ND,0);
-            #pragma omp for
-            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
-            {
-                for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
-            }
-
-            #pragma omp critical
-            {
-                for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
-            }
-}
-#endif
-        }
-        else
-        {
+//        if (nthreads>1) {
+//#ifdef USEOPENMP
+//#pragma omp parallel default(shared)
+//{
+//            // since this is nested thread id doesn't simply map to how
+//            // the local for loop is split so construct a tid to index map
+//            int tid, count=0;
+//            #pragma omp critical
+//            {
+//                tid = omp_get_thread_num();
+//                tidtoindex[tid] = count++;
+//            }
+//            // determine region of for loop to process
+//            tid = tidtoindex[omp_get_thread_num()];
+//            threadlocalstart[tid] = localstart + delta * static_cast<Int_t>(tid);
+//            threadlocalend[tid] = threadlocalstart[tid] + delta;
+//            if (tid == nthreads-1) threadlocalend[tid] = localend;
+//            vector<Double_t> localcenter(ND,0);
+//            #pragma omp for
+//            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+//            {
+//                for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
+//            }
+//
+//            #pragma omp critical
+//            {
+//                for (auto j = 0; j < ND; j++) center[j] += localcenter[j];
+//            }
+//}
+//#endif
+//        }
+//        else
+//        {
             for(auto i=localstart; i<localend;i++)
             {
                 for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
             }
-        }
+	    cout<<"	"<<center[0]<<endl;
+//        }
         for (auto &c:center) c*= norm;
+
+	    cout<<"	"<<center[0]<<endl;
         //now find most distant particle
-        if (nthreads>1) {
-#ifdef USEOPENMP
-#pragma omp parallel default(shared)
-{
-            int tid, count=0;
-            tid = tidtoindex[omp_get_thread_num()];
-            Double_t localmaxr2 = 0 ;
-            #pragma omp for
-            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
-            {
-                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
-                Double_t r2=0;
-                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
-                localmaxr2 = std::max(localmaxr2, r2);
-            }
-            #pragma omp critical
-            {
-                maxr2 = std::max(maxr2, localmaxr2);
-            }
-}
-#endif
-        }
-        else
-        {
+//        if (nthreads>1) {
+//#ifdef USEOPENMP
+//#pragma omp parallel default(shared)
+//{
+//            int tid, count=0;
+//            tid = tidtoindex[omp_get_thread_num()];
+//            Double_t localmaxr2 = 0 ;
+//            #pragma omp for
+//            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+//            {
+//                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+//                Double_t r2=0;
+//                for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
+//                localmaxr2 = std::max(localmaxr2, r2);
+//            }
+//            #pragma omp critical
+//            {
+//                maxr2 = std::max(maxr2, localmaxr2);
+//            }
+//}
+//#endif
+//        }
+//        else
+//        {
             //get largest distance
             for(auto i=localstart; i<localend;i++)
             {
@@ -698,7 +701,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
                 maxr2 = std::max(maxr2, r2);
             }
-        }
+//        }
         farthest = maxr2;
         return center;
     }
