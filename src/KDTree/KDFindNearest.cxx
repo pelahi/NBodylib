@@ -753,7 +753,8 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        //while(np->GetCount()>b){
+	while(np->GetLeaf()<0){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             //if (bucket[tt].GetPosition(k)<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
@@ -768,7 +769,8 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        //while(np->GetCount()>b){
+	while(np->GetLeaf()<0){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (x[k]<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
@@ -781,7 +783,8 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        //while(np->GetCount()>b){
+	while(np->GetLeaf()<0){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (search[k][0]<((SplitNode *)(sp->GetLeft()))->GetCutValue()) np=sp->GetLeft();
