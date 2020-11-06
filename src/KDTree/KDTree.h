@@ -44,7 +44,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
-#include <algorithm> 
+#include <algorithm>
 
 //option list for the performance test
 #include "/home/jinsu/dev/VELOCIraptor-STF/src/js_perform.h"
@@ -397,7 +397,7 @@ namespace NBody
         Coordinate CalcSmoothVelPosition(Double_t *x, Int_t Nsmooth=64, int densityset=1);
         Matrix CalcSmoothVelDispPosition(Double_t *x, Coordinate smvel, Int_t Nsmooth=64, int densityset=1);
         Double_t CalcDensityPosition(Coordinate x, Int_t Nsmooth=64, Coordinate v=Coordinate(0.));
-        Double_t CalcVelDensityPosition(Coordinate x, Int_t Nsmooth=64, Int_t Nsearch=64);
+        Double_t CalcVelDensityPosition(Coordinate x, Coordinate v, Int_t Nsmooth=64, Int_t Nsearch=64);
         //Double_t CalcVelDensityWithPhysDensityPosition(Coordinate x, Int_t Nsmooth=64, Int_t Nsearch=64,int densityset=1);
         Coordinate CalcSmoothVelPosition(Coordinate x, Int_t Nsmooth=64, int densityset=1);
         Matrix CalcSmoothVelDispPosition(Coordinate x, Coordinate smvel, Int_t Nsmooth=64, int densityset=1);

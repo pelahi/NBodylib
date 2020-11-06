@@ -189,8 +189,8 @@ namespace NBody
             }
     }
             r[1]=averad;
-            int nthreads;
-    #pragma omp parallel 
+            int nthreads = 1;
+    #pragma omp parallel
     {
             if (omp_get_thread_num()==0) nthreads=omp_get_num_threads();
     }
@@ -245,8 +245,8 @@ namespace NBody
             }
     }
             r[1]=averad;
-            int nthreads;
-    #pragma omp parallel 
+            int nthreads = 1;
+    #pragma omp parallel
     {
             if (omp_get_thread_num()==0) nthreads=omp_get_num_threads();
     }
@@ -366,7 +366,7 @@ namespace NBody
                 for (int j=0;j<3;j++) v[j]+=S[i].GetMass()*S[i].GetVelocity(j);
                 mtot+=S[i].GetMass();
             }
-#else 
+#else
             Double_t vx=0.,vy=0.,vz=0.;
     #pragma omp parallel default(shared)     \
     private(i)
@@ -384,11 +384,11 @@ namespace NBody
         }
         else {
 #ifndef USEOPENMP
-            for (i=0;i<numparts;i++){ 
+            for (i=0;i<numparts;i++){
                 for (int j=0;j<3;j++) v[j]+=particle[i].GetMass()*particle[i].GetVelocity(j);
                 mtot+=particle[i].GetMass();
             }
-#else 
+#else
             Double_t vx=0.,vy=0.,vz=0.;
     #pragma omp parallel default(shared)     \
     private(i)
@@ -413,7 +413,7 @@ namespace NBody
         Double_t v=0,mtot=0.;
         Int_t i;
         if (!cmframe)
-        {   
+        {
             System S(*this);
             S.AdjustForCMVel();
             S.AdjustForCM();
@@ -509,7 +509,7 @@ namespace NBody
         return TotalMass()/(4.0*3.14159/3.0*pow(MaxRadius(),3));
     }
 
-    //returns the density in some radius R from some point O 
+    //returns the density in some radius R from some point O
     Double_t System::RegionDensity(Double_t R, Double_t x, Double_t y, Double_t z) const
     {
         Double_t mass=0;
@@ -536,7 +536,7 @@ namespace NBody
         //qsort(particle, numparts, sizeof(Particle), SystemCompare);
     }
 
-    //is a quick sort. Eventually need to template this into 
+    //is a quick sort. Eventually need to template this into
     //a library of useful template sorts and other useful generic routines.
     void System::SortByRadius(int start, int n)
     {
@@ -554,9 +554,9 @@ namespace NBody
             int too_small_index = start + n - 1;
             while (too_big_index <= too_small_index)
             {
-                while (particle[too_big_index].Radius() <= pivot_rad && 
+                while (particle[too_big_index].Radius() <= pivot_rad &&
                        too_big_index < start + n)
-                    too_big_index++; 
+                    too_big_index++;
                 while (particle[too_small_index].Radius() > pivot_rad)
                     too_small_index--;
                 if (too_big_index < too_small_index)
@@ -584,8 +584,8 @@ namespace NBody
         //qsort(particle, numparts, sizeof(Particle), SystemCompare);
     }
 
-    //is a quick sort. Eventually need to template this into 
-    //a library of useful template sorts and other useful generic routines.    
+    //is a quick sort. Eventually need to template this into
+    //a library of useful template sorts and other useful generic routines.
     void System::SortByDistance(Coordinate c, int start, int n)
     {
         int pivot_index;
@@ -609,7 +609,7 @@ namespace NBody
                 dist=sqrt(pow(particle[too_big_index].X()-c[0],(Double_t)2.0)+pow(particle[too_big_index].Y()-c[1],(Double_t)2.0)+pow(particle[too_big_index].Z()-c[2],(Double_t)2.0));
                 while (dist <= pivot_dist && too_big_index < start + n)
                 {
-                    too_big_index++; 
+                    too_big_index++;
                     dist=sqrt(pow(particle[too_big_index].X()-c[0],(Double_t)2.0)+pow(particle[too_big_index].Y()-c[1],(Double_t)2.0)+pow(particle[too_big_index].Z()-c[2],(Double_t)2.0));
                 }
 
@@ -626,16 +626,16 @@ namespace NBody
                     particle[too_small_index] = swap;
                 }
             }
-    
+
             particle[start] = particle[too_small_index];
             particle[too_small_index] = pivot;
-        
+
             pivot_index = too_small_index;
             // end inline partition
-    
+
             n1 = pivot_index - start;
             n2 = n - n1 - 1;
-        
+
             SortByDistance(c,start, n1);
             SortByDistance(c,pivot_index + 1, n2);
         }
@@ -646,14 +646,14 @@ namespace NBody
         SortByEnergy(G,eps,0,numparts);
         //qsort(particle, numparts, sizeof(Particle), SystemCompare);
     }
-    
-    //is a quick sort. Eventually need to template this into 
-    //a library of useful template sorts and other useful generic routines.    
+
+    //is a quick sort. Eventually need to template this into
+    //a library of useful template sorts and other useful generic routines.
     void System::SortByEnergy(Double_t G, Double_t eps, int start, int n)
     {
         int pivot_index;
         int n1, n2;
-    
+
         if (n > 1)
         {
             // partition inline
@@ -666,9 +666,9 @@ namespace NBody
             int too_small_index = start + n - 1;
             while (too_big_index <= too_small_index)
             {
-                while ((this->KineticEnergy(too_big_index)+G*(this->PotentialEnergy(too_big_index,eps)) <= pivot_E) && 
+                while ((this->KineticEnergy(too_big_index)+G*(this->PotentialEnergy(too_big_index,eps)) <= pivot_E) &&
                        (too_big_index < start + n))
-                    too_big_index++; 
+                    too_big_index++;
                 while (this->KineticEnergy(too_small_index)+G*(this->PotentialEnergy(too_small_index,eps)) > pivot_E)
                     too_small_index--;
                 if (too_big_index < too_small_index)
@@ -678,36 +678,36 @@ namespace NBody
                     particle[too_small_index] = swap;
                 }
             }
-    
+
             particle[start] = particle[too_small_index];
             particle[too_small_index] = pivot;
-        
+
             pivot_index = too_small_index;
             // end inline partition
-    
+
             n1 = pivot_index - start;
             n2 = n - n1 - 1;
-        
+
             SortByEnergy(G,eps, start, n1);
             SortByEnergy(G,eps, pivot_index + 1, n2);
         }
         //for (Int_t i=0;i<numparts;i++)
             //cout <<i<<" " << this->KineticEnergy(i)+G*(this->PotentialEnergy(i,eps)) ;
     }
-    
+
     // Sort particles in system by radius
     void System::SortByDensity()
     {
         SortByDensity(0,numparts);
     }
 
-    //is a quick sort. Eventually need to template this into 
-    //a library of useful template sorts and other useful generic routines.    
+    //is a quick sort. Eventually need to template this into
+    //a library of useful template sorts and other useful generic routines.
     void System::SortByDensity(int start, int n)
     {
         int pivot_index;
         int n1, n2;
-    
+
         if (n > 1)
         {
             // partition inline
@@ -718,12 +718,12 @@ namespace NBody
             Double_t pivot_den = pivot.GetDensity();
             int too_big_index = start + 1;
             int too_small_index = start + n - 1;
-    
+
             while (too_big_index <= too_small_index)
             {
-                while (particle[too_big_index].GetDensity() <= pivot_den && 
+                while (particle[too_big_index].GetDensity() <= pivot_den &&
                        too_big_index < start + n)
-                    too_big_index++; 
+                    too_big_index++;
                 while (particle[too_small_index].GetDensity() > pivot_den)
                     too_small_index--;
                 if (too_big_index < too_small_index)
@@ -733,23 +733,23 @@ namespace NBody
                     particle[too_small_index] = swap;
                 }
             }
-    
+
             particle[start] = particle[too_small_index];
             particle[too_small_index] = pivot;
-        
+
             pivot_index = too_small_index;
             // end inline partition
-    
+
             n1 = pivot_index - start;
             n2 = n - n1 - 1;
-        
+
             SortByDensity(start, n1);
             SortByDensity(pivot_index + 1, n2);
         }
     }
 
     //CM and reference frame functions
-    
+
     // Subtract centre of mass coords ... needs testing, and
     // need to move to arrays rather than vectors
     Coord System::CM(Double_t tolerance) const
@@ -823,7 +823,7 @@ namespace NBody
         return Rcm;
     }
 
-    // Subtract centre of mass coords 
+    // Subtract centre of mass coords
     // need to optimize this
     void System::AdjustForCM(Double_t tolerance)
     {
@@ -976,7 +976,7 @@ namespace NBody
     }
 
     //Energy Functions
-    
+
     //Calculates the kinetic energy of the ith particle about the CM
     //Note that this KE has units of M*L^2/T^2
     Double_t System::KineticEnergy(Int_t i) const
@@ -1046,7 +1046,7 @@ namespace NBody
                 V=0.0;
         return V;
     }
-    
+
     //Calculates the potential energy of the ith particle in the gravtiational
     //Note that to be allow any units, the potential energy is not multplied by G.
     //Thus V is in generic units of M^2/L.

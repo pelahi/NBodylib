@@ -150,7 +150,7 @@ class GMatrix
         }
         else {
             printf("Error, incompatible dimensions (%d,%d) + (%d,%d)\n",row,col,m.row,m.col);
-            GMatrix(0,0);
+            return GMatrix(0,0);
         }
     }
 
@@ -166,7 +166,7 @@ class GMatrix
         }
         else {
             printf("Error, incompatible dimensions (%d,%d) + (%d,%d)\n",row,col,m.row,m.col);
-            GMatrix(0,0);
+            return GMatrix(0,0);
         }
     }
 
