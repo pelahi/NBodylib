@@ -66,6 +66,18 @@ namespace NBody
         vector<unsigned int> activethreadids;
     };
 
+    struct KDTreeForSorting
+    {
+        Double_t val;
+        Int_t orgindex;
+        KDTreeForSorting() = default;
+        KDTreeForSorting(const KDTreeForSorting &x) = default;
+        KDTreeForSorting(KDTreeForSorting &&x) = default;
+        ~KDTreeForSorting() = default;
+        KDTreeForSorting& operator=(const KDTreeForSorting &x) = default;
+        KDTreeForSorting& operator=(KDTreeForSorting &&x) = default;
+    };
+
     class KDTree
     {
 
@@ -198,7 +210,7 @@ namespace NBody
             Double_t *Period=NULL, Double_t **metric=NULL,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
-            Double_t Rdist2adapt = -1,
+            Double_t Rdistadapt = -1,
             Double_t AdaptiveMedianFac = 0.0
         );
         ///Creates tree from NBody::System
@@ -207,7 +219,7 @@ namespace NBody
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
-            Double_t Rdist2adapt = -1,
+            Double_t Rdistadapt = -1,
             Double_t AdaptiveMedianFac = 0.0
         );
 
