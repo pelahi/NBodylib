@@ -714,8 +714,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             {
                 for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
             }
-        }
+//        }
         for (auto &c:center) c*= norm;
+
         //now find most distant particle
         if (nthreads>1) {
 #ifdef USEOPENMP
@@ -749,7 +750,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
                 maxr2 = std::max(maxr2, r2);
             }
-        }
+//        }
         farthest = maxr2;
         return center;
     }
@@ -791,7 +792,28 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t localfarthest;
         if (rdist2adapt > 0) {
             center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
-            isleafflag = (localfarthest < rdist2adapt || size <= b);
+            //isleafflag = (localfarthest < rdist2adapt || size <= b);
+	    // -- Jinsu --
+	    //
+	    // This is not what I intended previously. 'localfarthest' distance is the farthest
+	    // distance from the center and it's only to check whether a search node is inside
+	    // search distance or not.
+	    //
+	    // What I previously intend is that if there is a position where single interparticle
+	    // distance is larger than the linking legnth then split that domain further.
+	    // So I add it below
+
+
+	    // Get maximum single interparticle distance	    
+	    int splitdim = DetermineSplitDim(start, end, bnd, otp);
+	    Double_t singleinterdist = -1.;
+	    Int_t adaptbuf = (end - start) / 8 ;
+	    for(auto i=start + adaptbuf; i<end - adaptbuf; i++) 
+	    {
+		Double_t checkdist = (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim)) * (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim));
+		singleinterdist = std::max(singleinterdist, checkdist);
+	    }
+	    isleafflag = (size <= b && singleinterdist < rdist2adapt);
         }
         else {
             isleafflag = (size <= b);

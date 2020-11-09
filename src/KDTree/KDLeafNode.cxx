@@ -533,7 +533,6 @@ namespace NBody
         //from the center
         int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
-        // int inodeflagged = 0;
 
         // if node entirely enclosed, link and flag
         if (inodeflagged == 1)
