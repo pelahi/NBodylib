@@ -314,13 +314,10 @@ namespace NBody
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        // Double_t maxr0=0.,maxr1=0.;
         Double_t maxr2 = 0.0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
             maxr2 += maxdist*maxdist;
-            // maxr0+=(bucket[target].GetPosition(j)-xbnd[j][0])*(bucket[target].GetPosition(j)-xbnd[j][0]);
-            // maxr1+=(bucket[target].GetPosition(j)-xbnd[j][1])*(bucket[target].GetPosition(j)-xbnd[j][1]);
         }
         if (maxr2<fdist2) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
@@ -525,7 +522,7 @@ namespace NBody
     void LeafNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
@@ -534,64 +531,44 @@ namespace NBody
         //or if farthest initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length
         //from the center
-        bool inodeflagged = false;
-        Double_t maxr2 = 0;
-        if (farthest > 0)
-        {
-            // get distance from particle to center
-            // instead of boundaries
-            for (int j=0;j<numdim;j++)
-            {
-                auto dist = bucket[target].GetPhase(j)-center[j];
-                maxr2 += dist*dist;
-            }
-            inodeflagged = (maxr2 < fdist2 && farthest < fdist2);
-        }
-        else
-        {
-            // get distance from particle to first point enclose node
-            // this could be updated to use farthest particle from centre
-            // instead of boundaries
-            for (int j=0;j<numdim;j++)
-            {
-                auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-                maxr2 += maxdist*maxdist;
-            }
-            inodeflagged = (maxr2<fdist2);
-        }
+        int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+
         // if node entirely enclosed, link and flag
-        if (inodeflagged)
+        if (inodeflagged == 1)
         {
-    		//The the entire node lies within search distance
-    		Int_t id;
-    		for (UInt_tree_t i = bucket_start; i < bucket_end; i++)
+            //The the entire node lies within search distance
+            Int_t id;
+            for (UInt_tree_t i = bucket_start; i < bucket_end; i++)
             {
-    			id=bucket[i].GetID();
-    			if (Group[id]) continue;
-    			Group[id]=iGroup;
-    			Fifo[iTail++]=i;
-    			Len[iGroup]++;
+                id=bucket[i].GetID();
+                if (Group[id]) continue;
+                Group[id]=iGroup;
+                Fifo[iTail++]=i;
+                Len[iGroup]++;
 
-    			Next[Tail[Head[target]]]=Head[i];
-    			Tail[Head[target]]=Tail[Head[i]];
-    			Head[i]=Head[target];
+                Next[Tail[Head[target]]]=Head[i];
+                Tail[Head[target]]=Tail[Head[i]];
+                Head[i]=Head[target];
 
-    			if(iTail==nActive)iTail=0;
-    		}
-    	}
+                if(iTail==nActive)iTail=0;
+            }
+            BucketFlag[nid]=1;
+        }
         //Otherwise check each particle individually
-    	else
+        else
         {
             Int_t id;
             Double_t dist2;
             for (UInt_tree_t i = bucket_start; i < bucket_end; i++)
             {
-                if (flag!=Head[i])flag=0;
+                if (flag!=Head[i]) flag=0;
                 id=bucket[i].GetID();
                 if (Group[id]) continue;
                 dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition());
                 if (numdim==6) dist2+=DistanceSqd(bucket[target].GetVelocity(),bucket[i].GetVelocity());
-                if (dist2 < fdist2) {
+                if (dist2 < fdist2)
+                {
                     Group[id]=iGroup;
                     Fifo[iTail++]=i;
                     Len[iGroup]++;
@@ -604,111 +581,8 @@ namespace NBody
                     flag=0;
                 }
             }
+            if (flag) BucketFlag[nid]=1;
         }
-
-    /*
-	//--JS--
-	//Node Skip by using trigonometric inequalities
-	Double_t js_pos[6], js_dist, js_rr;
-	for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
-	js_dist = DistanceSqd(js_pos, center, numdim);
-	js_rr = farthest;
-
-	if(sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)){
-		flag=0;
-	}
-	else if(sqrt(js_dist) <= abs(sqrt(js_rr) - sqrt(fdist2)) && fdist2 > js_rr){
-		//The the entire node lies within search distance
-		Int_t id;
-		for (Int_t i = bucket_start; i < bucket_end; i++){
-			id=bucket[i].GetID();
-			if (Group[id]) continue;
-			Group[id]=iGroup;
-			Fifo[iTail++]=i;
-			Len[iGroup]++;
-
-			Next[Tail[Head[target]]]=Head[i];
-			Tail[Head[target]]=Tail[Head[i]];
-			Head[i]=Head[target];
-
-			if(iTail==nActive)iTail=0;
-		}
-	}
-	else
-    {
-                Int_t id;
-                Double_t dist2;
-                for (Int_t i = bucket_start; i < bucket_end; i++)
-                {
-                    if (flag!=Head[i])flag=0;
-                    id=bucket[i].GetID();
-                    if (Group[id]) continue;
-                    dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition());
-                    if (numdim==6) dist2+=DistanceSqd(bucket[target].GetVelocity(),bucket[i].GetVelocity());
-                    if (dist2 < fdist2) {
-                        Group[id]=iGroup;
-                        Fifo[iTail++]=i;
-                        Len[iGroup]++;
-
-                        Next[Tail[Head[target]]]=Head[i];
-                        Tail[Head[target]]=Tail[Head[i]];
-                        Head[i]=Head[target];
-
-                        if(iTail==nActive)iTail=0;
-                        flag=0;
-                    }
-                }
-        }
-        */
-
-        //Double_t maxr0=0.,maxr1=0.;
-        //for (int j=0;j<numdim;j++){
-        //    maxr0+=(bucket[target].GetPhase(j)-xbnd[j][0])*(bucket[target].GetPhase(j)-xbnd[j][0]);
-        //    maxr1+=(bucket[target].GetPhase(j)-xbnd[j][1])*(bucket[target].GetPhase(j)-xbnd[j][1]);
-        //}
-        //first check to see if entire node lies wihtin search distance
-        //if (maxr0<fdist2&&maxr1<fdist2){
-        //    Int_t id;
-        //    for (Int_t i = bucket_start; i < bucket_end; i++){
-        //        id=bucket[i].GetID();
-        //        if (Group[id]) continue;
-        //        Group[id]=iGroup;
-        //        Fifo[iTail++]=i;
-        //        Len[iGroup]++;
-
-        //        Next[Tail[Head[target]]]=Head[i];
-        //        Tail[Head[target]]=Tail[Head[i]];
-        //        Head[i]=Head[target];
-
-        //        if(iTail==nActive)iTail=0;
-        //    }
-        //}
-        ////otherwise check each particle individually
-        //else {
-        //    Int_t id;
-        //    Double_t dist2;
-        //    for (Int_t i = bucket_start; i < bucket_end; i++)
-        //    {
-        //        if (flag!=Head[i])flag=0;
-        //        id=bucket[i].GetID();
-        //        if (Group[id]) continue;
-        //        dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition());
-        //        if (numdim==6) dist2+=DistanceSqd(bucket[target].GetVelocity(),bucket[i].GetVelocity());
-        //        if (dist2 < fdist2) {
-        //            Group[id]=iGroup;
-        //            Fifo[iTail++]=i;
-        //            Len[iGroup]++;
-
-        //            Next[Tail[Head[target]]]=Head[i];
-        //            Tail[Head[target]]=Tail[Head[i]];
-        //            Head[i]=Head[target];
-
-        //            if(iTail==nActive)iTail=0;
-        //            flag=0;
-        //        }
-        //    }
-        //}
-        if (flag) BucketFlag[nid]=1;
     }
     void LeafNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
