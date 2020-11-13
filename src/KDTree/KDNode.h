@@ -251,6 +251,7 @@ namespace NBody
             bool inside = true;
             if (farthest > 0)
             {
+                // if farthest from center defined then
                 // get distance from particle to center
                 // instead of boundaries
                 Double_t x[numdim];
@@ -262,12 +263,18 @@ namespace NBody
                     Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
                     if (dista*distb<0)  inside = false;
                 }
-                // if particle farthest from centre outside the search radius then don't explore node
+                // if particle outside node and node particle
+                // farthest from centre (assumed to be closed to particle)
+                // outside the search radius then don't explore node
                 if (!inside && (sqrt(maxr2) - sqrt(farthest) > sqrt(fdist2))) inodeflagged = -1;
-                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2) && farthest < fdist2);
+                //otherwise check that most distant particle within search radius to just tag entire node and close it
+                //Could also implement to see closed node particle to particle is within search radius
+                //and most distant particle also within search radius to link
+                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2));
             }
             else
             {
+                // if farthest not defined then just look at node boundaries
                 // get distance from particle to farthest point enclosing node, whether particle is in node
                 // and minimum distance to node if particle outside if skipping.
                 // instead of boundaries
@@ -318,7 +325,7 @@ namespace NBody
                 }
                 // if particle farthest from centre outside the search radius then don't explore node
                 if (!inside && (sqrt(maxr2) - sqrt(farthest) > sqrt(fdist2))) inodeflagged = -1;
-                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2) && farthest < fdist2);
+                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2));
             }
             else
             {

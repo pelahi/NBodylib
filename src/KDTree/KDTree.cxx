@@ -696,7 +696,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             if (tid == nthreads-1) threadlocalend[tid] = localend;
             vector<Double_t> localcenter(ND,0);
             #pragma omp for nowait
-            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]; i++)
             {
                 for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
             }
@@ -714,7 +714,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             {
                 for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
             }
-//        }
+        }
         for (auto &c:center) c*= norm;
 
         //now find most distant particle
@@ -726,7 +726,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             tid = tidtoindex[omp_get_thread_num()];
             Double_t localmaxr2 = 0 ;
             #pragma omp for nowait
-            for (auto i = threadlocalstart[tid] + 1; i < threadlocalend[tid]; i++)
+            for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]; i++)
             {
                 for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
                 Double_t r2=0;
@@ -750,8 +750,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
                 maxr2 = std::max(maxr2, r2);
             }
-//        }
+        }
         farthest = maxr2;
+
         return center;
     }
 
@@ -766,6 +767,77 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         for(auto j=0;j<ND;j++) node->SetCenter(j, center[j]);
         node->SetFarthest(maxr2);
     }
+
+
+    ///Calculate maximum squared interparticle distance
+    Double_t KDTree::DetermineMaxInterParticleSpacing(UInt_tree_t localstart, UInt_tree_t localend,
+        int splitdim,
+        KDTreeOMPThreadPool &otp
+        )
+    {
+        // get center
+        Double_t maxinterdist = 0.0;
+        UInt_tree_t size = (localend - localstart);
+        vector<KDTreeForSorting> x(size);
+        for (auto i=0; i<size; i++) {
+            x[i].val = bucket[i + localstart].GetPhase(splitdim);
+            x[i].orgindex = i + localstart;
+        }
+        std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
+            return a.val < b.val;
+        });
+        unsigned int nthreads = 1;
+#ifdef USEOPENMP
+        nthreads = min(static_cast<unsigned int>(floor((size)/static_cast<float>(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads <1) nthreads=1;
+        UInt_tree_t delta = ceil((size)/(double)nthreads);
+        unordered_map<int, int> tidtoindex;
+        vector<UInt_tree_t> threadlocalstart, threadlocalend;
+#endif
+        if (nthreads>1) {
+#ifdef USEOPENMP
+#pragma omp parallel default(shared)
+{
+            // since this is nested thread id doesn't simply map to how
+            // the local for loop is split so construct a tid to index map
+            int tid, count=0;
+            #pragma omp critical
+            {
+                tid = omp_get_thread_num();
+                tidtoindex[tid] = count++;
+            }
+            // determine region of for loop to process
+            tid = tidtoindex[omp_get_thread_num()];
+            threadlocalstart[tid] = delta * static_cast<Int_t>(tid);
+            threadlocalend[tid] = threadlocalstart[tid] + delta;
+            if (tid == nthreads-1) threadlocalend[tid] = size;
+            vector<Double_t> localmax = 0;
+            #pragma omp for nowait
+            for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]-1; i++)
+            {
+                auto diff = (x[i+1].val - x[i].val);
+                diff *= diff;
+                localmax = std::max(localmax, diff);
+            }
+            #pragma omp critical
+            {
+                maxinterdist = std::max(maxinterdist, localmax);
+            }
+}
+#endif
+        }
+        else
+        {
+            for(auto i=localstart; i<localend-1;i++)
+            {
+                auto diff = (x[i+1].val - x[i].val);
+                diff *= diff;
+                maxinterdist = std::max(maxinterdist, diff);
+            }
+        }
+        return maxinterdist;
+    }
+
     //@}
 
     //-- Private functions used to build tree
@@ -779,41 +851,33 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Double_t bnd[6][2];
         Int_t size = end - start;
         Int_tree_t id = 0;
+        int splitdim = -1;
         //if not building in parallel can set ids here and update number of nodes
         //otherwise, must set after construction
         if (ibuildinparallel == false) {
             id = numnodes;
             numnodes++;
         }
-        // PJE:: addition to check whether tree is adaptively constructured
-        //
         bool isleafflag;
         vector<Double_t> center;
         Double_t localfarthest;
+        // if constructing adaptive tree where leaf nodes must be smaller than some size
+        // calculate the farthest distance to the centre of the node
         if (rdist2adapt > 0) {
             center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
-            //isleafflag = (localfarthest < rdist2adapt || size <= b);
-	    // -- Jinsu --
-	    //
-	    // This is not what I intended previously. 'localfarthest' distance is the farthest
-	    // distance from the center and it's only to check whether a search node is inside
-	    // search distance or not.
-	    //
-	    // What I previously intend is that if there is a position where single interparticle
-	    // distance is larger than the linking legnth then split that domain further.
-	    // So I add it below
-
-
-	    // Get maximum single interparticle distance	    
-	    int splitdim = DetermineSplitDim(start, end, bnd, otp);
-	    Double_t singleinterdist = -1.;
-	    Int_t adaptbuf = (end - start) / 8 ;
-	    for(auto i=start + adaptbuf; i<end - adaptbuf; i++) 
-	    {
-		Double_t checkdist = (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim)) * (bucket[i+1].GetPhase(splitdim) - bucket[i].GetPhase(splitdim));
-		singleinterdist = std::max(singleinterdist, checkdist);
-	    }
-	    isleafflag = (size <= b && singleinterdist < rdist2adapt);
+            // if checking that leaf nodes have interparticle spacings smaller than some value
+            // then get interparticle spacing
+            if (igetmaxinterparticlespacing) {
+                //first get split dim
+                splitdim = DetermineSplitDim(start, end, bnd, otp);
+                //then get maximum interparticle spacing in split dimension
+                auto maxinterdist = DetermineMaxInterParticleSpacing(start, end, splitdim, otp);
+                isleafflag = (size <= b && maxinterdist < rdist2adapt);
+            }
+            // otherwise splitting criterion based on just farthest
+    	    else {
+                isleafflag = (size <= b && localfarthest < rdist2adapt);
+            }
         }
         else {
             isleafflag = (size <= b);
@@ -834,17 +898,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         {
             bool irearrangeandbalance=true;
             if (ikeepinputorder) irearrangeandbalance=false;
-            int splitdim = DetermineSplitDim(start, end, bnd, otp);
+            if (splitdim == -1) splitdim = DetermineSplitDim(start, end, bnd, otp);
             Int_t splitindex = start + (size - 1) / 2;
-// UInt_tree_t oldsplitindex = splitindex ;
-//
-// UInt_tree_t bufferwidth = size * adaptivemedianfac;
-// UInt_tree_t localleft = splitindex - bufferwidth/2;
-// UInt_tree_t localright = splitindex + bufferwidth/2;
-// Int_t newsplitindex = localleft;
-// splitindex = newsplitindex;
             Double_t splitvalue = (this->*medianfunc)(splitdim, splitindex, start, end, otp, irearrangeandbalance);
-// cout<<__func__<<" "<<start<<" "<<end<<" "<<oldsplitindex<<" "<<splitindex<<endl;
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
@@ -1068,7 +1124,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       bool iBuildInParallel,
       bool iKeepInputOrder,
       double Rdistadapt,
-      Double_t AdaptiveMedianFac
+      Double_t AdaptiveMedianFac,
+      bool iGetMaxInterParticleSpacing
     )
     {
         iresetorder=true;
@@ -1100,6 +1157,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         if (Rdistadapt > 0) rdist2adapt = Rdistadapt*Rdistadapt;
         else rdist2adapt = -1;
         adaptivemedianfac = AdaptiveMedianFac;
+        igetmaxinterparticlespacing = (Rdistadapt > 0 && iGetMaxInterParticleSpacing);
         if (Period!=NULL)
         {
             period=new Double_t[3];
@@ -1131,7 +1189,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
       bool iBuildInParallel,
       bool iKeepInputOrder,
       double Rdistadapt,
-      Double_t AdaptiveMedianFac
+      Double_t AdaptiveMedianFac,
+      bool iGetMaxInterParticleSpacing
     )
     {
 
@@ -1164,6 +1223,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         if (Rdistadapt > 0) rdist2adapt = Rdistadapt*Rdistadapt;
         else rdist2adapt = -1;
         adaptivemedianfac = AdaptiveMedianFac;
+        igetmaxinterparticlespacing = (Rdistadapt > 0 && iGetMaxInterParticleSpacing);
         if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];

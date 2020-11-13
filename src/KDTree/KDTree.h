@@ -122,6 +122,9 @@ namespace NBody
         const static int MAXND=6;
 	    ///max squared distance size of a leaf node for building adaptive trees
     	Double_t rdist2adapt;
+        /// flag for whether to calculate the maximum interparticle spacing
+        /// and see if one continues node splitting.
+        bool igetmaxinterparticlespacing;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -211,7 +214,9 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0
+            Double_t AdaptiveMedianFac = 0.0,
+            bool iGetMaxInterParticleSpacing = false
+
         );
         ///Creates tree from NBody::System
         KDTree(System &s,
@@ -220,7 +225,8 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0
+            Double_t AdaptiveMedianFac = 0.0,
+            bool iGetMaxInterParticleSpacing = false
         );
 
         ///resets particle order
@@ -592,7 +598,10 @@ namespace NBody
         vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
             Double_t &farthest, KDTreeOMPThreadPool &);
         void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
-             Node *&node, KDTreeOMPThreadPool &);
+            Node *&node, KDTreeOMPThreadPool &);
+        Double_t DetermineMaxInterParticleSpacing(UInt_tree_t localstart, UInt_tree_t localend,
+            int splitdim,
+            KDTreeOMPThreadPool &otp);
         //@}
 
     };
