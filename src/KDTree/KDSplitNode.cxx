@@ -454,12 +454,9 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Int_t target, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<numdim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
@@ -499,12 +496,9 @@ namespace NBody
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Double_t *x, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr2 = 0.0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
@@ -547,12 +541,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
     {
-        Double_t maxr2 = 0.0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
             return;
         }
@@ -584,12 +575,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
             return;
         }
@@ -625,12 +613,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
             return;
         }
@@ -662,12 +647,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
             return;
         }
@@ -933,38 +915,15 @@ namespace NBody
     void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        // if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         //now check if either search distance from particle fully encloses node
         //or if farthest initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length
         //from the center
-        bool inodeflagged = false;
-        Double_t maxr2 = 0;
-        if (farthest > 0)
-        {
-            // get distance from particle to center
-            // instead of boundaries
-            for (int j=0;j<numdim;j++)
-            {
-                auto dist = bucket[target].GetPhase(j)-center[j];
-                maxr2 += dist*dist;
-            }
-            inodeflagged = (maxr2 < fdist2 && farthest < fdist2);
-        }
-        else
-        {
-            // get distance from particle to first point enclose node
-            // this could be updated to use farthest particle from centre
-            // instead of boundaries
-            for (int j=0;j<numdim;j++)
-            {
-                auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-                maxr2 += maxdist*maxdist;
-            }
-            inodeflagged = (maxr2<fdist2);
-        }
+        int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
         // if node entirely enclosed, link and flag
-        if (inodeflagged) {
+        if (inodeflagged == 1) {
             Int_t id;
             for (auto i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();
@@ -1008,99 +967,7 @@ namespace NBody
             }
         }
         // once left and right have been checked, see if they have been closed. If so, update.
-		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
-
-    /*
-	if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
-	int flag=Head[bucket_start];
-
-        Double_t js_pos[6], js_dist, js_rr;
-        for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
-        js_dist = DistanceSqd(js_pos, js_center, numdim);
-        js_rr = js_farthest;
-
-	if (sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)){
-		//SKIP This Node
-		flag=0;
-	}
-	else if (sqrt(js_dist) <= abs(sqrt(js_rr) - sqrt(fdist2)) && fdist2 > js_rr){
-		//This node is entirely enclosed
-                Int_t id;
-
-                for (Int_t i = bucket_start; i < bucket_end; i++){
-                        id=bucket[i].GetID();
-                        if (Group[id]) continue;
-                        Group[id]=iGroup;
-                        Fifo[iTail++]=i;
-                        Len[iGroup]++;
-
-                        Next[Tail[Head[target]]]=Head[i];
-                        Tail[Head[target]]=Tail[Head[i]];
-                        Head[i]=Head[target];
-
-                        if(iTail==nActive)iTail=0;
-                }
-	}
-	else{
-		flag = 0;
-
-        	Double_t old_off = off[cut_dim];
-        	Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
-        	if (new_off < 0)
-        	{
-        	    left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        	    rd += -old_off*old_off + new_off*new_off;
-        	    if (rd < fdist2)
-        	    {
-        	        off[cut_dim] = new_off;
-        	        right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        	        off[cut_dim] = old_off;
-        	    }
-        	}
-        	else
-        	{
-        	    right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        	    rd += -old_off*old_off + new_off*new_off;
-        	    if (rd < fdist2)
-        	    {
-        	        off[cut_dim] = new_off;
-        	        left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        	        off[cut_dim] = old_off;
-        	    }
-        	}
-		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
-	}
-
-	if (flag) BucketFlag[nid]=1;
-
-	///
-        //Double_t old_off = off[cut_dim];
-        //Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
-        //if (new_off < 0)
-        //{
-        //    left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //    rd += -old_off*old_off + new_off*new_off;
-        //    if (rd < fdist2)
-        //    {
-        //        off[cut_dim] = new_off;
-        //        right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //        off[cut_dim] = old_off;
-        //    }
-        //}
-        //else
-        //{
-        //    right->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //    rd += -old_off*old_off + new_off*new_off;
-        //    if (rd < fdist2)
-        //    {
-        //        off[cut_dim] = new_off;
-        //        left->FOFSearchBall(rd,fdist2,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
-        //        off[cut_dim] = old_off;
-        //    }
-        //}
-
-	//if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
-        */
+        if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
