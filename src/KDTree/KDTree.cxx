@@ -811,7 +811,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             threadlocalstart[tid] = delta * static_cast<Int_t>(tid);
             threadlocalend[tid] = threadlocalstart[tid] + delta;
             if (tid == nthreads-1) threadlocalend[tid] = size;
-            vector<Double_t> localmax = 0;
+            Double_t localmax = 0;
             #pragma omp for nowait
             for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]-1; i++)
             {
