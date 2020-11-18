@@ -112,7 +112,7 @@ namespace NBody
         ///number of nodes and leafnodes
         Int_t numnodes,numleafnodes;
         ///bucket or leaf node size
-        Int_t b;
+        Int_t b, bmin;
         ///factor of the node size for which we allow an approximative median
         ///split to vary by in search for optimal split
         Double_t adaptivemedianfac;

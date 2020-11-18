@@ -815,8 +815,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             #pragma omp for nowait
             for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]-1; i++)
             {
-                auto diff = (x[i+1].val - x[i].val);
-                diff *= diff;
+                auto diff = pow(x[i+1].val - x[i].val,2.0);
                 localmax = std::max(localmax, diff);
             }
             #pragma omp critical
@@ -828,10 +827,9 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         }
         else
         {
-            for(auto i=localstart; i<localend-1;i++)
+            for(auto i=0; i<size-1;i++)
             {
-                auto diff = (x[i+1].val - x[i].val);
-                diff *= diff;
+                auto diff = pow(x[i+1].val - x[i].val,2.0);
                 maxinterdist = std::max(maxinterdist, diff);
             }
         }
@@ -872,11 +870,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 splitdim = DetermineSplitDim(start, end, bnd, otp);
                 //then get maximum interparticle spacing in split dimension
                 auto maxinterdist = DetermineMaxInterParticleSpacing(start, end, splitdim, otp);
-                isleafflag = (size <= b && maxinterdist < rdist2adapt);
+                isleafflag = ((size <= b && maxinterdist < rdist2adapt) || (size <= bmin));
             }
             // otherwise splitting criterion based on just farthest
     	    else {
-                isleafflag = (size <= b && localfarthest < rdist2adapt);
+                isleafflag = ((size <= b && localfarthest < rdist2adapt) || (size <= bmin));
             }
         }
         else {
@@ -1147,6 +1145,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         numleafnodes=numnodes=0;
         bucket = p;
         b = bucket_size;
+        bmin = std::max(static_cast<Int_t>(1),b/4);
         treetype = ttype;
         kernfunctype = smfunctype;
         kernres = smres;
@@ -1213,6 +1212,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         numleafnodes=numnodes=0;
         bucket = s.Parts();
         b = bucket_size;
+        bmin = std::max(static_cast<Int_t>(1),b/4);
         treetype = ttype;
         kernfunctype = smfunctype;
         kernres = smres;
