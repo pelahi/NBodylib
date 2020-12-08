@@ -12,7 +12,7 @@ namespace NBody
     ///\todo adjust periodic searches so that reflection is calculated faster.
     ///Non periodic functions
     //@{
-    void SplitNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void SplitNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPosition(cut_dim) - cut_val;
@@ -39,7 +39,7 @@ namespace NBody
             }
         }
     }
-    void SplitNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void SplitNode::FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetVelocity(cut_dim) - cut_val;
@@ -66,7 +66,7 @@ namespace NBody
             }
         }
     }
-    void SplitNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target)
+    void SplitNode::FindNearestPhase(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
@@ -93,7 +93,7 @@ namespace NBody
             }
         }
     }
-    void SplitNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *metric)
+    void SplitNode::FindNearestMetric(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, Double_t *metric)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
@@ -120,7 +120,7 @@ namespace NBody
             }
         }
     }
-    void SplitNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, Double_t *m0, Double_t *m1, GMatrix gm)
+    void SplitNode::FindNearestMetricwithTensor(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, Double_t *m0, Double_t *m1, GMatrix gm)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
@@ -147,7 +147,7 @@ namespace NBody
             }
         }
     }
-    void SplitNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void SplitNode::FindNearestCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPosition(cut_dim) - cut_val;
@@ -175,7 +175,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t target, int dim)
+    void SplitNode::FindNearestCheck(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
     {
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPosition(cut_dim) - cut_val;
@@ -452,7 +452,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Int_t target, int dim)
+    void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, UInt_tree_t target, int dim)
     {
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
@@ -539,7 +539,7 @@ namespace NBody
 	}
 
 
-    void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Int_t target, Int_t &nt, int dim)
+    void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, UInt_tree_t target, Int_t &nt, int dim)
     {
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
@@ -611,7 +611,7 @@ namespace NBody
         SearchBallPosTagged(rd,fdist2,bucket,tagged,off,x.GetCoord(),nt,dim);
     }
 
-    void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
+    void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
@@ -684,7 +684,7 @@ namespace NBody
     }
 
 
-	void SplitNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Int_t target, int dim)
+	void SplitNode::SearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, UInt_tree_t target, int dim)
     {
         //assume some distance measure is stored in params[1]
         Double_t old_off = off[cut_dim];
@@ -741,7 +741,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t* off, Int_t target, int dim)
+    void SplitNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t* off, UInt_tree_t target, int dim)
     {
         //assume some distance measure is stored in params[1]
         Double_t old_off = off[cut_dim];
@@ -798,7 +798,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Int_t target, int dim)
+    void SplitNode::SearchCriterionTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
         //assume some distance measure is stored in params[1]
         Double_t old_off = off[cut_dim];
@@ -855,7 +855,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, Int_t target, int dim)
+    void SplitNode::SearchCriterionNoDist(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t* off, UInt_tree_t target, int dim)
     {
         //assume some distance measure is stored in params[1]
         Double_t old_off = off[cut_dim];
@@ -971,7 +971,7 @@ namespace NBody
     }
 
     //key here is params which tell one how to search the tree
-    void SplitNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void SplitNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
@@ -1011,7 +1011,7 @@ namespace NBody
     }
 
     //key here is params which tell one how to search the tree
-    void SplitNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void SplitNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
@@ -1055,44 +1055,44 @@ namespace NBody
     ///Periodic version that generate reflections and use non periodic searches
     //@{
     //there are several reflections to search (sum_i^ND choose(ND,i), so for 3d have 7 possible reflections)
-    void SplitNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0,xp;
         x0=Coordinate(bucket[target].GetPosition());
         FindNearestPosPeriodic(rd,bucket,pq,off,p,x0,dim);
     }
-    void SplitNode::FindNearestVelPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::FindNearestVelPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         FindNearestVel(rd,bucket,pq,off,target,dim);
     }
-    void SplitNode::FindNearestPhasePeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target)
+    void SplitNode::FindNearestPhasePeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target)
     {
         Coordinate x0,xp,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestPhasePeriodic(rd,bucket,pq,off,p,x0,v);
     }
-    void SplitNode::FindNearestMetricPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, Double_t *metric)
+    void SplitNode::FindNearestMetricPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, Double_t *metric)
     {
         Coordinate x0,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestMetricPeriodic(rd,bucket,pq,off,p,x0,v,metric);
     }
-    void SplitNode::FindNearestMetricwithTensorPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, Double_t *m0, Double_t *m1, GMatrix gm)
+    void SplitNode::FindNearestMetricwithTensorPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, Double_t *m0, Double_t *m1, GMatrix gm)
     {
         Coordinate x0,xp,v;
         x0=Coordinate(bucket[target].GetPosition());
         v=Coordinate(bucket[target].GetVelocity());
         FindNearestMetricwithTensorPeriodic(rd,bucket,pq,off,p,x0,v,m0,m1,gm);
     }
-    void SplitNode::FindNearestCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::FindNearestCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle p0;
         p0=bucket[target];
         FindNearestCriterionPeriodic(rd,cmp,params,bucket,pq,off,p,p0,dim);
     }
-    void SplitNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle p0;
         p0=bucket[target];
@@ -1321,7 +1321,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -1361,7 +1361,7 @@ namespace NBody
         SearchBallPosPeriodic(rd,fdist2,iGroup,bucket,Group,dist2,off,p,x.GetCoord(),dim);
     }
 
-    void SplitNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t *off, Double_t *p, Int_t target, Int_t &nt, int dim)
+    void SplitNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t *off, Double_t *p, UInt_tree_t target, Int_t &nt, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -1401,7 +1401,7 @@ namespace NBody
         SearchBallPosPeriodicTagged(rd,fdist2,bucket,tagged,off,p,x.GetCoord(),nt,dim);
     }
 
-    void SplitNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchBallPosPeriodicTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;
         x0=Coordinate(bucket[target].GetPosition());
@@ -1441,7 +1441,7 @@ namespace NBody
         SearchBallPosPeriodicTagged(rd,fdist2,bucket,tagged,off,p,x.GetCoord(),dim);
     }
 
-    void SplitNode::SearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -1476,7 +1476,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, Int_t &nt, Int_t *tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -1511,7 +1511,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchCriterionPeriodicTagged(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, vector<Int_t> &tagged, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -1546,7 +1546,7 @@ namespace NBody
         }
     }
 
-    void SplitNode::SearchCriterionNoDistPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *off, Double_t *p, Int_t target, int dim)
+    void SplitNode::SearchCriterionNoDistPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Particle x0;
         x0=bucket[target];
@@ -1582,7 +1582,7 @@ namespace NBody
         }
     }
     //here code is effectively like that of FOFsearchBallPeriodic but adjust the particle's position in the left/right search
-    void SplitNode::FOFSearchBallPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, Int_t target)
+    void SplitNode::FOFSearchBallPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, UInt_tree_t target)
     {
         //first search normal particle
         FOFSearchBall(rd, fdist2, iGroup, nActive, bucket, Group, Len, Head, Tail, Next, BucketFlag, Fifo, iTail, off, target);
@@ -1629,7 +1629,7 @@ namespace NBody
     }
 
     //key here is params which tell one how to search the tree
-    void SplitNode::FOFSearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, Int_t target)
+    void SplitNode::FOFSearchCriterionPeriodic(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, UInt_tree_t target)
     {
         FOFSearchCriterion(rd,cmp,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
         Coordinate x0(bucket[target].GetPosition()),xp;
@@ -1663,7 +1663,7 @@ namespace NBody
         for (int j=0;j<3;j++) bucket[target].SetPosition(j,x0[j]);
     }
 
-    void SplitNode::FOFSearchCriterionSetBasisForLinksPeriodic(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, Int_t target)
+    void SplitNode::FOFSearchCriterionSetBasisForLinksPeriodic(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Double_t *p, UInt_tree_t target)
     {
         FOFSearchCriterionSetBasisForLinks(rd,cmp,check,params,iGroup,nActive,bucket,Group,Len,Head,Tail,Next,BucketFlag,Fifo,iTail,off,target);
         Coordinate x0(bucket[target].GetPosition()),xp;
