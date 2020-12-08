@@ -454,12 +454,9 @@ namespace NBody
 
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, UInt_tree_t target, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<numdim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
@@ -499,12 +496,9 @@ namespace NBody
     void SplitNode::SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t* off, Double_t *x, int dim)
     {
         //first check to see if entire node lies wihtin search distance
-        Double_t maxr2 = 0.0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j] - xbnd[j][0]), std::abs(x[j] - xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
                 Int_t id=bucket[i].GetID();
@@ -547,12 +541,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, UInt_tree_t target, Int_t &nt, int dim)
     {
-        Double_t maxr2 = 0.0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
             return;
         }
@@ -584,12 +575,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, Int_t *tagged, Double_t* off, Double_t *x, Int_t &nt, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
             return;
         }
@@ -625,12 +613,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
             return;
         }
@@ -662,12 +647,9 @@ namespace NBody
 
     void SplitNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, Double_t *x, int dim)
     {
-        Double_t maxr2 = 0;
-        for (int j=0;j<dim;j++){
-            auto maxdist = std::max(std::abs(x[j]-xbnd[j][0]), std::abs(x[j]-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
+        if (inodeflagged == -1) return;
+        if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
             return;
         }
@@ -930,16 +912,18 @@ namespace NBody
         }
     }
 
-    void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
+    void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
-        Double_t maxr2 = 0;
-        for (int j=0;j<numdim;j++){
-            auto maxdist = std::max(std::abs(bucket[target].GetPhase(j)-xbnd[j][0]), std::abs(bucket[target].GetPhase(j)-xbnd[j][1]));
-            maxr2 += maxdist*maxdist;
-        }
-        if (maxr2<fdist2) {
+        // if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        //now check if either search distance from particle fully encloses node
+        //or if farthest initialized, then that particle is within linking length
+        //of center and all other particles in the node are within this linking length
+        //from the center
+        int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
+        if (inodeflagged == -1) return;
+        // if node entirely enclosed, link and flag
+        if (inodeflagged == 1) {
             Int_t id;
             for (auto i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();
@@ -957,6 +941,7 @@ namespace NBody
             BucketFlag[nid]=1;
             return;
         }
+        // otherwise check left and right
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         if (new_off < 0)
@@ -981,11 +966,15 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+        // once left and right have been checked, see if they have been closed. If so, update.
+        if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
     void SplitNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         //types of trees
@@ -1017,11 +1006,15 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+        // once left and right have been checked, see if they have been closed. If so, update.
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //key here is params which tell one how to search the tree
     void SplitNode::FOFSearchCriterionSetBasisForLinks(Double_t rd, FOFcompfunc cmp, FOFcheckfunc check, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
+        //if bucket already linked and particle already part of group, do nothing.
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         Double_t old_off = off[cut_dim];
         Double_t new_off = bucket[target].GetPhase(cut_dim) - cut_val;
         //types of trees
@@ -1053,6 +1046,8 @@ namespace NBody
                 off[cut_dim] = old_off;
             }
         }
+        // once left and right have been checked, see if they have been closed. If so, update.
+		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
     }
 
     //@}
