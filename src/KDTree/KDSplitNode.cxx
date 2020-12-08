@@ -912,7 +912,15 @@ namespace NBody
         }
     }
 
-    void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
+    void SplitNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup,
+        Int_t nActive, Particle *bucket,
+        Int_t *Group, Int_tree_t *Len,
+        Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next,
+        short *BucketFlag,
+        Int_tree_t *Fifo,
+        Int_t &iTail,
+        Double_t* off, 
+        UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
         // if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
