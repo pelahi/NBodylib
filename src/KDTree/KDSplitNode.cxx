@@ -919,11 +919,11 @@ namespace NBody
         short *BucketFlag,
         Int_tree_t *Fifo,
         Int_t &iTail,
-        Double_t* off, 
+        Double_t* off,
         UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        // if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         //now check if either search distance from particle fully encloses node
         //or if farthest initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length

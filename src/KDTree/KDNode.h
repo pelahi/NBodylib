@@ -342,7 +342,7 @@ namespace NBody
                         else minr2 += distb2;
                         inside = false;
                     }
-                    maxr2 += std::max(dista2,distb2);;
+                    maxr2 += std::max(dista2,distb2);
                 }
                 inodeflagged = (maxr2<fdist2);
                 if (!inside && minr2 > fdist2) inodeflagged = -1;
