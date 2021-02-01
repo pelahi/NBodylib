@@ -304,7 +304,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t ibin,i;
         Double_t mtot=0.,entropy=0.;
         Double_t idx=static_cast<Double_t>(nbins)/(up-low);
-        for (i=0;i<=nbins;i++) nientropy[i]=0.;
+        for (i=0;i<nbins;i++) nientropy[i]=0.;
         for (i=start;i<end;i++){
             mtot+=bucket[i].GetMass();
             ibin=static_cast<Int_t>(floor((bucket[i].GetPhase(j)-low)*idx));
