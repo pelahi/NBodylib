@@ -33,21 +33,23 @@ namespace NBody
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #ifdef USEOPENMPTARGET
+        // if data set is large enough, warrants offloading
         Int_t size = end-start;
-        if (size>=KDTREEOMPGPUPARALLELSIZE) {
+        if (size>=KDTREEOMPGPUCRITPARALLELSIZE && omp_get_num_devices() > 0) {
             Double_t * pos = new Double_t[start]
 #pragma omp parallel for \
 default(shared) private(i) schedule(static) \
 num_threads(nthreads) if (nthreads>1)
             for (i = start; i < end; i++) pos[i-start] = bucket[i].GetPosition(j);
             minval = maxval = pos[0];
-#pragma omp target teams distribute parallel for map(to:pos) map(tofrom:minval,maxval)
-            for (i = 1; i < end; i++)
+#pragma omp target teams distribute parallel for schedule(static,1) \
+map(to:pos) map(tofrom:minval,maxval)
+            for (i = 1; i < size; i++)
             {
                 minval = pos[i] ^ ((minval ^ pos[i]) & -(minval < pos[i]));
                 maxval = maxval ^ ((maxval ^ pos[i]) & -(maxval < pos[i]));
             }
-            delete pos;
+            delete[] pos;
         }
         else
 #endif
@@ -61,7 +63,9 @@ reduction(min:minval) reduction(max:maxval) num_threads(nthreads) if (nthreads>1
             if (bucket[i].GetPosition(j) < minval) minval = bucket[i].GetPosition(j);
             if (bucket[i].GetPosition(j) > maxval) maxval = bucket[i].GetPosition(j);
         }
+#ifdef USEOPENMP
         }
+#endif
         bnd[0]=minval;bnd[1]=maxval;
         return maxval - minval;
     }
