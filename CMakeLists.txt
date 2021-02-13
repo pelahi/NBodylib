@@ -57,6 +57,7 @@ endmacro()
 
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
+nbody_option(ENABLE_OPENMP_GPU "Enable GPU offloading through OpenMP if possible in NBodyLib" OFF)
 
 # Precision options
 nbody_option(SINGLE_PRECISION  "Use single point precision to store all properties and perform all calculations" OFF)
@@ -145,6 +146,15 @@ macro(find_openmp)
 		list(APPEND NBODY_LINK_FLAGS ${OpenMP_CXX_FLAGS})
 		list(APPEND NBODY_DEFINES USEOPENMP USEOMP)
 		set(NBODY_HAS_OPENMP Yes)
+		if (NBODY_ENABLE_OPENMP_GPU)
+			if (${OpenMP_CXX_VERSION} GREATER 4.0 OR {OpenMP_CXX_VERSION} EQUAL 4.0)
+				set(NBODY_HAS_OPENMPGPU Yes)
+				#list(APPEND NBODY_CXX_FLAGS -foffload=-lm)
+				#list(APPEND NBODY_LINK_FLAGS -foffload=-lm)
+				list(APPEND NBODY_DEFINES UPSEOPENMPTARGET)
+			endif()
+		endif()
+		# need to add the
 	endif()
 endmacro()
 
