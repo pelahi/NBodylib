@@ -114,7 +114,7 @@ namespace NBody
 
         ///0 if using most spread dimension as criterion, 1 if use entropy along with entropy array, 2 if using largest dispersion
         int splittingcriterion;
-        Double_t *nientropy[MAXND];
+        //Double_t *nientropy[MAXND];
 
         ///kernel construction
         ///resolution in kernel array and type

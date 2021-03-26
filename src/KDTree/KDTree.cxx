@@ -304,7 +304,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t ibin,i;
         Double_t mtot=0.,entropy=0.;
         Double_t dx=(up-low)/nbins;
-        for (i=0;i<=nbins;i++) nientropy[i]=0.;
+        for (i=0;i<nbins;i++) nientropy[i]=0.;
         for (i=start;i<end;i++){
             mtot+=bucket[i].GetMass();
             ibin=(Int_t)((bucket[i].GetPhase(j)-low)/dx);
@@ -776,12 +776,12 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
@@ -834,11 +834,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
-            if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
