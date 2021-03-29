@@ -36,9 +36,10 @@ namespace NBody
         // if data set is large enough, warrants offloading
         Int_t size = end-start;
         if (size>=KDTREEOMPGPUCRITPARALLELSIZE && omp_get_num_devices() > 0) {
-            Double_t * pos = new Double_t[start]
+            cout<<" running with openmp target "<<omp_get_num_devices()<<endl;
+            Double_t * pos = new Double_t[end-start];
 #pragma omp parallel for \
-default(shared) private(i) schedule(static) \
+default(shared) schedule(static) \
 num_threads(nthreads) if (nthreads>1)
             for (i = start; i < end; i++) pos[i-start] = bucket[i].GetPosition(j);
             minval = maxval = pos[0];
@@ -46,8 +47,10 @@ num_threads(nthreads) if (nthreads>1)
 map(to:pos) map(tofrom:minval,maxval)
             for (i = 1; i < size; i++)
             {
-                minval = pos[i] ^ ((minval ^ pos[i]) & -(minval < pos[i]));
-                maxval = maxval ^ ((maxval ^ pos[i]) & -(maxval < pos[i]));
+                //minval = pos[i] ^ ((minval ^ pos[i]) & -(minval < pos[i]));
+                ///maxval = maxval ^ ((maxval ^ pos[i]) & -(maxval < pos[i]));
+                minval = min(minval, pos[i]);
+                maxval = max(maxval, pos[i];
             }
             delete[] pos;
         }
