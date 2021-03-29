@@ -36,23 +36,21 @@ namespace NBody
         // if data set is large enough, warrants offloading
         Int_t size = end-start;
         if (size>=KDTREEOMPGPUCRITPARALLELSIZE && omp_get_num_devices() > 0) {
-            cout<<" running with openmp target "<<omp_get_num_devices()<<endl;
-            Double_t * pos = new Double_t[end-start];
+            Double_t * gpupos = new Double_t[size];
 #pragma omp parallel for \
 default(shared) schedule(static) \
 num_threads(nthreads) if (nthreads>1)
-            for (i = start; i < end; i++) pos[i-start] = bucket[i].GetPosition(j);
-            minval = maxval = pos[0];
-#pragma omp target teams distribute parallel for schedule(static,1) \
-map(to:pos) map(tofrom:minval,maxval)
+            for (i = start; i < end; i++) gpupos[i-start] = bucket[i].GetPosition(j);
+            minval = maxval = gpupos[0];
+#pragma omp target teams distribute parallel for \
+map(to:pos[0:size]) defaultmap(tofrom:scalar) \
+reduction(min:minval) reduction(max:maxval)
             for (i = 1; i < size; i++)
             {
-                //minval = pos[i] ^ ((minval ^ pos[i]) & -(minval < pos[i]));
-                ///maxval = maxval ^ ((maxval ^ pos[i]) & -(maxval < pos[i]));
-                minval = min(minval, pos[i]);
-                maxval = max(maxval, pos[i];
+                minval = min(minval, gpupos[i]);
+                maxval = max(maxval, gpupos[i]);
             }
-            delete[] pos;
+            delete[] gpupos;
         }
         else
 #endif

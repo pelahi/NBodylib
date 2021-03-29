@@ -37,7 +37,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include (NBodylibCMakeUtils)
 # complation summary
 include(NBodylibCompilationMessages)
-#include(CMakeOpenMP)
 
 
 # Are we part of an outside build?
@@ -151,7 +150,7 @@ macro(find_openmp)
 				set(NBODY_HAS_OPENMPGPU Yes)
 				#list(APPEND NBODY_CXX_FLAGS -foffload=-lm)
 				#list(APPEND NBODY_LINK_FLAGS -foffload=-lm)
-				list(APPEND NBODY_DEFINES UPSEOPENMPTARGET)
+				list(APPEND NBODY_DEFINES USEOPENMPTARGET)
 			endif()
 		endif()
 		# need to add the
@@ -165,6 +164,7 @@ endmacro()
 find_gsl()
 
 set(NBODY_HAS_OPENMP No)
+set(NBODY_HAS_OPENMPGPU No)
 if (NBODY_OPENMP)
 	find_openmp()
 endif()
