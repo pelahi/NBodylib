@@ -43,7 +43,7 @@ num_threads(nthreads) if (nthreads>1)
             for (i = start; i < end; i++) gpupos[i-start] = bucket[i].GetPosition(j);
             minval = maxval = gpupos[0];
 #pragma omp target teams distribute parallel for \
-map(to:pos[0:size]) defaultmap(tofrom:scalar) \
+map(to:gpupos[0:size]) defaultmap(tofrom:scalar) \
 reduction(min:minval) reduction(max:maxval)
             for (i = 1; i < size; i++)
             {
