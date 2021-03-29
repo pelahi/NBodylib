@@ -37,7 +37,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include (NBodylibCMakeUtils)
 # complation summary
 include(NBodylibCompilationMessages)
-#include(CMakeOpenMP)
 
 
 # Are we part of an outside build?
@@ -57,6 +56,8 @@ endmacro()
 
 # Optional dependencies
 nbody_option(OPENMP "Attempt to include OpenMP support in NBodyLib" ON)
+nbody_option(ENABLE_OPENMP_GPU "Attempt to include OpenMP GPU support in NBodyLib" OFF)
+nbody_option(OPENACC "Attempt to include OpenACC support in NBodyLib" OFF)
 
 # Precision options
 nbody_option(SINGLE_PRECISION  "Use single point precision to store all properties and perform all calculations" OFF)
@@ -145,6 +146,24 @@ macro(find_openmp)
 		list(APPEND NBODY_LINK_FLAGS ${OpenMP_CXX_FLAGS})
 		list(APPEND NBODY_DEFINES USEOPENMP USEOMP)
 		set(NBODY_HAS_OPENMP Yes)
+		if (NBODY_ENABLE_OPENMP_GPU)
+			if (${OpenMP_CXX_VERSION} GREATER 4.0 OR {OpenMP_CXX_VERSION} EQUAL 4.0)
+				set(NBODY_HAS_OPENMPGPU Yes)
+				#list(APPEND NBODY_CXX_FLAGS -foffload=-lm)
+				#list(APPEND NBODY_LINK_FLAGS -foffload=-lm)
+				list(APPEND NBODY_DEFINES USEOPENMPTARGET)
+			endif()
+		endif()
+	endif()
+endmacro()
+
+macro(find_openacc)
+	find_package(OpenACC COMPONENTS CXX)
+	if (OPENMP_FOUND AND NBODY_ENABLE_OPENACC)
+		list(APPEND NBODY_CXX_FLAGS ${OpenACC_CXXX_FLAGS})
+		list(APPEND NBODY_LINK_FLAGS ${OpenACC_CXX_FLAGS})
+		list(APPEND NBODY_DEFINES USEOPENACC)
+		set(NBODY_HAS_OPENACC Yes)
 	endif()
 endmacro()
 
@@ -155,8 +174,13 @@ endmacro()
 find_gsl()
 
 set(NBODY_HAS_OPENMP No)
+set(NBODY_HAS_OPENMPGPU No)
+set(NBODY_HAS_OPENACC No)
 if (NBODY_OPENMP)
 	find_openmp()
+endif()
+if (NBODY_OPENACC)
+	find_openacc()
 endif()
 
 
@@ -212,6 +236,9 @@ if (_export)
 	set(NBODYLIB_VERSION_MINOR "${NBODY_VERSION_MINOR}" PARENT_SCOPE)
 	set(NBODYLIB_INCLUDE_DIRS "${NBODY_INCLUDE_DIRS}" PARENT_SCOPE)
 	set(NBODYLIB_DEFINES "${NBODY_DEFINES}" PARENT_SCOPE)
+	set(NBODYLIB_HAS_OPENMP "${NBODY_HAS_OPENMP}" PARENT_SCOPE)
+	set(NBODYLIB_HAS_OPENMPGPU "${NBODY_HAS_OPENMPGPU}" PARENT_SCOPE)
+	set(NBODYLIB_HAS_OPENACC "${NBODY_HAS_OPENACC}" PARENT_SCOPE)
 	set(NBODYLIB_CXX_FLAGS "${NBODY_CXX_FLAGS}" PARENT_SCOPE)
 	set(NBODYLIB_LINK_FLAGS "${NBODY_LINK_FLAGS}" PARENT_SCOPE)
 	set(NBODYLIB_LIBS "${NBODY_LIBS}" PARENT_SCOPE)
