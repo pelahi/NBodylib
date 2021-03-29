@@ -65,6 +65,7 @@ namespace NBody
         unsigned int nthreads;
         unsigned int nactivethreads;
         vector<unsigned int> activethreadids;
+        unsigned int ngpus, nactivegpus;
     };
 
     struct KDTreeForSorting
@@ -167,6 +168,11 @@ namespace NBody
 
         ///flag indicating whether tree should be build in parallel
         bool ibuildinparallel;
+
+        /// for gpu memory
+        Double_t *gpupos;
+        unsigned long long *gpuindex;
+
 
         /// \name Private function pointers used in building tree
         //@{
@@ -591,6 +597,10 @@ namespace NBody
         //@{
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
+        /// init memory on gpu to minimize communication 
+        void OMPGPUInitMem(KDTreeOMPThreadPool &);
+        /// free memory on gpu 
+        void OMPGPUFreeMem(KDTreeOMPThreadPool &);
         //@}
 
         /// \name Adaptive Tree related functions

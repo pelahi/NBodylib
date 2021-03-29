@@ -28,29 +28,26 @@ namespace NBody
         Double_t minval = bucket[start].GetPosition(j);
         Double_t maxval = minval;
         Int_t i;
-        unsigned int nthreads;;
+        unsigned int nthreads;
 #ifdef USEOPENMP
         nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
         if (nthreads <1) nthreads=1;
 #ifdef USEOPENMPTARGET
         // if data set is large enough, warrants offloading
         Int_t size = end-start;
-        if (size>=KDTREEOMPGPUCRITPARALLELSIZE && omp_get_num_devices() > 0) {
+        if (size>=KDTREEOMPGPUCRITPARALLELSIZE && omp_get_num_devices() > 0 && otp.nactivegpus> 0) {
             Double_t * gpupos = new Double_t[size];
-#pragma omp parallel for \
-default(shared) schedule(static) \
-num_threads(nthreads) if (nthreads>1)
-            for (i = start; i < end; i++) gpupos[i-start] = bucket[i].GetPosition(j);
             minval = maxval = gpupos[0];
+            otp.nactivegpus--;
 #pragma omp target teams distribute parallel for \
-map(to:gpupos[0:size]) defaultmap(tofrom:scalar) \
 reduction(min:minval) reduction(max:maxval)
-            for (i = 1; i < size; i++)
+            for (i = start+1; i < end; i++)
             {
-                minval = min(minval, gpupos[i]);
-                maxval = max(maxval, gpupos[i]);
+                unsigned long long index = i*ND + j;
+                minval = min(minval, gpupos[index]);
+                maxval = max(maxval, gpupos[index]);
             }
-            delete[] gpupos;
+            otp.nactivegpus++;
         }
         else
 #endif
@@ -1198,7 +1195,17 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
             if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
+            //if gpu present, allocate and map memory 
+#ifdef USEOPENMPTARGET
+            OMPGPUMemInit(otp);
+            #pragma omp target map(to:gpupos) defaultmap(tofrom:scalar)
+            {
+#endif 
             root=BuildNodes(0,numparts, otp);
+#ifdef USEOPENMPTARGET
+            }
+            OMPGPUFreeMem(otp);
+#endif 
             if (ibuildinparallel) BuildNodeIDs();
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
             if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
@@ -1339,4 +1346,33 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 #endif
         return newthreadpool;
     }
+
+    void OMPGPUMemInit(KDTreeOMPThreadPool &otp)
+    {
+#ifdef USEOPENMPTARGET 
+        int dimoffset=0;
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((end-start)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        gpupos = new Double_t[numparts*ND];
+        gpuindex = new unsigned long long[numparts*ND];
+        if (treetype == TVEL) dimoffset=3;
+#pragma omp parallel for \
+default(shared) private(index) firstprivate(dimoffset) schedule(static) \
+num_threads(nthreads) if (nthreads>1)
+        for (unsigned long long i = 0; i < numparts; i++) {
+            index = i*ND;
+            for (auto j=0;j<ND;) gpupos[index+j] = bucket[i].GetPhase(j+dimoffset);
+        }
+        opt.ngpus = omp_get_num_devices();
+        opt.nactivegpus = opt.ngpus;
+#endif
+    }
+
+    void OMPGPUMemInit(KDTreeOMPThreadPool &otp){
+#ifdef USEOPENMPTARGET 
+        delete[] gpupos;
+        delete[] gpuindex;
+#endif
+    }
+
 }
