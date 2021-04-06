@@ -970,23 +970,23 @@ namespace NBody
 	    js_rr = js_farthest;
 
 	    if(sqrt(js_dist) >= sqrt(js_rr) + 1.0){
-		    flag=0;
+	            flag=0;
 	    }
 	    else if(sqrt(js_dist) <= abs(sqrt(js_rr) - 1.0) && 1.0 > js_rr){
-		    for(Int_t i=bucket_start; i < bucket_end; i++){
-			    Int_t id = bucket[i].GetID();
-			    //if(Group[id]==iGroup) continue;       // Skip already linked
-			    if(Group[id]) continue; // Skip already linked
-			    if(Group[id]<0) continue;       // Skip Background
-			    Group[id]=iGroup;
-			    Fifo[iTail++]=i;
-			    Len[iGroup]++;
+	            for(Int_t i=bucket_start; i < bucket_end; i++){
+	        	    Int_t id = bucket[i].GetID();
+	        	    //if(Group[id]==iGroup) continue;       // Skip already linked
+	        	    if(Group[id]) continue; // Skip already linked
+	        	    if(Group[id]<0) continue;       // Skip Background
+	        	    Group[id]=iGroup;
+	        	    Fifo[iTail++]=i;
+	        	    Len[iGroup]++;
 
-			    Next[Tail[Head[target]]]=Head[i];
-			    Tail[Head[target]]=Tail[Head[i]];
-			    Head[i]=Head[target];
-			    if(iTail==nActive)iTail=0;
-		    }
+	        	    Next[Tail[Head[target]]]=Head[i];
+	        	    Tail[Head[target]]=Tail[Head[i]];
+	        	    Head[i]=Head[target];
+	        	    if(iTail==nActive)iTail=0;
+	            }
 	    }
 	    else{
 		    flag = 0;

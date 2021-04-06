@@ -47,7 +47,7 @@
 #include <algorithm>
 
 //option list for the performance test
-#include "/home/jinsu/dev/VELOCIraptor-STF/src/js_perform.h"
+//#include "/home/jinsu/dev/VELOCIraptor-STF/src/js_perform.h"
 
 
 #ifdef USEOPENMP
