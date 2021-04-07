@@ -867,16 +867,19 @@ namespace NBody
 	if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
 	int flag=Head[bucket_start];
 
-        Double_t js_pos[6], js_dist, js_rr;
-        for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
-        js_dist = DistanceSqd(js_pos, js_center, numdim);
-        js_rr = js_farthest;
+	//Only acts when numdim==3
+	Double_t js_pos[6], js_dist, js_rr;
+	if(numdim==3){
+		for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
+		js_dist = DistanceSqd(js_pos, js_center, numdim);
+		js_rr = js_farthest;
+	}
 
-	if (sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)){
+	if ((sqrt(js_dist) >= sqrt(js_rr) + sqrt(fdist2)) && numdim==3){
 		//SKIP This Node
 		flag=0;
 	}
-	else if (sqrt(js_dist) <= abs(sqrt(js_rr) - sqrt(fdist2)) && fdist2 > js_rr){
+	else if (sqrt(js_dist) <= abs(sqrt(js_rr) - sqrt(fdist2)) && (fdist2 > js_rr) && numdim==3){
 		//This node is entirely enclosed
                 Int_t id;
 
