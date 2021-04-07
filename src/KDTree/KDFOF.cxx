@@ -72,7 +72,7 @@ namespace NBody
                 //within a distance fdist2, marks all particles using their IDS and pGroup array
                 //adjusts the Fifo array, iTail and pLen.
                 //first set offset to zero when beginning node search
-                for (int j = 0; j < 3; j++) off[j] = 0.0;
+                for (int j = 0; j < 6; j++) off[j] = 0.0;
                 if (period==NULL) root->FOFSearchBall(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,iid);
                 else root->FOFSearchBallPeriodic(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
             }
