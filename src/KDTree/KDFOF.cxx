@@ -75,6 +75,16 @@ namespace NBody
                 for (int j = 0; j < 6; j++) off[j] = 0.0;
                 if (period==NULL) root->FOFSearchBall(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,iid);
                 else root->FOFSearchBallPeriodic(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
+
+		//Change the order of Fifo based on the splay operation
+		if(iHead!=iTail){
+			Int_tree_t Fifodum;
+			Int_tree_t iTail2;
+			iTail2 = iTail - 1;
+			if(iTail2 == -1) iTail2 = numparts-1;
+			Fifodum = Fifo[iTail2]; Fifo[iTail2] = Fifo[iHead]; Fifo[iHead] = Fifodum;
+		}
+
             }
             if(pLen[iGroup]<minnum){
                 Int_t ii=pHead[pGroupHead[iGroup]];
