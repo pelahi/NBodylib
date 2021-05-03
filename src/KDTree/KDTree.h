@@ -66,6 +66,18 @@ namespace NBody
         vector<unsigned int> activethreadids;
     };
 
+    struct KDTreeForSorting
+    {
+        Double_t val;
+        Int_t orgindex;
+        KDTreeForSorting() = default;
+        KDTreeForSorting(const KDTreeForSorting &x) = default;
+        KDTreeForSorting(KDTreeForSorting &&x) = default;
+        ~KDTreeForSorting() = default;
+        KDTreeForSorting& operator=(const KDTreeForSorting &x) = default;
+        KDTreeForSorting& operator=(KDTreeForSorting &&x) = default;
+    };
+
     class KDTree
     {
 
@@ -100,9 +112,19 @@ namespace NBody
         ///number of nodes and leafnodes
         Int_t numnodes,numleafnodes;
         ///bucket or leaf node size
-        Int_t b;
+        Int_t b, bmin;
+        ///factor of the node size for which we allow an approximative median
+        ///split to vary by in search for optimal split
+        Double_t adaptivemedianfac;
+        ///minimum size of region for which an adaptive median is searched for.
+        int minadaptivemedianregionsize = 10;
         ///max number of dimensions of tree
         const static int MAXND=6;
+	    ///max squared distance size of a leaf node for building adaptive trees
+    	Double_t rdist2adapt;
+        /// flag for whether to calculate the maximum interparticle spacing
+        /// and see if one continues node splitting.
+        bool igetmaxinterparticlespacing;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -198,15 +220,23 @@ namespace NBody
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
             Double_t *Period=nullptr, Double_t **metric=nullptr,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0,
+            bool iGetMaxInterParticleSpacing = false
+
         );
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=nullptr,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0,
+            bool iGetMaxInterParticleSpacing = false
         );
+
         ///resets particle order
         ~KDTree();
         //@}
@@ -493,6 +523,11 @@ namespace NBody
         /// Determine the split dimension
         int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2], 
                 KDTreeOMPThreadPool &otp);
+        /// splay function for FOF searches. change first in, first out array to a last in, first out
+        /// The last particle found in a particle FOF search is likely to be
+        /// the most distant and hence using this as a starting point for the next
+        /// search will improve the performance.  
+        inline void splay(Int_tree_t *&Fifo, Int_tree_t &iTail, Int_tree_t &iHead);
         //@}
 
         /// \name Rearrange and balance the tree
@@ -540,6 +575,19 @@ namespace NBody
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
+
+        /// \name Adaptive Tree related functions
+        //@{
+        /// for calculating the centre and distance to furtherts in a bucket
+        vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+            Double_t &farthest, KDTreeOMPThreadPool &);
+        void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+            Node *&node, KDTreeOMPThreadPool &);
+        Double_t DetermineMaxInterParticleSpacing(UInt_tree_t localstart, UInt_tree_t localend,
+            int splitdim,
+            KDTreeOMPThreadPool &otp);
+        //@}
+
     };
 
 }

@@ -752,7 +752,8 @@ namespace NBody
     Node *KDTree::FindLeafNode(Int_t tt){
         Node* np=root;
         SplitNode *sp;
-        while(np->GetCount()>b){
+        int k;
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             //if (bucket[tt].GetPosition(k)<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
             //else np=sp->GetRight();
@@ -766,7 +767,7 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (x[k]<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
@@ -779,7 +780,7 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (search[k][0]<((SplitNode *)(sp->GetLeft()))->GetCutValue()) np=sp->GetLeft();
