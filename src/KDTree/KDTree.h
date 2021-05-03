@@ -176,12 +176,6 @@ namespace NBody
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         void (NBody::KDTree::*getparticlepos) (const Particle &p, vector<Double_t> &x);
         Double_t (NBody::KDTree::*getparticleithpos) (const Particle &p, int i);
-
-        // Double_t(NBody::KDTree::*bmfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
-        // Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
-        // Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
-        // Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
-        // Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
         //@}
 
         /// \name Private arrays used to build tree
@@ -537,15 +531,11 @@ namespace NBody
         //@{
         inline Double_t Median(int d, Int_t k, Int_t start, Int_t end,
             KDTreeOMPThreadPool &, bool balanced=true);
-
-//         inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
-//             KDTreeOMPThreadPool &, bool balanced=true);
-//         /// same as above but with velocities
-//         inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end,
-//             KDTreeOMPThreadPool &, bool balanced=true);
-//         /// same as above but with full phase-space
-//         inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end,
-//             KDTreeOMPThreadPool &, bool balanced=true);
+        /// allow for an approximative binary tree where the split
+        /// is adjust from the median to the point of largest separation
+        /// between adjacent particles
+        Double_t AdjustMedianToMaximalDistance(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+            KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET
         //inline Double_t MedianDim(int d, Int_t k, Int_t start, Int_t end, bool balanced=true, Double_t **metric=NULL);

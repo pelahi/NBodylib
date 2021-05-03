@@ -755,6 +755,7 @@ namespace NBody
         int k;
         while(!np->GetLeaf()){
             sp=(SplitNode *)np;
+            k=sp->GetCutDim();
             //if (bucket[tt].GetPosition(k)<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
             //else np=sp->GetRight();
             if (tt<(sp->GetLeft())->GetEnd()) np=sp->GetLeft();

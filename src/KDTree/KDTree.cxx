@@ -577,11 +577,11 @@ firstprivate(x)
     ///but approximative and splits at the particle with the largest distance
     ///between particles. This search is limited to a buffer region around
     ///the median index
-    Double_t KDTree::AdjustMedianToMaximalDistancePos(int d,
+    Double_t KDTree::AdjustMedianToMaximalDistance(int d,
         Int_t &splitindex, Int_t trueleft, Int_t trueright,
         KDTreeOMPThreadPool &otp, bool balanced)
     {
-        Double_t splitvalue = MedianPos(d, splitindex, trueleft, trueright, otp, balanced);
+        Double_t splitvalue = Median(d, splitindex, trueleft, trueright, otp, balanced);
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
         if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
@@ -590,7 +590,7 @@ firstprivate(x)
         UInt_tree_t size = right - left;
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
-            x[i].val = bucket[left+i].GetPosition(d);
+            x[i].val = (this->*getparticleithpos)(bucket[left+i],d);
             x[i].orgindex = left+i;
         }
         UInt_tree_t n=0;
@@ -615,7 +615,7 @@ firstprivate(x)
         }
         splitindex = newsplitindex;
         splitvalue = newsplitvalue;
-        splitvalue = MedianPos(d, splitindex, trueleft, trueright, otp, balanced);
+        splitvalue = Median(d, splitindex, trueleft, trueright, otp, balanced);
         return splitvalue;
 
         /*
@@ -644,88 +644,6 @@ firstprivate(x)
         splitvalue = newsplitvalue;
         return splitvalue;
         */
-    }
-    Double_t KDTree::AdjustMedianToMaximalDistanceVel(int d,
-        Int_t &splitindex, Int_t trueleft, Int_t trueright,
-        KDTreeOMPThreadPool &otp, bool balanced)
-    {
-        Double_t splitvalue = MedianVel(d, splitindex, trueleft, trueright, otp, balanced);
-        UInt_tree_t truesize = trueright - trueleft;
-        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
-        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
-        UInt_tree_t left = splitindex - bufferwidth/2;
-        UInt_tree_t right = splitindex + bufferwidth/2;
-        UInt_tree_t size = right - left;
-        vector<KDTreeForSorting> x(size);
-        for (auto i=0;i<size;i++) {
-            x[i].val = bucket[left+i].GetVelocity(d);
-            x[i].orgindex = left+i;
-        }
-        UInt_tree_t n=0;
-        std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
-            return a.val < b.val;
-        });
-        UInt_tree_t newsplitindex = left;
-        Double_t newsplitvalue;
-        auto dist = std::abs(x[1].val - x[0].val);
-        auto maxdist = dist;
-        UInt_tree_t maxi = 0;
-        for (UInt_tree_t i=1; i<size-1; i++)
-        {
-            dist = std::abs(x[i+1].val - x[i].val);
-            if (dist > maxdist)
-            {
-                maxdist = dist;
-                newsplitindex = i+x[i].orgindex;
-                newsplitvalue = x[i].val;
-                maxi = i;
-            }
-        }
-        splitindex = newsplitindex;
-        splitvalue = newsplitvalue;
-        splitvalue = MedianVel(d, splitindex, trueleft, trueright, otp, balanced);
-        return splitvalue;
-    }
-    Double_t KDTree::AdjustMedianToMaximalDistancePhs(int d,
-        Int_t &splitindex, Int_t trueleft, Int_t trueright,
-        KDTreeOMPThreadPool &otp, bool balanced)
-    {
-        Double_t splitvalue = MedianPhs(d, splitindex, trueleft, trueright, otp, balanced);
-        UInt_tree_t truesize = trueright - trueleft;
-        UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
-        if (bufferwidth<minadaptivemedianregionsize) return splitvalue;
-        UInt_tree_t left = splitindex - bufferwidth/2;
-        UInt_tree_t right = splitindex + bufferwidth/2;
-        UInt_tree_t size = right - left;
-        vector<KDTreeForSorting> x(size);
-        for (auto i=0;i<size;i++) {
-            x[i].val = bucket[left+i].GetPhase(d);
-            x[i].orgindex = left+i;
-        }
-        UInt_tree_t n=0;
-        std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
-            return a.val < b.val;
-        });
-        UInt_tree_t newsplitindex = left;
-        Double_t newsplitvalue;
-        auto dist = std::abs(x[1].val - x[0].val);
-        auto maxdist = dist;
-        UInt_tree_t maxi = 0;
-        for (UInt_tree_t i=1; i<size-1; i++)
-        {
-            dist = std::abs(x[i+1].val - x[i].val);
-            if (dist > maxdist)
-            {
-                maxdist = dist;
-                newsplitindex = i+x[i].orgindex;
-                newsplitvalue = x[i].val;
-                maxi = i;
-            }
-        }
-        splitindex = newsplitindex;
-        splitvalue = newsplitvalue;
-        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, otp, balanced);
-        return splitvalue;
     }
 
     ///Calculate center and largest sqaured distance for node
@@ -768,7 +686,7 @@ firstprivate(x)
             #pragma omp for nowait
             for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]; i++)
             {
-                for(auto j=0;j<ND;j++) localcenter[j] += bucket[i].GetPhase(j);
+                for(auto j=0;j<ND;j++) localcenter[j] += (this->*getparticleithpos)(bucket[i],j);
             }
 
             #pragma omp critical
@@ -782,7 +700,7 @@ firstprivate(x)
         {
             for(auto i=localstart; i<localend;i++)
             {
-                for(auto j=0;j<ND;j++) center[j] += bucket[i].GetPhase(j);
+                for(auto j=0;j<ND;j++) center[j] += (this->*getparticleithpos)(bucket[i],j);
             }
         }
         for (auto &c:center) c*= norm;
@@ -798,7 +716,7 @@ firstprivate(x)
             #pragma omp for nowait
             for (auto i = threadlocalstart[tid]; i < threadlocalend[tid]; i++)
             {
-                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                for(auto j=0;j<ND;j++) pos[j] = (this->*getparticleithpos)(bucket[i],j);
                 Double_t r2=0;
                 for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
                 localmaxr2 = std::max(localmaxr2, r2);
@@ -815,7 +733,7 @@ firstprivate(x)
             //get largest distance
             for(auto i=localstart; i<localend;i++)
             {
-                for(auto j=0;j<ND;j++) pos[j] = bucket[i].GetPhase(j);
+                for(auto j=0;j<ND;j++) pos[j] = (this->*getparticleithpos)(bucket[i],j);
                 Double_t r2=0;
                 for(auto j=0;j<ND;j++) r2+=(pos[j] - center[j])*(pos[j] - center[j]);
                 maxr2 = std::max(maxr2, r2);
@@ -850,7 +768,8 @@ firstprivate(x)
         UInt_tree_t size = (localend - localstart);
         vector<KDTreeForSorting> x(size);
         for (auto i=0; i<size; i++) {
-            x[i].val = bucket[i + localstart].GetPhase(splitdim);
+		
+            x[i].val = (this->*getparticleithpos)(bucket[i+localstart],splitdim);
             x[i].orgindex = i + localstart;
         }
         std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
@@ -1066,40 +985,20 @@ firstprivate(x)
             medianfunc=&NBody::KDTree::Median;
             if (treetype==TPHYS)
             {
-                // bmfunc=&NBody::KDTree::BoundaryandMeanPos;
-                // dispfunc=&NBody::KDTree::DispersionPos;
-                // spreadfunc=&NBody::KDTree::SpreadestPos;
-                // entropyfunc=&NBody::KDTree::EntropyPos;
-                // medianfunc=&NBody::KDTree::MedianPos;
                 getparticlepos=&NBody::KDTree::GetParticlePos;
                 getparticleithpos=&NBody::KDTree::GetParticleithPos;
             }
             else if (treetype==TVEL) {
                 getparticlepos=&NBody::KDTree::GetParticleVel;
                 getparticleithpos=&NBody::KDTree::GetParticleithVel;
-                // bmfunc=&NBody::KDTree::BoundaryandMeanVel;
-                // dispfunc=&NBody::KDTree::DispersionVel;
-                // spreadfunc=&NBody::KDTree::SpreadestVel;
-                // entropyfunc=&NBody::KDTree::EntropyVel;
-                // medianfunc=&NBody::KDTree::MedianVel;
             }
             else if (treetype==TPHS) {
                 getparticlepos=&NBody::KDTree::GetParticlePhs;
                 getparticleithpos=&NBody::KDTree::GetParticleithPhs;
-                // bmfunc=&NBody::KDTree::BoundaryandMeanPhs;
-                // dispfunc=&NBody::KDTree::DispersionPhs;
-                // spreadfunc=&NBody::KDTree::SpreadestPhs;
-                // entropyfunc=&NBody::KDTree::EntropyPhs;
-                // medianfunc=&NBody::KDTree::MedianPhs;
             }
             else if (treetype==TPROJ) {
                 getparticlepos=&NBody::KDTree::GetParticleProj;
                 getparticleithpos=&NBody::KDTree::GetParticleithProj;
-                // bmfunc=&NBody::KDTree::BoundaryandMeanPos;
-                // dispfunc=&NBody::KDTree::DispersionPos;
-                // spreadfunc=&NBody::KDTree::SpreadestPos;
-                // entropyfunc=&NBody::KDTree::EntropyPos;
-                // medianfunc=&NBody::KDTree::MedianPos;
             }
             return 1;
         }
