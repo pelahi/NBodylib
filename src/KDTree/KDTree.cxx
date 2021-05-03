@@ -860,12 +860,12 @@ firstprivate(x)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            // if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
             //else if (treetype==TMETRIC) root = BuildNodesDim(0, numparts,metric);
-            // if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
@@ -918,11 +918,11 @@ firstprivate(x)
             for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
             if (scalespace) ScaleSpace();
             for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            // if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
             KDTreeOMPThreadPool otp = OMPInitThreadPool();
             root=BuildNodes(0,numparts, otp);
             if (ibuildinparallel) BuildNodeIDs();
-            // if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
+            //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
         omp_set_nested(inested);
