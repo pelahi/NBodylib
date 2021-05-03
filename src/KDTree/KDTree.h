@@ -538,6 +538,11 @@ namespace NBody
         /// Determine the split dimension
         inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
                 KDTreeOMPThreadPool &otp);
+        /// splay function for FOF searches. change first in, first out array to a last in, first out
+        /// The last particle found in a particle FOF search is likely to be
+        /// the most distant and hence using this as a starting point for the next
+        /// search will improve the performance.  
+        inline void splay(Int_tree_t *&Fifo, Int_tree_t &iTail, Int_tree_t &iHead);
         //@}
 
         /// \name Rearrange and balance the tree
