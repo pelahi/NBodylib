@@ -725,7 +725,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    if (ikeepinputorder) irearrangeandbalance=false;
 
 		    splitdim = DetermineSplitDim(start, end, bnd, otp);
-#ifdef JS_ADT_ON
 		    js_qsort(js_ind0, js_ind1, splitdim);
 
 		    double js_dx=0., js_dx2;
@@ -735,10 +734,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
 			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
 		    }
-#else
-		    k = start + (size - 1) / 2;
-		    splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
-#endif
+		    //k = start + (size - 1) / 2;
+		    //splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
 	    }
 
 	    //Now Split the node
@@ -910,7 +907,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    js_xc = 1.0/js_xc;
 		    js_vc = 1.0/js_vc;
 		    for(Int_t js_i=start; js_i<end; js_i++) bucket[js_i].ScalePhase(js_xc, js_vc);
-#ifdef JS_ADT_ON
 		    js_qsort(js_ind0, js_ind1, splitdim);
 
 		    double js_dx=0., js_dx2;
@@ -920,10 +916,36 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
 			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
 		    }
-#else
+
+		    //Adaptive Tree based on background particles only
 		    k = start + (size - 1) / 2;
 		    splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
-#endif
+
+		    double js2_dx0, js2_dx1, js2_dx2=-1.;
+		    int js2_nn=0;
+		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+			    if(bucket[js_ind].GetPotential()<param[9]){
+				    js2_dx1 = bucket[js_ind].GetPhase(splitdim);
+				    if(js2_nn==0){
+					    js2_nn++;
+					    js2_dx0=js2_dx1;
+				    	    k= js_ind;
+					    splitvalue=bucket[k].GetPhase(splitdim);
+				    }
+				    else
+				    {
+					    if(js2_dx1 - js2_dx0 > js2_dx2){
+						    k = js_ind;
+						    splitvalue=bucket[k].GetPhase(splitdim);
+						    js2_dx2 = js2_dx1 - js2_dx0;
+					    }
+					    js2_dx0=js2_dx1;
+				    }
+			    }
+		    }
+
+		    //k = start + (size - 1) / 2;
+		    //splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
 
 	    }
 
