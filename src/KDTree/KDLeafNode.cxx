@@ -518,7 +518,8 @@ namespace NBody
     void LeafNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+        //if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+	if(BucketFlag[nid])return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
         int flag=Head[bucket_start];
@@ -555,11 +556,15 @@ namespace NBody
                 Double_t dist2;
                 for (Int_t i = bucket_start; i < bucket_end; i++)
                 {
-                    if (flag!=Head[i])flag=0;
+                    //if (flag!=Head[i])flag=0;
                     id=bucket[i].GetID();
                     if (Group[id]) continue;
                     dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition());
                     if (numdim==6) dist2+=DistanceSqd(bucket[target].GetVelocity(),bucket[i].GetVelocity());
+
+                    //if (flag!=Head[i])flag=0;
+		    flag=0;
+
                     if (dist2 < fdist2) {
                         Group[id]=iGroup;
                         Fifo[iTail++]=i;
@@ -628,7 +633,8 @@ namespace NBody
     void LeafNode::FOFSearchCriterion(Double_t rd, FOFcompfunc cmp, Double_t *params, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, Int_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+        //if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
+	if(BucketFlag[nid])return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
 	int flag=Head[bucket_start];
@@ -652,6 +658,7 @@ namespace NBody
 			//if(Group[id]==iGroup) continue;
 			if(Group[id]<0) continue;
 			if(Group[id]) continue;
+
 			Group[id]=iGroup;
 			Fifo[iTail++]=i;
 			Len[iGroup]++;
@@ -665,13 +672,17 @@ namespace NBody
 	else{
         	for (Int_t i = bucket_start; i < bucket_end; i++)
         	{
-        	    if (flag!=Head[i])flag=0;
+        	    //if (flag!=Head[i])flag=0;
         	    Int_t id=bucket[i].GetID();
         	    //if already linked don't do anything
         	    //if (Group[id]==iGroup) continue;
 		    if (Group[id]) continue;
         	    //if tag below zero then don't do anything
         	    if (Group[id]<0) continue;
+
+        	    //if (flag!=Head[i])flag=0;
+		    flag=0;
+
         	    if (cmp(bucket[target],bucket[i],params)) {
         	        Group[id]=iGroup;
         	        Fifo[iTail++]=i;
