@@ -918,31 +918,31 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    }
 
 		    //Adaptive Tree based on background particles only
-		    k = start + (size - 1) / 2;
-		    splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
+		    //k = start + (size - 1) / 2;
+		    //splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
 
-		    double js2_dx0, js2_dx1, js2_dx2=-1.;
-		    int js2_nn=0;
-		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-			    if(bucket[js_ind].GetPotential()<param[9]){
-				    js2_dx1 = bucket[js_ind].GetPhase(splitdim);
-				    if(js2_nn==0){
-					    js2_nn++;
-					    js2_dx0=js2_dx1;
-				    	    k= js_ind;
-					    splitvalue=bucket[k].GetPhase(splitdim);
-				    }
-				    else
-				    {
-					    if(js2_dx1 - js2_dx0 > js2_dx2){
-						    k = js_ind;
-						    splitvalue=bucket[k].GetPhase(splitdim);
-						    js2_dx2 = js2_dx1 - js2_dx0;
-					    }
-					    js2_dx0=js2_dx1;
-				    }
-			    }
-		    }
+		    //double js2_dx0, js2_dx1, js2_dx2=-1.;
+		    //int js2_nn=0;
+		    //for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+		    //        if(bucket[js_ind].GetPotential()<param[9]){
+		    //    	    js2_dx1 = bucket[js_ind].GetPhase(splitdim);
+		    //    	    if(js2_nn==0){
+		    //    		    js2_nn++;
+		    //    		    js2_dx0=js2_dx1;
+		    //    	    	    k= js_ind;
+		    //    		    splitvalue=bucket[k].GetPhase(splitdim);
+		    //    	    }
+		    //    	    else
+		    //    	    {
+		    //    		    if(js2_dx1 - js2_dx0 > js2_dx2){
+		    //    			    k = js_ind;
+		    //    			    splitvalue=bucket[k].GetPhase(splitdim);
+		    //    			    js2_dx2 = js2_dx1 - js2_dx0;
+		    //    		    }
+		    //    		    js2_dx0=js2_dx1;
+		    //    	    }
+		    //        }
+		    //}
 
 		    //k = start + (size - 1) / 2;
 		    //splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);

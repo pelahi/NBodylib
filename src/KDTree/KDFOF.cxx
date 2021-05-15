@@ -198,10 +198,7 @@ namespace NBody
 
 	//Initially close node in which no bg particles are
 	//%123123123
-	FOFCriterion_CloseNodeFirst(root, pBucketFlag, pGroup);
-	int js_nnn=0;
-	for (Int_t i=0; i<numnodes; i++) if(pBucketFlag[i]) js_nnn++;
-	if(numparts==22693627 || numparts==3434348) cout<<"%123123	Closed First	"<<js_nnn<<endl;
+	//FOFCriterion_CloseNodeFirst(root, pBucketFlag, pGroup);
 
         for (Int_t i=0;i<numparts;i++){
             //if particle already member of group, ignore and go to next particle
@@ -212,12 +209,6 @@ namespace NBody
             pGroupHead[iGroup]=i;
             Fifo[iTail++]=i;
 
-	    //%123123123
-		    struct timeval js_start, js_end;
-		    int js_nn = 1;
-	    if(numparts==22693627 || numparts==3434348){
-		    gettimeofday(&js_start, NULL);
-	    }
             //if reach the end of particle list, set iTail to zero and wrap around
             if(iTail==numparts) iTail=0;
             //continue search for this group until one has wrapped around such that iHead==iTail
@@ -240,19 +231,6 @@ namespace NBody
 			Fifo[iTail2] = Fifo[iHead];
 			Fifo[iHead] = Fifo_dum;
 		}
-
-		//%123123123
-		if(numparts==22693627 || numparts==28974929 || numparts==3434348){
-			gettimeofday(&js_end, NULL);
-			double js_time = (js_end.tv_sec - js_start.tv_sec) + (js_end.tv_usec - js_start.tv_usec)/1.e6;
-			if(js_time > js_nn*10.){
-			       js_nn ++;
-
-			       Int_t js_nc = 0;
-			       for(Int_t i2=0; i2<numnodes; i2++) if(pBucketFlag[i2]) js_nc++;
-			       cout<<"%123123123 - Inside Loop "<<iid<<" / "<<iHead<<" / "<<iTail<<" / "<<pLen[iGroup]<<" / "<<js_nc<<" / "<<numnodes<<endl;
-			}
-		}	       
             }
             //make sure group big enough
             if(pLen[iGroup]<minnum){
