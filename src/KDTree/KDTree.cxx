@@ -742,7 +742,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         ibuildinparallel = false;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
-        bool inested = omp_get_max_active_levels();
+        int inested = omp_get_max_active_levels();
         int nthreads;
         #pragma omp parallel
         #pragma omp single
@@ -750,7 +750,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             nthreads = omp_get_num_threads();
         }
         if (nthreads == 1) ibuildinparallel = false;
-        if (inested == false && ibuildinparallel) omp_set_max_active_levels(nthreads/2);
+        if (inested == 0 && ibuildinparallel) omp_set_max_active_levels(nthreads/2);
 #endif
         numparts = nparts;
         numleafnodes=numnodes=0;
@@ -784,7 +784,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
         }
 #ifdef USEOPENMP
-        omp_set_nested(inested);
+        omp_set_max_active_levels(inested);
 #endif
     }
 
@@ -801,7 +801,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         ibuildinparallel = false;
 #ifdef USEOPENMP
         ibuildinparallel = iBuildInParallel;
-        bool inested = omp_get_max_active_levels();
+        int inested = omp_get_max_active_levels();
         int nthreads;
         #pragma omp parallel
         #pragma omp single
@@ -809,7 +809,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             nthreads = omp_get_num_threads();
         }
         if (nthreads == 1) ibuildinparallel = false;
-        if (inested == false && ibuildinparallel) omp_set_max_active_levels(nthreads/2);
+        if (inested == 0 && ibuildinparallel) omp_set_max_active_levels(nthreads/2);
 #endif
         numparts = s.GetNumParts();
         numleafnodes=numnodes=0;
