@@ -89,6 +89,7 @@ namespace NBody
                 //if reached the head of Index list, go back to zero
                 if (iHead==numparts) iHead=0;
 
+		Int_t old_pLen = pLen[iGroup];
                 //now begin Ball search. This node routine finds all particles
                 //within a distance fdist2, marks all particles using their IDS and pGroup array
                 //adjusts the Fifo array, iTail and pLen.
@@ -98,18 +99,54 @@ namespace NBody
                 else root->FOFSearchBallPeriodic(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
 
 		//SPLAY
+		//new ver
 		if(iHead!=iTail){
+			Int_t nlink = pLen[iGroup] - old_pLen;
+			Int_t i3, iTail2;
+			if(nlink > 0){
+				double dist_dum, dist_dum2 = -1.0;
+				double sp_pos[6], sp_pos2[6];
+				for(int j=0; j<MAXND; j++) sp_pos[j] = bucket[iid].GetPhase(j);
+				for(Int_t i2=0; i2<nlink; i2++){
+					i3 = iTail - i2 - 1;
+					if(i3<0) i3 += numparts;
+					for(int j=0; j<MAXND; j++) sp_pos2[j] = bucket[Fifo[i3]].GetPhase(j);
+					dist_dum = DistanceSqd(sp_pos, sp_pos2, MAXND);
+					if(dist_dum > dist_dum2){
+						dist_dum2 = dist_dum;
+						iTail2 = i3;
+					}
+				}
+			}
+			else{
+				iTail2 = iTail - 1;
+				if(iTail2 < 0) iTail2 += numparts;
+			}
+			
 			Int_tree_t Fifo_dum;
-			Int_tree_t iTail2;
-			iTail2 = iTail-1;
-			if(iTail2 == -1) iTail2=numparts-1;
 		        Fifo_dum = Fifo[iTail2];
 			Fifo[iTail2] = Fifo[iHead];
 			Fifo[iHead] = Fifo_dum;
 		}
+
+		//old ver
+		//if(iHead!=iTail){
+		//	Int_tree_t Fifo_dum;
+		//	Int_tree_t iTail2;
+		//	iTail2 = iTail-1;
+		//	if(iTail2 == -1) iTail2=numparts-1;
+		//        Fifo_dum = Fifo[iTail2];
+		//	Fifo[iTail2] = Fifo[iHead];
+		//	Fifo[iHead] = Fifo_dum;
+		//}
             }
 
             if(pLen[iGroup]<minnum){
+
+		//Closed needless nodes
+		//FOF_CloseUselessNode(root, bucket[i].GetID()
+//Node *node, short *BucketFlag, Int_t *pGroup)
+		
                 Int_t ii=pHead[pGroupHead[iGroup]];
                 do {
                     pGroup[bucket[ii].GetID()]=-1;
