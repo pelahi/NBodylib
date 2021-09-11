@@ -59,6 +59,7 @@ namespace NBody
 	Int_t js_leaf=-1;
 	Double_t js_center[6];
 	Double_t js_farthest=-1.;
+	Node *parent, *sibling;
         public:
         virtual ~Node() {};
 
@@ -77,7 +78,7 @@ namespace NBody
 	///Get Leaf node tag
 	virtual Int_t GetLeaf(){return js_leaf;}
 	///Get Farthest distance
-	virtual Double_t GEtFarthest(){return js_farthest;}
+	virtual Double_t GetFarthest(){return js_farthest;}
 	///Get Center
 	virtual Double_t GetCenter(int i){return js_center[i];}
         //@}
@@ -254,6 +255,8 @@ namespace NBody
         Double_t cut_val;
         Node *left;
         Node *right;
+	Node *parent;
+	Node *sibling;
         public:
         SplitNode(Int_t id, int d, Double_t p, Int_t Count, Double_t bnd[6][2],
             Int_t new_bucket_start, Int_t new_bucket_end, unsigned short ndim,
@@ -267,6 +270,8 @@ namespace NBody
             bucket_end = new_bucket_end;
             left = initial_left;
             right = initial_right;
+	    parent = NULL;
+	    sibling = NULL;
             numdim=ndim;
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
@@ -282,8 +287,18 @@ namespace NBody
         Node *GetLeft(){return left;}
         ///get the child node to the right of the cut value
         Node *GetRight(){return right;}
+	//get the parent node
+	Node *GetParent(){return parent;}
+	//get the sibling
+	Node *GetSibling(){return sibling;}
         //@}
 
+	/// \name Simple Set functions
+	//@{
+	virtual void SetParent(Node* node){parent=node;}
+	virtual void SetSibling(Node *node){sibling=node;}
+	//@}
+	
         //implementations of Find functions
         void FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t t, int dim=3);
         void FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t t, int dim=3);
@@ -399,10 +414,26 @@ namespace NBody
             bucket_end = new_bucket_end;
             count=bucket_end-bucket_start;
             numdim=ndim;
+	    parent=NULL;
+	    sibling=NULL;
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~LeafNode() { }
 
+        /// \name Simple Get functions
+        //@{
+	//get the parent node
+	Node *GetParent(){return parent;}
+	//get the sibling
+	Node *GetSibling(){return sibling;}
+        //@}
+
+	/// \name Simple Set functions
+	//@{
+	virtual void SetParent(Node* node){parent=node;}
+	virtual void SetSibling(Node *node){sibling=node;}
+	//@}
+	
         //implementations of Find functions
         void FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t t, int dim=3);
         void FindNearestVel(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Int_t t, int dim=3);
