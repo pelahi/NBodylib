@@ -144,8 +144,17 @@ namespace NBody
             if(pLen[iGroup]<minnum){
 
 		//Closed needless nodes
-		//FOF_CloseUselessNode(root, bucket[i].GetID()
-//Node *node, short *BucketFlag, Int_t *pGroup)
+		Node* contain_node = FindLeafNode(bucket[i].GetID());
+		Int_t i0 = contain_node->GetStart();
+		Int_t i1 = contain_node->GetEnd();
+		int useless_flag = 1;
+		for(Int_t ii=i0; ii<i1; ii++){
+			if(pGroup[ii]!=iGroup)useless_flag=0;
+		}
+		if(useless_flag){
+			pBucketFlag[contain_node->GetID()]=1;
+			if(pBucketFlag[(contain_node->GetSibling())->GetID()]==1)pBucketFlag[(contain_node->GetParent())->GetID()]=1;
+		}
 		
                 Int_t ii=pHead[pGroupHead[iGroup]];
                 do {

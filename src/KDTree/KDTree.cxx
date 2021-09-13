@@ -673,8 +673,16 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 			    #pragma omp taskwait
 		    }
 
-                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                        left, right);
+
+                    SplitNode *end_node = new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+                    left->SetSibling(right);
+                    right->SetSibling(left);
+                    left->SetParent(end_node);
+                    right->SetParent(end_node);
+                    return end_node;
+
+                    //return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                    //    left, right);
 #endif
 	    }
 	    else {
@@ -683,8 +691,14 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    left = BuildNodes_OMP(start, k+1, otp);
 		    right = BuildNodes_OMP(k+1, end, otp);
 
-                    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                        left, right);
+                    SplitNode *end_node = new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+                    left->SetSibling(right);
+                    right->SetSibling(left);
+                    left->SetParent(end_node);
+                    right->SetParent(end_node);
+                    return end_node;
+                    //return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
+                    //    left, right);
 	    }	    
     }
     
@@ -700,7 +714,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    int js_ind0 = start;
 	    int js_ind1 = end-1;
 
-        
 	    //if not building in parallel can set ids here and update number of nodes
 	    //otherwise, must set after construction
 	    if (ibuildinparallel == false) {
@@ -724,16 +737,39 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    bool irearrangeandbalance=true;
 		    if (ikeepinputorder) irearrangeandbalance=false;
 
+		    ///
+		    //double js_dx=0., js_dx2;
+		    //int js_skip = 0, js_dim2;
+		    //int js_nn = (end - start) / 8;
+		    //for(int js_dim=0; js_dim<ND; js_dim++){
+		    //    js_dim2 = js_dim;
+		    //	js_qsort(js_ind0, js_ind1, js_dim2);
+		    //    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
+		    //    	js_dx2 = abs(bucket[js_ind+1].GetPhase(js_dim) - bucket[js_ind].GetPhase(js_dim));
+		    //    	if(js_dx2 > js_dx){
+		    //    		splitdim = js_dim;
+		    //    		k = js_ind;
+		    //    		splitvalue=bucket[k].GetPhase(splitdim);
+		    //    		js_dx = js_dx2;
+		    //    	}
+		    //    }
+		    //}
+		    //js_qsort(js_ind0, js_ind1, splitdim);
+		    ///
+
 		    splitdim = DetermineSplitDim(start, end, bnd, otp);
 		    js_qsort(js_ind0, js_ind1, splitdim);
 
 		    double js_dx=0., js_dx2;
 		    int js_nn = (end - start) / 8;
+		    if (js_nn == 0) js_nn = 1;
 
 		    for(int js_ind=start + js_nn; js_ind<end - js_nn; js_ind++){
-			    js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
-			    if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
+		            js_dx2 = abs(bucket[js_ind+1].GetPhase(splitdim) - bucket[js_ind].GetPhase(splitdim));
+		            if(js_dx2 > js_dx){js_dx=js_dx2; k=js_ind; splitvalue=bucket[k].GetPhase(splitdim);}
 		    }
+		    
+
 		    //k = start + (size - 1) / 2;
 		    //splitvalue = (this->*medianfunc)(splitdim, k, start, end, otp, irearrangeandbalance);
 	    }
@@ -800,7 +836,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    }
 		    right->SetFarthest(js_dd);
 
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+		    SplitNode *end_node = new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+		    left->SetSibling(right);
+		    right->SetSibling(left);
+		    left->SetParent(end_node);
+		    right->SetParent(end_node);
+		    return end_node;
+		    //return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
 
 #endif
 	    }
@@ -854,7 +896,13 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    }
 		    right->SetFarthest(js_dd);
 
-		    return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+		    SplitNode *end_node = new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
+		    left->SetSibling(right);
+		    right->SetSibling(left);
+		    left->SetParent(end_node);
+		    right->SetParent(end_node);
+		    return end_node;
+		    //return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND, left, right);
 	    }	    
     }
     

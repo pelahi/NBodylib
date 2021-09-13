@@ -81,6 +81,10 @@ namespace NBody
 	virtual Double_t GetFarthest(){return js_farthest;}
 	///Get Center
 	virtual Double_t GetCenter(int i){return js_center[i];}
+	//get parent
+	Node *GetParent(){return parent;}
+	//get the sibling
+	Node *GetSibling(){return sibling;}
         //@}
 
         /// \name Simple Set functions
@@ -90,6 +94,8 @@ namespace NBody
 	virtual void SetLeaf(Int_t js_leaftmp){js_leaf=js_leaftmp;}
 	virtual void SetFarthest(Double_t js_fartmp){js_farthest=js_fartmp;}
 	virtual void SetCenter(Double_t centertmp, int i){js_center[i]=centertmp;}
+	virtual void SetParent(Node* node){parent=node;}
+	virtual void SetSibling(Node *node){sibling=node;}
         //@}
 
         /// \name Find Nearest routines:

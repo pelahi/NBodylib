@@ -925,7 +925,10 @@ namespace NBody
 		if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
 	}
 
-	if (flag) BucketFlag[nid]=1;
+	if (flag){
+		BucketFlag[nid]=1;
+		if(BucketFlag[sibling->GetID()]==1)BucketFlag[parent->GetID()]=1;
+	}
 
 	///
         //Double_t old_off = off[cut_dim];
