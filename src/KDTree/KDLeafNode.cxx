@@ -522,7 +522,8 @@ namespace NBody
 	if(BucketFlag[nid])return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
-        int flag=Head[bucket_start];
+        //int flag=Head[bucket_start];
+	int flag=1;
 
 	//--JS--
 	//Node Skip by using trigonometric inequalities only acts when numdim==3
@@ -641,7 +642,8 @@ namespace NBody
 	if(BucketFlag[nid])return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
-	int flag=Head[bucket_start];
+	//int flag=Head[bucket_start];
+	int flag=1;
 
 
 	Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;

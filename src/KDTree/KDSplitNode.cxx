@@ -866,7 +866,8 @@ namespace NBody
     {
 	//if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
 	if(BucketFlag[nid])return;
-	int flag=Head[bucket_start];
+	//int flag=Head[bucket_start];
+	int flag=1;
 
 	Double_t js_pos[6], js_dist, js_rr;
 	for(int js_j=0; js_j<numdim; js_j++) js_pos[js_j] = bucket[target].GetPhase(js_j);
@@ -964,7 +965,8 @@ namespace NBody
     {
 	    //if(BucketFlag[nid]&&Head[target]==Head[bucket_start])return;
 	    if(BucketFlag[nid])return;
-	    int flag = Head[bucket_start];
+	    //int flag = Head[bucket_start];
+	    int flag=1;
 
 	    Double_t js_pos[3], js_vel[3], js_dist=0., js_rr;
 	    Double_t js_posCen[3], js_velCen[3];
