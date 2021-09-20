@@ -15,7 +15,7 @@ namespace NBody
     the most distant and hence using this as a starting point for the next
     search will improve the performance.  
     */ 
-    inline void KDTree::splay(Int_tree_t *&Fifo, Int_tree_t &iTail, Int_tree_t &iHead){
+    inline void KDTree::splay(Int_tree_t *&Fifo, Int_t &iTail, Int_t &iHead){
         if(iHead==iTail) return;
         Int_tree_t Fifodum;
         Int_tree_t iTail2 = iTail - 1;
@@ -54,8 +54,8 @@ namespace NBody
         if (pLen==NULL)     {pLen=new Int_tree_t[numparts];ipl=true;}
         if (pTail==NULL)    {pTail=new Int_tree_t[numparts];ipt=true;}
 
-        Int_t iGroup=0,iHead=0,iTail=0,id,iid;
-        Int_t maxlen=0;
+        Int_t iGroup=0, iHead=0, iTail=0;
+        Int_t id,iid, maxlen=0;
 
         //initial arrays
         //initial arrays

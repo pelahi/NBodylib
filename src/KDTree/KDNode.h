@@ -260,17 +260,20 @@ namespace NBody
                 {
                     auto dist = x[j]-center[j];
                     maxr2 += dist*dist;
-                    Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
+                    auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
                     if (dista*distb<0)  inside = false;
                 }
+                auto maxr = sqrt(maxr2);
+                auto far = sqrt(farthest);
+                auto fdist = sqrt(fdist2);
                 // if particle outside node and node particle
                 // farthest from centre (assumed to be closed to particle)
                 // outside the search radius then don't explore node
-                if (!inside && (sqrt(maxr2) - sqrt(farthest) > sqrt(fdist2))) inodeflagged = -1;
+                if (!inside && (maxr - far > fdist)) inodeflagged = -1;
                 //otherwise check that most distant particle within search radius to just tag entire node and close it
                 //Could also implement to see closed node particle to particle is within search radius
                 //and most distant particle also within search radius to link
-                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2));
+                else inodeflagged = (maxr + far < fdist);
             }
             else
             {
@@ -282,8 +285,8 @@ namespace NBody
                 for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
                 for (int j=0;j<numdim;j++)
                 {
-                    Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
-                    Double_t dista2 = dista*dista, distb2 = distb*distb;
+                    auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
+                    auto dista2 = dista*dista, distb2 = distb*distb;
                     // if object is outside cell, calculate minimum distance to node edge/surface/vertex
                     if (dista*distb<0)  {
                         if (dista<0) minr2 += dista2;

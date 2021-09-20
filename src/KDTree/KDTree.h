@@ -78,6 +78,7 @@ namespace NBody
         KDTreeForSorting& operator=(KDTreeForSorting &&x) = default;
     };
 
+
     class KDTree
     {
 
@@ -95,6 +96,12 @@ namespace NBody
         /// ie: KSPH=0,KEPAN=2,KGAUSS=3,KTH=3;
         //@{
         const static int KSPH=0,KGAUSS=1,KEPAN=2,KTH=3;
+        //@}
+
+        /// \name Public variables that specify type of spliting criterion
+        /// 0 is standard spread, 1 is entropy, 2 is dispersion, 3 is max interparticle spacing;
+        //@{
+        const static int KDTREE_SPLIT_ENTROPY=1, KDTREE_SPLIT_DISPERSION = 2, KDTREE_SPLIT_MAXINTERPARTICLESPACING =3, KDTREE_SPLIT_SPREAD=0;
         //@}
 
         protected:
@@ -118,13 +125,11 @@ namespace NBody
         Double_t adaptivemedianfac;
         ///minimum size of region for which an adaptive median is searched for.
         int minadaptivemedianregionsize = 10;
+        int maxadaptivemedianregionsize;
         ///max number of dimensions of tree
         const static int MAXND=6;
 	    ///max squared distance size of a leaf node for building adaptive trees
-    	Double_t rdist2adapt;
-        /// flag for whether to calculate the maximum interparticle spacing
-        /// and see if one continues node splitting.
-        bool igetmaxinterparticlespacing;
+    	Double_t rdist2adapt,rdist2daptwithfac;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -173,7 +178,7 @@ namespace NBody
         Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*medianfunc)(int , Int_t &, Int_t, Int_t, KDTreeOMPThreadPool &, bool);
+        Double_t(NBody::KDTree::*medianfunc)(int , Int_t &, Int_t, Int_t, Double_t, KDTreeOMPThreadPool &, bool);
         //@}
 
         /// \name Private arrays used to build tree
@@ -214,8 +219,7 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0,
-            bool iGetMaxInterParticleSpacing = false
+            Double_t AdaptiveMedianFac = 0.0
 
         );
         ///Creates tree from NBody::System
@@ -225,8 +229,7 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0,
-            bool iGetMaxInterParticleSpacing = false
+            Double_t AdaptiveMedianFac = 0.0
         );
 
         ///resets particle order
@@ -542,7 +545,7 @@ namespace NBody
         /// The last particle found in a particle FOF search is likely to be
         /// the most distant and hence using this as a starting point for the next
         /// search will improve the performance.  
-        inline void splay(Int_tree_t *&Fifo, Int_tree_t &iTail, Int_tree_t &iHead);
+        inline void splay(Int_tree_t *&Fifo, Int_t &iTail, Int_t &iHead);
         //@}
 
         /// \name Rearrange and balance the tree
@@ -550,22 +553,23 @@ namespace NBody
         /// the k'th particle's are lower in index, and vice versa. This function permanently alters
         /// the NBody::System, but it keeps track of the changes.
         //@{
-        Double_t MedianPos(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t MedianPos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with velocities
-        Double_t MedianVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t MedianVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with full phase-space
-        Double_t MedianPhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t MedianPhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
+        bool UseMedianOverMaxInterparticleSpacing(Double_t nodefarthest, Int_t nodesize, Int_t bufferwidth);
         /// allow for an approximative binary tree where the split
         /// is adjust from the median to the point of largest separation
         /// between adjacent particles
-        Double_t AdjustMedianToMaximalDistancePos(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t AdjustMedianToMaximalDistancePos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
-        Double_t AdjustMedianToMaximalDistanceVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t AdjustMedianToMaximalDistanceVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
-        Double_t AdjustMedianToMaximalDistancePhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end,
+        Double_t AdjustMedianToMaximalDistancePhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET

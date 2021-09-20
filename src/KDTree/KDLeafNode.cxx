@@ -522,10 +522,10 @@ namespace NBody
     void LeafNode::FOFSearchBall(Double_t rd, Double_t fdist2, Int_t iGroup, Int_t nActive, Particle *bucket, Int_t *Group, Int_tree_t *Len, Int_tree_t *Head, Int_tree_t *Tail, Int_tree_t *Next, short *BucketFlag, Int_tree_t *Fifo, Int_t &iTail, Double_t* off, UInt_tree_t target)
     {
         //if bucket already linked and particle already part of group, do nothing.
-        if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
+        if(BucketFlag[nid]) return;
         //this flag is initialized to !=0 and if entire bucket searched and all particles already linked,
         //then BucketFlag[nid]=1
-        int flag=Head[bucket_start];
+        int flag=1;
         //now check if either search distance from particle fully encloses node
         //or if farthest initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length
@@ -561,7 +561,6 @@ namespace NBody
             Double_t dist2;
             for (UInt_tree_t i = bucket_start; i < bucket_end; i++)
             {
-                if (flag!=Head[i]) flag=0;
                 id=bucket[i].GetID();
                 if (Group[id]) continue;
                 dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition());
@@ -577,8 +576,10 @@ namespace NBody
                     Head[i]=Head[target];
 
                     if(iTail==nActive)iTail=0;
-                    flag=0;
                 }
+                // found particle that is not already linked and cannot be linked so do not 
+                // set BucketFlag 
+                else flag=0;
             }
             if (flag) BucketFlag[nid]=1;
         }
