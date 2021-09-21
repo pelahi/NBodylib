@@ -14,6 +14,8 @@
 */
 
 #include <KDTree.h>
+#include <random>
+#define XSORT
 
 namespace NBody
 {
@@ -334,6 +336,15 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Particle *pval = NULL;
         //produced a balanced tree
         if (balanced){
+// cout<<__func__<<" "<<__LINE__<<" BEFORE ";
+// cout<<"["<<start<<","<<k<<","<<(end-start)/2<<","<<end<<"] ";
+// auto valmid = bucket[k].GetPosition(d);
+// int countleft = 0, countright = 0;
+// for (auto index=start;index<k;index++)countleft += (bucket[index].GetPosition(d)>valmid);
+// for (auto index=k+1;index<end;index++) countright += (bucket[index].GetPosition(d)<valmid);
+// cout<<" : "<<countleft<<" "<<countright<<endl;
+
+
             while (left < right)
             {
                 x = bucket[k].GetPosition(d);
@@ -356,6 +367,14 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 if (i >= k) right = i - 1;
                 if (i <= k) left = i + 1;
             }
+// cout<<__func__<<" "<<__LINE__<<" AFTER ";
+// cout<<"["<<start<<","<<k<<","<<(end-start)/2<<","<<end<<"] ";
+// valmid = bucket[k].GetPosition(d);
+// countleft = 0, countright = 0;
+// for (auto index=start;index<k;index++)countleft += (bucket[index].GetPosition(d)>valmid);
+// for (auto index=k+1;index<end;index++) countright += (bucket[index].GetPosition(d)<valmid);
+// cout<<" : "<<countleft<<" "<<countright<<endl;
+
             return bucket[k].GetPosition(d);
         }
         //requires that particle order is already balanced. Use with caution
@@ -513,6 +532,8 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         // if node contains too few particles in which to search for max interparticle spacing 
         // no need to adjust median splitting to maximum inter-particle spacing 
         else if (bufferwidth<minadaptivemedianregionsize) return true;
+        // check if nodesize is too small
+        else if (nodesize < 2*b) return true;
         else return false;
     }
 
@@ -524,55 +545,83 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
-        Double_t splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
-
+        Double_t splitvalue;
         // determine whether need to use Median over max interparcile spacing 
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) return splitvalue;
+        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
+            splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+            return splitvalue;
+        }
 
         //now begin search for more optimal split point with large interparticle distance splitting. 
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
+        splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
             x[i].val = bucket[left+i].GetPosition(d);
             x[i].orgindex = left+i;
-        }        
-        UInt_tree_t n=0;
+        }
         std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
             return a.val < b.val;
         });
-        // // here sort of all particles
-        // std::sort(&bucket[left], &bucket[left] + size, [d](const Particle &a, const Particle &b) {
-        //     return a.GetPosition(d) < b.GetPosition(d);
-        // });
-        // for (auto i=0;i<size;i++) {
-        //     x[i].val = bucket[left+i].GetPosition(d);
-        //     x[i].orgindex = left+i;
-        // }        
 
         // look at region around median and find that with maximum interparticle distance
-        UInt_tree_t newsplitindex = left;
-        Double_t newsplitvalue;
-        auto dist = (x[1].val - x[0].val)*(x[1].val - x[0].val);
-        auto maxdist = dist;
-        UInt_tree_t maxi = 0;
-        for (UInt_tree_t i=1; i<size-1; i++)
-        {
-            dist = (x[i+1].val - x[i].val)*(x[i+1].val - x[i].val);
-            if (dist > maxdist)
+        Double_t maxdist=0;
+        UInt_tree_t maxi=0;
+        Double_t startdist = x[size/2+1].val - x[size/2].val;
+#ifdef USEOPENMP
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((size)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads < 1) nthreads=1;
+        if (nthreads > 1) {
+#pragma omp parallel \
+default(shared) 
+{
+            Double_t localmaxdist;
+            UInt_tree_t localmaxi;
+            auto dist = (x[1].val - x[0].val);
+            localmaxdist = dist;
+            localmaxi = 0;
+            #pragma omp for schedule(static) nowait
+            for (UInt_tree_t i=1; i<size-1; i++)
             {
-                maxdist = dist;
-                newsplitindex = x[i].orgindex;
-                newsplitvalue = x[i].val;
-                maxi = i;
+                dist = (x[i+1].val - x[i].val);
+                if (dist > localmaxdist)
+                {
+                    localmaxdist = dist;
+                    localmaxi = i;
+                }
+            }
+            #pragma omp critical
+            {
+                if (localmaxdist > maxdist) {
+                    maxdist = localmaxdist;
+                    maxi = localmaxi;
+                }
+            }
+}
+        }
+        else 
+#endif 
+        {
+            auto dist = (x[1].val - x[0].val);
+            for (UInt_tree_t i=1; i<size-1; i++)
+            {
+                dist = (x[i+1].val - x[i].val);
+                if (dist > maxdist)
+                {
+                    maxdist = dist;
+                    maxi = i;
+                }
             }
         }
-        splitindex = newsplitindex;
-        splitvalue = newsplitvalue;
+
+        splitindex = x[maxi].orgindex;
+        splitvalue = x[maxi].val;
         // once split index found move particles. Only necessary if sort of particles not done 
         splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         return splitvalue;
@@ -582,40 +631,84 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
-        Double_t splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) return splitvalue;
+        Double_t splitvalue;
+        // determine whether need to use Median over max interparcile spacing 
+        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
+            splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+            return splitvalue;
+        }
+
+        //now begin search for more optimal split point with large interparticle distance splitting. 
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
+        splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
             x[i].val = bucket[left+i].GetVelocity(d);
             x[i].orgindex = left+i;
         }
-        UInt_tree_t n=0;
         std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
             return a.val < b.val;
         });
-        UInt_tree_t newsplitindex = left;
-        Double_t newsplitvalue;
-        auto dist = std::abs(x[1].val - x[0].val);
-        auto maxdist = dist;
-        UInt_tree_t maxi = 0;
-        for (UInt_tree_t i=1; i<size-1; i++)
-        {
-            dist = std::abs(x[i+1].val - x[i].val);
-            if (dist > maxdist)
+
+        // look at region around median and find that with maximum interparticle distance
+        Double_t maxdist=0;
+        UInt_tree_t maxi=0;
+        Double_t startdist = x[size/2+1].val - x[size/2].val;
+#ifdef USEOPENMP
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((size)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads < 1) nthreads=1;
+        if (nthreads > 1) {
+#pragma omp parallel \
+default(shared) 
+{
+            Double_t localmaxdist;
+            UInt_tree_t localmaxi;
+            auto dist = (x[1].val - x[0].val);
+            localmaxdist = dist;
+            localmaxi = 0;
+            #pragma omp for schedule(static) nowait
+            for (UInt_tree_t i=1; i<size-1; i++)
             {
-                maxdist = dist;
-                newsplitindex = i+x[i].orgindex;
-                newsplitvalue = x[i].val;
-                maxi = i;
+                dist = (x[i+1].val - x[i].val);
+                if (dist > localmaxdist)
+                {
+                    localmaxdist = dist;
+                    localmaxi = i;
+                }
+            }
+            #pragma omp critical
+            {
+                if (localmaxdist > maxdist) {
+                    maxdist = localmaxdist;
+                    maxi = localmaxi;
+                }
+            }
+}
+        }
+        else 
+#endif 
+        {
+            auto dist = (x[1].val - x[0].val);
+            for (UInt_tree_t i=1; i<size-1; i++)
+            {
+                dist = (x[i+1].val - x[i].val);
+                if (dist > maxdist)
+                {
+                    maxdist = dist;
+                    maxi = i;
+                }
             }
         }
-        splitindex = newsplitindex;
-        splitvalue = newsplitvalue;
+
+        splitindex = x[maxi].orgindex;
+        splitvalue = x[maxi].val;
+        // once split index found move particles. Only necessary if sort of particles not done 
         splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         return splitvalue;
     }
@@ -623,40 +716,84 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
-        Double_t splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) return splitvalue;
+        Double_t splitvalue;
+        // determine whether need to use Median over max interparcile spacing 
+        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
+            splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+            return splitvalue;
+        }
+
+        //now begin search for more optimal split point with large interparticle distance splitting. 
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
+        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
             x[i].val = bucket[left+i].GetPhase(d);
             x[i].orgindex = left+i;
         }
-        UInt_tree_t n=0;
         std::sort(x.begin(), x.end() , [](const KDTreeForSorting &a, const KDTreeForSorting &b) {
             return a.val < b.val;
         });
-        UInt_tree_t newsplitindex = left;
-        Double_t newsplitvalue;
-        auto dist = std::abs(x[1].val - x[0].val);
-        auto maxdist = dist;
-        UInt_tree_t maxi = 0;
-        for (UInt_tree_t i=1; i<size-1; i++)
-        {
-            dist = std::abs(x[i+1].val - x[i].val);
-            if (dist > maxdist)
+
+        // look at region around median and find that with maximum interparticle distance
+        Double_t maxdist=0;
+        UInt_tree_t maxi=0;
+        Double_t startdist = x[size/2+1].val - x[size/2].val;
+#ifdef USEOPENMP
+        unsigned int nthreads;
+        nthreads = min((unsigned int)(floor((size)/float(KDTREEOMPCRITPARALLELSIZE))), otp.nactivethreads);
+        if (nthreads < 1) nthreads=1;
+        if (nthreads > 1) {
+#pragma omp parallel \
+default(shared) 
+{
+            Double_t localmaxdist;
+            UInt_tree_t localmaxi;
+            auto dist = (x[1].val - x[0].val);
+            localmaxdist = dist;
+            localmaxi = 0;
+            #pragma omp for schedule(static) nowait
+            for (UInt_tree_t i=1; i<size-1; i++)
             {
-                maxdist = dist;
-                newsplitindex = i+x[i].orgindex;
-                newsplitvalue = x[i].val;
-                maxi = i;
+                dist = (x[i+1].val - x[i].val);
+                if (dist > localmaxdist)
+                {
+                    localmaxdist = dist;
+                    localmaxi = i;
+                }
+            }
+            #pragma omp critical
+            {
+                if (localmaxdist > maxdist) {
+                    maxdist = localmaxdist;
+                    maxi = localmaxi;
+                }
+            }
+}
+        }
+        else 
+#endif 
+        {
+            auto dist = (x[1].val - x[0].val);
+            for (UInt_tree_t i=1; i<size-1; i++)
+            {
+                dist = (x[i+1].val - x[i].val);
+                if (dist > maxdist)
+                {
+                    maxdist = dist;
+                    maxi = i;
+                }
             }
         }
-        splitindex = newsplitindex;
-        splitvalue = newsplitvalue;
+
+        splitindex = x[maxi].orgindex;
+        splitvalue = x[maxi].val;
+        // once split index found move particles. Only necessary if sort of particles not done 
         splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
         return splitvalue;
     }
