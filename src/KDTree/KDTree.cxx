@@ -132,7 +132,7 @@ firstprivate(x)
         (this->*getparticlepos)(bucket[localstart], x);
         for (auto j=0;j<ND;j++) localminval[j] = localmaxval[j] = x[j];
 
-        #pragma omp for
+        #pragma omp for nowait
         for (auto i = localstart + 1; i < localend; i++)
         {
             (this->*getparticlepos)(bucket[i], x);
@@ -240,7 +240,7 @@ firstprivate(x)
         if (tid == nthreads-1) localend = end;
         (this->*getparticlepos)(bucket[localstart], x);
         for (auto j=0;j<ND;j++) localminval[j] = localmaxval[j] = localmean[j] = x[j];
-        #pragma omp for
+        #pragma omp for nowait
         for (auto i = localstart + 1; i < localend; i++)
         {
             (this->*getparticlepos)(bucket[i], x);
@@ -335,7 +335,7 @@ firstprivate(x)
         auto localend = localstart + delta;
         if (tid == nthreads-1) localend = end;
 
-        #pragma omp for
+        #pragma omp for nowait
         for (auto i = localstart; i < localend; i++)
         {
             (this->*getparticlepos)(bucket[i], x);
@@ -435,7 +435,7 @@ firstprivate(x)
         auto localend = localstart + delta;
         if (tid == nthreads-1) localend = end;
         (this->*getparticlepos)(bucket[localstart], x);
-        #pragma omp for
+        #pragma omp for nowait
         for (auto i = localstart; i < localend; i++)
         {
            auto mass=bucket[i].GetMass();
