@@ -308,13 +308,13 @@ typedef Int_t PARTPIDTYPE;
         DoublePos_t tage;
         unique_ptr<StarProperties> star;
 #endif
-#if defined (GASON) && (STARON)
+#if defined (GASON) && defined(STARON)
         ///metallicity
         DoublePos_t zmet;
         ///star formation rate of gas
         DoublePos_t sfr;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         ///store entropy, useful for searching for shocks and related entropy structures
         DoublePos_t entropy;
         ///store temperature
@@ -395,7 +395,7 @@ typedef Int_t PARTPIDTYPE;
             ival*=((zmet==p.zmet)&&(sfr==p.sfr));
 #endif
 
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
             ival*=((entropy==p.entropy));
             ival*=((temperature==p.temperature));
 #endif
@@ -538,14 +538,14 @@ typedef Int_t PARTPIDTYPE;
         Double_t GetTage() const {return tage;}
         void SetTage(const Double_t &Tage){tage=Tage;}
 #endif
-#if defined (GASON) && (STARON)
+#if defined (GASON) && defined(STARON)
         Double_t GetZmet() const {return zmet;}
         void SetZmet(const Double_t &Zmet){zmet=Zmet;}
         Double_t GetSFR() const {return sfr;}
         void SetSFR(const Double_t &SFR){sfr=SFR;}
 #endif
 
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         Double_t GetEntropy() const {return entropy;}
         void SetEntropy(const Double_t &Entropy) {entropy=Entropy;}
         Double_t GetTemperature() const {return temperature;}

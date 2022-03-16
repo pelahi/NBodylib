@@ -147,7 +147,7 @@ namespace NBody
         zmet=0;
         sfr=0;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         entropy = 0;
         temperature = 0;
 #endif
@@ -191,7 +191,7 @@ namespace NBody
         zmet=0;
         sfr=0;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         entropy=0;
         temperature=0;
 #endif
@@ -246,7 +246,7 @@ namespace NBody
             zmet=p.zmet;
             sfr=p.sfr;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
             entropy=p.entropy;
             temperature=p.temperature;
 #endif
@@ -338,7 +338,7 @@ namespace NBody
             zmet=p.zmet;
             sfr=p.sfr;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
             entropy=p.entropy;
             temperature=p.temperature;
 #endif
