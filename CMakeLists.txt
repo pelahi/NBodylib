@@ -38,6 +38,9 @@ include (NBodylibCMakeUtils)
 # complation summary
 include(NBodylibCompilationMessages)
 
+include(CTest)
+enable_testing()
+
 
 # Are we part of an outside build?
 # If so, we want to let the caller know what to include, define, etc at the end
@@ -227,6 +230,11 @@ add_library(nbodylib STATIC)
 target_link_libraries(nbodylib nbodylib_iface)
 add_library(NBodylib::nbodylib ALIAS nbodylib)
 sanitizer_options(nbodylib)
+
+if (BUILD_TESTING)
+	add_subdirectory(src/tests)
+endif()
+
 
 # Export the include directories and definitions, if necessary
 # If building on our own, add the "doc" target
