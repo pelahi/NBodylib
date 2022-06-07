@@ -4,6 +4,8 @@
 #include <random> 
 #include <chrono>
 #include <algorithm>
+#include <string>
+#include <map>
 
 #include <NBodyMath.h>
 #include <NBody.h>
@@ -12,9 +14,23 @@
 #include <omp.h>
 
 
+
 #define start_time() auto linestart = __LINE__; auto start = std::chrono::high_resolution_clock::now();
 #define end_time() auto lineend = __LINE__; auto end = std::chrono::high_resolution_clock::now();
 #define get_time_taken() std::chrono::duration<double> elapsed = end-start; std::cout<<__func__<<"@L"<<linestart<<"-L"<<lineend<<" time taken "<<elapsed.count()<<std::endl;
+
+int tpos=NBody::KDTree::TPHYS;
+int tvel=NBody::KDTree::TVEL;
+int tphs=NBody::KDTree::TPHS;
+
+std::map<std::string, int> TreeTypes() 
+{
+    std::map<std::string, int> treetypes;
+    treetypes.insert(std::pair<std::string, int>("Physical", tpos));
+    treetypes.insert(std::pair<std::string, int>("Velocity", tvel));
+    treetypes.insert(std::pair<std::string, int>("Phase", tphs));
+    return treetypes;
+}
 
 std::vector<NBody::Particle> generate_vector(std::size_t size)
 {
@@ -57,7 +73,7 @@ std::vector<NBody::Particle> generate_vector(std::size_t size)
 
 NBody::KDTree * build_kdtree(std::vector<NBody::Particle> &parts,
     Int_t b = 16, 
-    int treetype = 0,
+    int treetype = NBody::KDTree::TPHYS,
     double rdist2 = -1
 )
 {
@@ -170,7 +186,17 @@ int main(int argc, char *argv[])
     // generate vector 
     std::size_t size = atoi(argv[1]);
     auto parts = generate_vector(size);
-    auto tree = build_kdtree(parts);
-    kdtree_test_NN(tree,parts);
-    kdtree_test_ballsearch(tree,parts);
+
+    auto treetypes = TreeTypes();
+
+    for (auto &m:treetypes) {
+        std::cout<<"Building and testing a "<<m.first<<std::endl;
+        std::cout<<"=========================="<<std::endl;
+        auto tree = build_kdtree(parts, 16, m.second);
+        kdtree_test_NN(tree,parts);
+        kdtree_test_ballsearch(tree,parts);
+        delete tree;
+        std::cout<<std::endl;
+    }
+
 }
