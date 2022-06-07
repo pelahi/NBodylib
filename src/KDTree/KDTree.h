@@ -179,6 +179,8 @@ namespace NBody
         Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*medianfunc)(int , Int_t &, Int_t, Int_t, Double_t, KDTreeOMPThreadPool &, bool);
+        DoublePos_t(NBody::KDTree::*get_part_data_jth)(Int_t i, int j);
+        std::vector<DoublePos_t> (NBody::KDTree::*get_part_data)(Int_t i);
         //@}
 
         /// \name Private arrays used to build tree
@@ -488,58 +490,38 @@ namespace NBody
 
         private:
 
-        //-- private inline functions declarations
+        /// \name Get relevant particle data 
+        //@{
+        DoublePos_t get_particle_pos_jth(Int_t i, int j);
+        DoublePos_t get_particle_vel_jth(Int_t i, int j);
+        DoublePos_t get_particle_phs_jth(Int_t i, int j);
+        std::vector<DoublePos_t> get_particle_pos(Int_t i);
+        std::vector<DoublePos_t> get_particle_vel(Int_t i);
+        std::vector<DoublePos_t> get_particle_phs(Int_t i);
+
+        //@}
 
         /// \name Splitting criteria methods
         /// How to split the system
         //@{
 
         /// Find the dimension of which the data has the most spread
-        /// for positions
-        inline Double_t SpreadestPos(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t SpreadestVel(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and phase
-        inline Double_t SpreadestPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+        Double_t Spreadest(int j, Int_t start, Int_t end, Double_t *bnd,
             KDTreeOMPThreadPool &);
         /// Find the boundary of the data and return mean
         /// for positions
-        inline Double_t BoundaryandMeanPos(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t BoundaryandMeanVel(int j, Int_t start, Int_t end, Double_t *bnd,
-            KDTreeOMPThreadPool &);
-        /// and phs
-        inline Double_t BoundaryandMeanPhs(int j, Int_t start, Int_t end, Double_t *bnd,
+        Double_t BoundaryandMean(int j, Int_t start, Int_t end, Double_t *bnd,
             KDTreeOMPThreadPool &);
         /// Find the dispersion in a dimension
-        /// for positions
-        inline Double_t DispersionPos(int j, Int_t start, Int_t end, Double_t mean,
-            KDTreeOMPThreadPool &);
-        /// and velocities
-        inline Double_t DispersionVel(int j, Int_t start, Int_t end, Double_t mean,
-            KDTreeOMPThreadPool &);
-        /// and phase
-        inline Double_t DispersionPhs(int j, Int_t start, Int_t end, Double_t mean,
+        Double_t Dispersion(int j, Int_t start, Int_t end, Double_t mean,
             KDTreeOMPThreadPool &);
         /// Calculate the entropy in a given dimension. This can be used as a node splitting criterion
         /// instead of most spread dimension
-        /// for positions
-        inline Double_t EntropyPos(int j, Int_t start, Int_t end,
-            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
-            KDTreeOMPThreadPool &);
-        /// and for velocities
-        inline Double_t EntropyVel(int j, Int_t start, Int_t end,
-            Double_t low, Double_t up, Double_t nbins, Double_t *ni,
-            KDTreeOMPThreadPool &);
-        /// and for phase
-        inline Double_t EntropyPhs(int j, Int_t start, Int_t end,
+        Double_t Entropy(int j, Int_t start, Int_t end,
             Double_t low, Double_t up, Double_t nbins, Double_t *ni,
             KDTreeOMPThreadPool &);
         /// Determine the split dimension
-        inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
+        int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
                 KDTreeOMPThreadPool &otp);
         /// splay function for FOF searches. change first in, first out array to a last in, first out
         /// The last particle found in a particle FOF search is likely to be
@@ -553,23 +535,13 @@ namespace NBody
         /// the k'th particle's are lower in index, and vice versa. This function permanently alters
         /// the NBody::System, but it keeps track of the changes.
         //@{
-        Double_t MedianPos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
-            KDTreeOMPThreadPool &, bool balanced=true);
-        /// same as above but with velocities
-        Double_t MedianVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
-            KDTreeOMPThreadPool &, bool balanced=true);
-        /// same as above but with full phase-space
-        Double_t MedianPhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
+        Double_t Median(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
             KDTreeOMPThreadPool &, bool balanced=true);
         bool UseMedianOverMaxInterparticleSpacing(Double_t nodefarthest, Int_t nodesize, Int_t bufferwidth);
         /// allow for an approximative binary tree where the split
         /// is adjust from the median to the point of largest separation
         /// between adjacent particles
-        Double_t AdjustMedianToMaximalDistancePos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
-            KDTreeOMPThreadPool &, bool balanced=true);
-        Double_t AdjustMedianToMaximalDistanceVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
-            KDTreeOMPThreadPool &, bool balanced=true);
-        Double_t AdjustMedianToMaximalDistancePhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
+        Double_t AdjustMedianToMaximalDistance(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET
