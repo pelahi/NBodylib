@@ -609,6 +609,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 	    //See whether this OMP region is further decomposed or not.
 	    //If the maximum interparticle distance is quite larger than the linking length,
 	    // decompose the domain further.
+	    b=200000000;
 	    if (size <= b){
 		    js_ompskip=1;
 		    if(size > 1000000){ // Minimum size of OMP domain (arbitrary chosen)
