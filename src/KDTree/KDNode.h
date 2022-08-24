@@ -35,6 +35,11 @@ typedef unsigned int UInt_tree_t;
 
 namespace NBody
 {
+    ///\name Different types of kdtree nodes
+    //{@
+    const static int TREETYPE_PHYS=0, TREETYPE_PROJ=1, TREETYPE_VEL=2;
+    const static int TREETYPE_PHS=3, TREETYPE_METRIC=4;
+    //@}
 
 /*!
     \class NBody::Node
@@ -61,8 +66,28 @@ namespace NBody
 	    Double_t center[6];
         // stores the maximum squared distance from the centre of the node to particle contained in a node
 	    Double_t farthest;
+
+        DoublePos_t(NBody::Node::*get_part_data_jth)(Particle &p, int j);
+        DoublePos_t(NBody::Node::*get_part_data)(Particle &p);
+
         public:
-        virtual ~Node() {};
+        Node(unsigned int treetype) {
+            if (treetype == TREETYPE_PHYS)
+            {
+                get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+            }
+            else if (treetype == TREETYPE_VEL) {
+                get_part_data_jth=&NBody::Node::get_particle_vel_jth;
+            }
+            else if (treetype == TREETYPE_PHS) {
+                get_part_data_jth=&NBody::Node::get_particle_phs_jth;
+            }
+            else if (treetype == TREETYPE_PROJ) {
+                get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+            }
+            else get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+        }
+        virtual ~Node() {get_part_data_jth=nullptr;};
 
         /// \name Simple Get functions
         //@{
@@ -91,6 +116,20 @@ namespace NBody
 	    virtual void SetLeaf(bool IsLeaf){isleaf = IsLeaf;}
 	    virtual void SetFarthest(Double_t x){farthest = x;}
 	    virtual void SetCenter(int i, Double_t x){center[i]=x;}
+        //@}
+
+        /// \name Simple get particle data used by tree functions
+        //@{
+        DoublePos_t get_particle_pos_jth(Particle &p, int j);
+        DoublePos_t get_particle_vel_jth(Particle &p, int j);
+        DoublePos_t get_particle_phs_jth(Particle &p, int j);
+        //@}
+
+    
+        /// \name simple return some distance 
+        //@{
+        Double_t D2BetweenParticles(Particle &p1, Particle &p2, int dim);
+        Double_t D2ToParticle(Double_t *x, Particle &p2, int dim);
         //@}
 
         /// \name Find Nearest routines:
@@ -152,6 +191,25 @@ namespace NBody
         virtual void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3) = 0;
         virtual void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3) = 0;
         virtual void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Coordinate &x, int dim=3) = 0;
+
+        // generalized FindNearest in the data space of the tree
+        virtual void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim=3) = 0;
+        virtual void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3) = 0;
+        virtual void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, Double_t *x, int dim=3) = 0;
+        virtual void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, std::vector<Double_t> &x, int dim=3) = 0;
+        virtual void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3) = 0;
+        virtual void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3) = 0;
+        virtual void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3) = 0;
+        virtual void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim=3) = 0;
+        virtual void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3) = 0;
+        virtual void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3) = 0;
+        virtual void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3) = 0;
+
         //@}
 
         /// \name Ball Searches
@@ -255,7 +313,7 @@ namespace NBody
                 // get distance from particle to center
                 // instead of boundaries
                 Double_t x[numdim];
-                for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
+                for (int j=0;j<numdim;j++) x[j] = (this->*get_part_data_jth)(p,j);
                 for (auto j=0;j<numdim;j++)
                 {
                     auto dist = x[j]-center[j];
@@ -282,7 +340,7 @@ namespace NBody
                 // and minimum distance to node if particle outside if skipping.
                 // instead of boundaries
                 Double_t x[numdim];
-                for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
+                for (int j=0;j<numdim;j++) x[j] = (this->*get_part_data_jth)(p,j);
                 for (int j=0;j<numdim;j++)
                 {
                     auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
@@ -306,7 +364,7 @@ namespace NBody
         virtual int FlagNodeForSearchBallPos(Double_t fdist2, Particle &p)
         {
             vector<Double_t> x(numdim);
-            for (unsigned short j=0; j<numdim;j++) x[j] = p.GetPhase(j);
+            for (unsigned short j=0; j<numdim;j++) x[j] = (this->*get_part_data_jth)(p,j);
             int inodeflagged = FlagNodeForSearchBallPos(fdist2, x.data());
             return inodeflagged;
         }
@@ -373,7 +431,8 @@ namespace NBody
         public:
         SplitNode(Int_t id, int d, Double_t p, Int_t Count, Double_t bnd[6][2],
             Int_t new_bucket_start, Int_t new_bucket_end, unsigned short ndim,
-            Node *initial_left = NULL, Node *initial_right = NULL)
+            Node *initial_left = NULL, Node *initial_right = NULL,
+            unsigned int treetype = 0): Node(treetype)
         {
             nid=id;
             cut_dim = d;
@@ -385,8 +444,6 @@ namespace NBody
             right = initial_right;
             numdim = ndim;
             isleaf = false;
-            farthest = -1;
-            // where is farthest and centre calculated?
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~SplitNode() { delete left; delete right; }
@@ -445,6 +502,24 @@ namespace NBody
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Coordinate &x, int dim=3);
+
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim=3);
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, Double_t *x, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3);
+        void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
+
 
         //implementation of Ball and FOF searches
         void SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, UInt_tree_t t, int dim=3);
@@ -511,7 +586,11 @@ namespace NBody
     {
         private:
         public:
-        LeafNode(Int_t id, Int_t new_bucket_start, Int_t new_bucket_end, Double_t bnd[6][2], unsigned short ndim)
+        LeafNode(Int_t id, 
+        Int_t new_bucket_start, Int_t new_bucket_end, 
+        Double_t bnd[6][2], 
+        unsigned short ndim,
+        unsigned int treetype): Node(treetype)
         {
             nid = id;
             bucket_start = new_bucket_start;
@@ -566,6 +645,23 @@ namespace NBody
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
         void FindNearestCheckPeriodic(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Coordinate &x, int dim=3);
+
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim=3);
+        void FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, Double_t *x, int dim=3);
+        void FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *period, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3);
+        void FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
+        void FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim=3);
+        void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t t, int dim=3);
+        void FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim=3);
+        void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t t, int dim=3);
+        void FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim=3);
 
         //implementation of Ball and FOF searches
         void SearchBallPos(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t* off, UInt_tree_t t, int dim=3);

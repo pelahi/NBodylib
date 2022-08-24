@@ -59,7 +59,6 @@
 
 namespace NBody
 {
-
     struct KDTreeOMPThreadPool{
         unsigned int nthreads;
         unsigned int nactivethreads;

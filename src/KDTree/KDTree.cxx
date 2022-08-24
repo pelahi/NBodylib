@@ -625,7 +625,7 @@ default(shared)
         {
             if (ibuildinparallel == false) numleafnodes++;
             for (int j=0;j<ND;j++) (this->*bmfunc)(j, start, end, bnd[j], otp);
-            Node * leaf = new LeafNode(id, start, end,  bnd, ND);
+            Node * leaf = new LeafNode(id, start, end,  bnd, ND, treetype);
             if (rdist2adapt > 0)
             {
                 leaf->SetFarthest(localfarthest);
@@ -663,7 +663,7 @@ default(shared)
                 }
 #endif
                 return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                    left, right);
+                    left, right, treetype);
             }
             else {
                 if (rdist2adapt > 0) {
@@ -673,7 +673,7 @@ default(shared)
                     right = BuildNodes(splitindex+1, end, otp);
                     DetermineCentreAndSmallestSphere(splitindex+1, end, right, otp);
                     return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,
-                    left, right);
+                    left, right, treetype);
                 }
                 else {
                     return new SplitNode(id, splitdim, splitvalue, size, bnd, start, end, ND,

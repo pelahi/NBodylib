@@ -8,8 +8,151 @@
 
 namespace NBody
 {
+
+    /// \defgroup GetPartDataForTree 
+    /// Get particle data relevant to tree 
+    //@{
+    #pragma omp declare simd
+    DoublePos_t Node::get_particle_pos_jth(Particle &p, int j) 
+    {
+        return p.GetPosition(j);
+    }
+    #pragma omp declare simd
+    DoublePos_t Node::get_particle_vel_jth(Particle &p, int j) {
+        return p.GetVelocity(j);
+    }
+    #pragma omp declare simd
+    DoublePos_t Node::get_particle_phs_jth(Particle &p, int j) {
+        return p.GetPhase(j);
+    }
+    Double_t Node::D2BetweenParticles(Particle &p1, Particle &p2, int dim) 
+    {
+        Double_t d2=0;
+        for (auto i=0;i<dim;i++) {
+            auto diff = (this->*get_part_data_jth)(p1,i)-(this->*get_part_data_jth)(p2,i);
+            d2 += diff * diff;
+        }
+        return d2;
+    }
+    Double_t Node::D2ToParticle(Double_t *x, Particle &p2, int dim) 
+    {
+        Double_t d2=0;
+        for (auto i=0;i<dim;i++) {
+            auto diff = x[i]-(this->*get_part_data_jth)(p2,i);
+            d2 += diff * diff;
+        }
+        return d2;
+    }
+    //@}
+
     ///\name Leaf Node Functions
     //@{
+
+    ///\name generalized calls 
+    //@{
+    // generalized FindNearest in the data space of the tree
+    void LeafNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            Double_t dist2 = D2ToParticle(x, bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+    void LeafNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim)
+    {
+        FindNearestInTree(rd, bucket, pq, off, x.data(), dim);
+    }
+    void LeafNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            if (i==target) continue;
+            Double_t dist2 = D2BetweenParticles(bucket[target], bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            if (i==target) continue;
+            int cmpval = cmp(bucket[target],bucket[i],params);
+            Double_t dist2 = D2BetweenParticles(bucket[target], bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && cmpval==1)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim) 
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            int cmpval = cmp(p, bucket[i], params);
+            Double_t dist2 = D2BetweenParticles(p, bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && cmpval==1)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            if (i==target) continue;
+            int checkval = check(bucket[i],params);
+            Double_t dist2 = D2BetweenParticles(bucket[target], bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+
+    void LeafNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim) 
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            int checkval = check(bucket[i],params);
+            Double_t dist2 = D2BetweenParticles(p, bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+    void LeafNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim) 
+    {
+        for (auto i = bucket_start; i < bucket_end; i++)
+        {
+            int checkval = check(bucket[i],params);
+            Double_t dist2 = D2ToParticle(x.data(), bucket[i], dim);
+            if (dist2 < pq->TopPriority() && dist2 > 0 && checkval==0)
+            {
+                pq->Pop();
+                pq->Push(i, dist2);
+            }
+        }
+    }
+    //@}
+
     ///\name Non-periodic calls
     //@{
     void LeafNode::FindNearestPos(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
@@ -747,6 +890,39 @@ namespace NBody
         FindNearestCheck(rd,check,params,bucket,pq,off,x0,dim);
     }
 
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Double_t *x, int dim)
+    {
+        FindNearestInTree(rd, bucket, pq, off, x, dim);
+    }
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim)
+    {
+        FindNearestInTree(rd, bucket, pq, off, x.data(), dim);
+    }
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    {
+        FindNearestInTree(rd, bucket, pq, off, target, dim);
+    }
+    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    {
+        FindNearestCriterionInTree(rd, cmp, params, bucket, pq, off, target, dim);
+    }
+    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim) 
+    {
+        FindNearestCriterionInTree(rd, cmp, params, bucket, pq, off, p, dim);
+    }
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    {
+        FindNearestCheckInTree(rd, check, params, bucket, pq, off, target, dim);
+    }
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim) 
+    {
+        FindNearestCheckInTree(rd, check, params, bucket, pq, off, p, dim);
+    }
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim)
+    {
+        FindNearestCheckInTree(rd, check, params, bucket, pq, off, x, dim);
+    }
+
     void LeafNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *pdist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;
@@ -849,6 +1025,11 @@ namespace NBody
         FOFSearchCriterionSetBasisForLinks(rd, cmp, check, params, iGroup, nActive, bucket, Group, Len, Head, Tail, Next, BucketFlag, Fifo, iTail, off, target);
     }
     //@}
+
+    //@}
+
+    /// Updated FindNearest in the tree's data space 
+    //@{
 
     //@}
 
