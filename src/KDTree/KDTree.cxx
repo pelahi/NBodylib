@@ -801,6 +801,20 @@ default(shared)
         }
     }
 
+    void KDTree::PeriodConstruction(){
+        periodicreflectionindices.resize();
+        std::vector<int> indices(ND);
+        for (auto i=0;i<ND;i++) indices[i] = i;
+        for (auto i=1;i<=ND;i++) 
+        {
+            do {
+                std::vector<int> mysub(indices.begin(), indices.begin()+i);
+                std::sort(mysub.begin(), mysub.end());
+                if (mysub.front() <= mysub.back()) periodicreflectionindices[i].insert(mysub);
+            } while ( std::next_permutation(indices.begin(), indices.end()));
+        }
+    }
+
     void KDTree::BuildNodeIDs()
     {
         numnodes = 0;
@@ -902,6 +916,7 @@ default(shared)
         {
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=Period[k];
+            PeriodConstruction();
         }
         else period=NULL;
         if (TreeTypeCheck()) {
@@ -970,6 +985,7 @@ default(shared)
         if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
             period=new Double_t[3];
             for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];
+            PeriodConstruction();
         }
         else period=NULL;
         if (TreeTypeCheck()) {

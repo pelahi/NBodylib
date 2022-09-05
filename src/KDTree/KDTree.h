@@ -46,6 +46,7 @@
 #include <unordered_map>
 #include <utility>
 #include <algorithm>
+#include <set>
 
 #ifdef USEOPENMP
 #include <omp.h>
@@ -115,6 +116,8 @@ namespace NBody
         Node *root;
         ///if system is periodic, period in each direction
         Double_t *period;
+        // to store reflection set if period passed. 
+        std::vector<std::set<int>> periodicreflectionindices;
         ///number of nodes and leafnodes
         Int_t numnodes,numleafnodes;
         ///bucket or leaf node size
@@ -582,6 +585,12 @@ namespace NBody
         Double_t DetermineMaxInterParticleSpacing(UInt_tree_t localstart, UInt_tree_t localend,
             int splitdim,
             KDTreeOMPThreadPool &otp);
+        //@}
+
+        /// \name Period functions 
+        //@{ 
+        /// produce all the possible permutations of a relections
+        void PeriodReflectionConstruction();
         //@}
 
     };
