@@ -1,6 +1,10 @@
 /*! \file KDNode.h
  *  \brief header file for the \ref NBody::Node Class
-
+ *  \todo need to update FindNearest and other searches 
+ *  so that for periodic searches the target id is ignored. 
+ *  Particularly need for findnearest where perodic search 
+ *  can list the particle again itself it seems. Need to verify this
+ * 
 */
 
 #ifndef KDNODE_H
@@ -70,23 +74,31 @@ namespace NBody
 
         DoublePos_t(NBody::Node::*get_part_data_jth)(Particle &p, int j);
         DoublePos_t(NBody::Node::*get_part_data)(Particle &p);
+        void(NBody::Node::*set_part_data_jth)(Particle &p, int j, Double_t x);
 
         public:
         Node(unsigned int treetype) {
             if (treetype == TREETYPE_PHYS)
             {
                 get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+                set_part_data_jth=&NBody::Node::set_particle_pos_jth;
             }
             else if (treetype == TREETYPE_VEL) {
                 get_part_data_jth=&NBody::Node::get_particle_vel_jth;
+                set_part_data_jth=&NBody::Node::set_particle_vel_jth;
             }
             else if (treetype == TREETYPE_PHS) {
                 get_part_data_jth=&NBody::Node::get_particle_phs_jth;
+                set_part_data_jth=&NBody::Node::set_particle_phs_jth;
             }
             else if (treetype == TREETYPE_PROJ) {
                 get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+                set_part_data_jth=&NBody::Node::set_particle_pos_jth;
             }
-            else get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+            else {
+                get_part_data_jth=&NBody::Node::get_particle_pos_jth;
+                set_part_data_jth=&NBody::Node::set_particle_pos_jth;
+            }
         }
         virtual ~Node() {get_part_data_jth=nullptr;};
 
@@ -124,6 +136,9 @@ namespace NBody
         DoublePos_t get_particle_pos_jth(Particle &p, int j);
         DoublePos_t get_particle_vel_jth(Particle &p, int j);
         DoublePos_t get_particle_phs_jth(Particle &p, int j);
+        void set_particle_pos_jth(Particle &, int , Double_t );
+        void set_particle_vel_jth(Particle &, int , Double_t );
+        void set_particle_phs_jth(Particle &, int , Double_t );
         //@}
 
     
@@ -365,7 +380,6 @@ namespace NBody
             return inodeflagged;
         }
 
-
         ///see if node within search radius and if all particles within node
         virtual int FlagNodeForSearchBallPos(Double_t fdist2, Particle &p)
         {
@@ -417,7 +431,6 @@ namespace NBody
             return inodeflagged;
         }
         //@}
-
     };
 
 /*!

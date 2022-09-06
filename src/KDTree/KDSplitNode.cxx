@@ -9,6 +9,167 @@
 namespace NBody
 {
     ///Split Node Functions
+    ///\name generalized calls 
+    //@{
+    // generalized FindNearest in the data space of the tree
+    void SplitNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *x, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = x[cut_dim] - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestInTree(rd,bucket,pq,off,x,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestInTree(rd,bucket,pq,off,x,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestInTree(rd,bucket,pq,off,x,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestInTree(rd,bucket,pq,off,x,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+    void SplitNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim)
+    {
+        FindNearestInTree(rd, bucket, pq, off, x.data(), dim);
+    }
+    void SplitNode::FindNearestInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        vector<Double_t> x(dim);
+        for (auto i=0;i<dim;i++) x[i] = (this->*get_part_data_jth)(bucket[target], i);
+        FindNearestInTree(rd, bucket, pq, off, x.data(), dim);
+    }
+
+    void SplitNode::FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off =  (this->*get_part_data_jth)(bucket[target], cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,target,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,target,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,target,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,target,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCriterionInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim) 
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off =  (this->*get_part_data_jth)(p, cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,p,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,p,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,p,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,p,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, UInt_tree_t target, int dim)
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = (this->*get_part_data_jth)(bucket[target], cut_dim) - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCheckInTree(rd,check,params,bucket,pq,off,target,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCheckInTree(rd,check,params,bucket,pq,off,target,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCheckInTree(rd,check,params,bucket,pq,off,target,dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCheckInTree(rd,check,params,bucket,pq,off,target,dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Particle &p, int dim) 
+    {
+        vector<Double_t> x(dim);
+        for (auto i=0;i<dim;i++) x[i] = (this->*get_part_data_jth)(p, i);
+        FindNearestCheckInTree(rd, check, params, bucket, pq, off, x, dim);
+    }
+
+    void SplitNode::FindNearestCheckInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, std::vector<Double_t> &x, int dim) 
+    {
+        Double_t old_off = off[cut_dim];
+        Double_t new_off = x[cut_dim] - cut_val;
+        if (new_off < 0)
+        {
+            left->FindNearestCheckInTree(rd,check,params,bucket,pq,off,x, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                right->FindNearestCheckInTree(rd,check,params,bucket,pq,off,x, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+        else
+        {
+            right->FindNearestCheckInTree(rd,check,params,bucket,pq,off,x, dim);
+            rd += -old_off*old_off + new_off*new_off;
+            if (rd < pq->TopPriority())
+            {
+                off[cut_dim] = new_off;
+                left->FindNearestCheckInTree(rd,check,params,bucket,pq,off,x, dim);
+                off[cut_dim] = old_off;
+            }
+        }
+    }
+    //@}
+
     ///\todo adjust periodic searches so that reflection is calculated faster.
     ///Non periodic functions
     //@{
@@ -1066,8 +1227,31 @@ namespace NBody
     void SplitNode::FindNearestPosPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0,xp;
+        FindNearestPos(rd,bucket,pq,off,target,dim);
         x0=Coordinate(bucket[target].GetPosition());
-        FindNearestPosPeriodic(rd,bucket,pq,off,p,x0,dim);
+        Double_t sval;
+        for (int k=0;k<dim;k++) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            sval=PeriodicReflection1D(x0,xp,p,k);
+            if (sqrt(pq->TopPriority())>sval) FindNearestPos(rd,bucket,pq,off,xp,dim);
+        }
+        if (dim==3) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            sval=PeriodicReflection2D(x0,xp,p,0,1);
+            if (pq->TopPriority()>sval) FindNearestPos(rd,bucket,pq,off,xp,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            sval=PeriodicReflection2D(x0,xp,p,0,2);
+            if (pq->TopPriority()>sval) FindNearestPos(rd,bucket,pq,off,xp,dim);
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            sval=PeriodicReflection2D(x0,xp,p,1,2);
+            if (pq->TopPriority()>sval) FindNearestPos(rd,bucket,pq,off,xp,dim);
+        }
+        // search all axis if current max dist less than search radius
+        if (dim>1) {
+            for (int j = 0; j < dim; j++) off[j] = 0.0;
+            sval=PeriodicReflectionND(x0,xp,p,dim);
+            if (pq->TopPriority()>sval) FindNearestPos(rd,bucket,pq,off,xp,dim);
+        }
     }
     void SplitNode::FindNearestVelPeriodic(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
@@ -1265,7 +1449,8 @@ namespace NBody
             FindNearestCriterion(rd,cmp,params,bucket,pq,off,pp,dim);
         }
         // search all axis if current max dist less than search radius
-        if (dim>1) {
+        if (dim>1) 
+        {
             for (int j = 0; j < dim; j++) off[j] = 0.0;
             PeriodicReflectionND(p0,pp,p,dim);
             FindNearestCriterion(rd,cmp,params,bucket,pq,off,pp,dim);
@@ -1277,7 +1462,8 @@ namespace NBody
         Particle pp;
         pp=p0;
         FindNearestCheck(rd,check,params,bucket,pq,off,p0,dim);
-        for (int k=0;k<dim;k++) {
+        for (int k=0;k<dim;k++) 
+        {
             for (int j = 0; j < dim; j++) off[j] = 0.0;
             PeriodicReflection1D(p0,pp,p,k);
             FindNearestCheck(rd,check,params,bucket,pq,off,pp,dim);
@@ -1329,6 +1515,123 @@ namespace NBody
         }
     }
 
+    void SplitNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim) 
+    {
+        FindNearestInTree(rd,bucket,pq,off,target,dim);
+        vector<Double_t> x0(dim), xp(dim);
+        for (auto i=0;i<dim;i++) x0[i]=(this->*get_part_data_jth)(bucket[target], i);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) FindNearestInTree(rd,bucket,pq,off,xp,dim);
+            }
+        }
+    }
+    void SplitNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, std::vector<Double_t> &x0, int dim) 
+    {
+        vector<Double_t> xp(dim);
+        FindNearestInTree(rd,bucket,pq,off,x0,dim);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) FindNearestInTree(rd,bucket,pq,off,xp,dim);
+            }
+        }
+    }
+    void SplitNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, Double_t *x0, int dim)
+    {  
+        vector<Double_t> x(dim);
+        for (auto i=0;i<dim;i++) x[i] = x0[i];
+        FindNearestPeriodicInTree(rd,bucket,pq,off,p,refl,x0,dim);
+    }
+
+    void SplitNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim)
+    {
+        Particle pp;
+        vector<Double_t> x0(dim), xp(dim); 
+        pp=bucket[target];
+        for (auto i=0;i<dim;i++) x0[i]=(this->*get_part_data_jth)(bucket[target], i);
+        FindNearestCheckInTree(rd,check,params,bucket,pq,off,target,dim);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) FindNearestCheckInTree(rd,check,params,bucket,pq,off,xp,dim);
+            }
+        }
+    }
+    void SplitNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, 
+    Double_t *p, std::vector<std::set<std::vector<int>>> &refl, 
+    Particle &p0, int dim)
+    {
+        vector<Double_t> x0(dim);
+        for (auto i=0;i<dim;i++) x0[i]=(this->*get_part_data_jth)(p0, i);
+        FindNearestCheckPeriodicInTree(rd,check,params,bucket,pq,off,p,refl,x0,dim);
+    }
+    void SplitNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, 
+    Double_t *p, std::vector<std::set<std::vector<int>>> &refl, 
+    std::vector<Double_t> &x0, int dim)
+    {
+        vector<Double_t> xp(dim); 
+        FindNearestCheckInTree(rd,check,params,bucket,pq,off,x0,dim);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) FindNearestCheckInTree(rd,check,params,bucket,pq,off,xp,dim);
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim)
+    {
+        FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,target,dim);
+        Particle pp;
+        vector<Double_t> x0(dim), xp(dim); 
+        pp=bucket[target];
+        for (auto i=0;i<dim;i++) x0[i]=(this->*get_part_data_jth)(bucket[target], i);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) {
+                    for (auto i=0;i<dim;i++) (this->*set_part_data_jth)(pp, i, xp[i]);
+                    FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,pp,dim);
+                }
+            }
+        }
+    }
+
+    void SplitNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t *off, Double_t *p, std::vector<std::set<std::vector<int>>> &refl, Particle &p0, int dim)
+    {
+        FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,p0,dim);
+        Particle pp;
+        vector<Double_t> x0(dim), xp(dim); 
+        pp=p0;
+        for (auto i=0;i<dim;i++) x0[i]=(this->*get_part_data_jth)(p0, i);
+        for (auto &reflinsubdim:refl) 
+        {
+            for (auto &indices:reflinsubdim) {
+                for (int j = 0; j < dim; j++) off[j] = 0.0;
+                auto sval = PeriodicReflectionInTree(x0,xp,p,indices);
+                if (sqrt(pq->TopPriority())>sval) {
+                    for (auto i=0;i<dim;i++) (this->*set_part_data_jth)(pp, i, xp[i]);
+                    FindNearestCriterionInTree(rd,cmp,params,bucket,pq,off,pp,dim);
+                }
+            }
+        }
+    }
+
+
+    //??? may want to update the search ball passed a particle if idea is to ignore particle itself
+    // in non-period search
     void SplitNode::SearchBallPosPeriodic(Double_t rd, Double_t fdist2, Int_t iGroup, Particle *bucket, Int_t *Group, Double_t *dist2, Double_t *off, Double_t *p, UInt_tree_t target, int dim)
     {
         Coordinate x0;

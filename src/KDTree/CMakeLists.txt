@@ -13,6 +13,7 @@ set(KDTREE_SRC
     KDCalcSmoothQuantities.cxx
     KDFindNearest.cxx
     KDFOF.cxx
+    KDNode.cxx
     KDLeafNode.cxx
     KDSplitNode.cxx
     KDTree.cxx

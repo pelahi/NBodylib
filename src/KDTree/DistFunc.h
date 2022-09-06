@@ -354,7 +354,18 @@ namespace NBody
         return sqrt(sval);
     }
 
-    inline Double_t PeriodicReflectionInTree(const vector<Double_t> &x0, vector<Double_t> &xp, vector<Double_t> p, std::vector<int> &kchoice)
+    inline Double_t PeriodicReflectionInTree(const vector<Double_t> &x0, vector<Double_t> &xp, const vector<Double_t> &p, const std::vector<int> &kchoice)
+    {
+        Double_t sval=0;
+        xp=x0;
+        for (auto &k:kchoice) 
+        {
+            if (x0[k]<p[k]/2.0) {xp[k]=x0[k]+p[k];sval+=x0[k]*x0[k];}
+            else {xp[k]=x0[k]-p[k];sval+=xp[k]*xp[k];}
+        }
+        return sqrt(sval);
+    }
+    inline Double_t PeriodicReflectionInTree(const vector<Double_t> &x0, vector<Double_t> &xp, Double_t* p, const std::vector<int> &kchoice)
     {
         Double_t sval=0;
         xp=x0;
