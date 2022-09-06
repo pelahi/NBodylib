@@ -117,7 +117,7 @@ namespace NBody
         ///if system is periodic, period in each direction
         Double_t *period;
         // to store reflection set if period passed. 
-        std::vector<std::set<int>> periodicreflectionindices;
+        std::vector<std::set<std::vector<int>>> periodicreflectionindices;
         ///number of nodes and leafnodes
         Int_t numnodes,numleafnodes;
         ///bucket or leaf node size

@@ -890,35 +890,35 @@ namespace NBody
         FindNearestCheck(rd,check,params,bucket,pq,off,x0,dim);
     }
 
-    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Double_t *x, int dim)
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, Double_t *x, int dim)
     {
         FindNearestInTree(rd, bucket, pq, off, x, dim);
     }
-    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim)
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, std::vector<Double_t> &x, int dim)
     {
         FindNearestInTree(rd, bucket, pq, off, x.data(), dim);
     }
-    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    void LeafNode::FindNearestPeriodicInTree(Double_t rd, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim)
     {
         FindNearestInTree(rd, bucket, pq, off, target, dim);
     }
-    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim)
     {
         FindNearestCriterionInTree(rd, cmp, params, bucket, pq, off, target, dim);
     }
-    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim) 
+    void LeafNode::FindNearestCriterionPeriodicInTree(Double_t rd, FOFcompfunc cmp, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, Particle &p, int dim) 
     {
         FindNearestCriterionInTree(rd, cmp, params, bucket, pq, off, p, dim);
     }
-    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, UInt_tree_t target, int dim)
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, UInt_tree_t target, int dim)
     {
         FindNearestCheckInTree(rd, check, params, bucket, pq, off, target, dim);
     }
-    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, Particle &p, int dim) 
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, Particle &p, int dim) 
     {
         FindNearestCheckInTree(rd, check, params, bucket, pq, off, p, dim);
     }
-    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<Double_t> &x, int dim)
+    void LeafNode::FindNearestCheckPeriodicInTree(Double_t rd, FOFcheckfunc check, Double_t *params, Particle *bucket, PriorityQueue *pq, Double_t* off, Double_t *period, std::vector<std::set<std::vector<int>>> &refl, std::vector<Double_t> &x, int dim)
     {
         FindNearestCheckInTree(rd, check, params, bucket, pq, off, x, dim);
     }

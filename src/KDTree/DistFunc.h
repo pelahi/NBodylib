@@ -365,7 +365,6 @@ namespace NBody
         }
         return sqrt(sval);
     }
-    inline vector<> ReflectionChoices(dim)
 
     inline Double_t PeriodicReflection1D(const Particle &x0, Particle &xp, Coordinate p,int k){
         Double_t sval=0;
