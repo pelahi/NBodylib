@@ -13,6 +13,7 @@ Additional contributors:
  - James Willis
  - Rodrigo Canas
  - Rodrigo Tobar
+ - Jinsu Rhee 
 
 ================================================================================================
 

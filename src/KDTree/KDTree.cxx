@@ -1287,7 +1287,7 @@ default(shared)
         kernfunctype = smfunctype;
         kernres = smres;
         splittingcriterion = criterion;
-        anisotropic=aniso;
+        anisotropic = aniso;
         scalespace = scale;
         metric = m;
         if (Rdistadapt > 0) rdist2adapt = Rdistadapt*Rdistadapt;
@@ -1321,6 +1321,19 @@ default(shared)
 #endif
     }
 
+    KDTree::KDTree(std::vector<Particle> &p, Int_t bucket_size,
+      int ttype, int smfunctype, int smres,
+      int criterion, int aniso, int scale,
+      Double_t *Period, Double_t **m,
+      bool iBuildInParallel,
+      bool iKeepInputOrder,
+      Double_t Rdistadapt,
+      Double_t AdaptiveMedianFac
+    ) : KDTree::KDTree(p.data(), p.size(), bucket_size,
+            ttype, smfunctype, smres, criterion, aniso, scale,
+            Period, m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac) {};
+
+
     KDTree::KDTree(System &s, Int_t bucket_size,
       int ttype, int smfunctype, int smres, int criterion, int aniso, int scale,
       Double_t **m,
@@ -1328,64 +1341,14 @@ default(shared)
       bool iKeepInputOrder,
       double Rdistadapt,
       Double_t AdaptiveMedianFac
-    )
+    ) : KDTree(s.Parts(), s.GetNumParts(), bucket_size,
+            ttype, smfunctype, smres, criterion, aniso, scale,
+            s.GetPeriod().GetCoord(), m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac)
     {
-
-        iresetorder=true;
-        ikeepinputorder = iKeepInputOrder;
-        ibuildinparallel = false;
-#ifdef USEOPENMP
-        ibuildinparallel = iBuildInParallel;
-        int inested = omp_get_max_active_levels();
-        int nthreads;
-        #pragma omp parallel
-        #pragma omp single
-        {
-            nthreads = omp_get_num_threads();
+        // system always has a period but if they are all zero, just delete period 
+        if ((s.GetPeriod()[0] == 0&&s.GetPeriod()[1] == 0&&s.GetPeriod()[2] == 0)) {
+            delete[] period; period = NULL;
         }
-        if (nthreads == 1) ibuildinparallel = false;
-        if (inested == 0 && ibuildinparallel) omp_set_max_active_levels(nthreads/2);
-#endif
-        numparts = s.GetNumParts();
-        numleafnodes=numnodes=0;
-        bucket = s.Parts();
-        b = bucket_size;
-        bmin = std::max(static_cast<Int_t>(1),b/4);
-        maxadaptivemedianregionsize = 8*b;
-        treetype = ttype;
-        kernfunctype = smfunctype;
-        kernres = smres;
-        splittingcriterion = criterion;
-        anisotropic=aniso;
-        scalespace = scale;
-        metric = m;
-        if (Rdistadapt > 0) rdist2adapt = Rdistadapt*Rdistadapt;
-        else rdist2adapt = -1;
-        // store rdist2apapt with and extra >1 factor which is useful for determining 
-        // when to use non-median based splitting index 
-        rdist2daptwithfac = 4.0*rdist2adapt;
-        adaptivemedianfac = AdaptiveMedianFac;
-        if (s.GetPeriod()[0]>0&&s.GetPeriod()[1]>0&&s.GetPeriod()[2]>0){
-            period=new Double_t[3];
-            for (int k=0;k<3;k++) period[k]=s.GetPeriod()[k];
-        }
-        else period=NULL;
-        if (TreeTypeCheck()) {
-            KernelConstruction();
-            for (Int_t i = 0; i < numparts; i++) bucket[i].SetID(i);
-            vol=1.0;ivol=1.0;
-            for (int j=0;j<ND;j++) {xvar[j]=1.0;ixvar[j]=1.0;}
-            if (scalespace) ScaleSpace();
-            for (int j=0;j<ND;j++) {vol*=xvar[j];ivol*=ixvar[j];}
-            //if (splittingcriterion==1) for (int j=0;j<ND;j++) nientropy[j]=new Double_t[numparts];
-            KDTreeOMPThreadPool otp = OMPInitThreadPool();
-            root=BuildNodes(0,numparts, otp);
-            if (ibuildinparallel) BuildNodeIDs();
-            //if (splittingcriterion==1) for (int j=0;j<ND;j++) delete[] nientropy[j];
-        }
-#ifdef USEOPENMP
-        omp_set_max_active_levels(inested);
-#endif
     }
 
     KDTree::~KDTree()
@@ -1394,7 +1357,7 @@ default(shared)
             delete root;
             delete[] Kernel;
             delete[] derKernel;
-            if (period!=NULL) delete[] period;
+            if (period != NULL) delete[] period;
             if (iresetorder) std::sort(bucket, bucket + numparts, IDCompareVec);
             if (scalespace) {
             for (Int_t i=0;i<numparts;i++)

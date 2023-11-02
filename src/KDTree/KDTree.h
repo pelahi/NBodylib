@@ -128,8 +128,8 @@ namespace NBody
         int maxadaptivemedianregionsize;
         ///max number of dimensions of tree
         const static int MAXND=6;
-	    ///max squared distance size of a leaf node for building adaptive trees
-    	Double_t rdist2adapt,rdist2daptwithfac;
+        ///max squared distance size of a leaf node for building adaptive trees
+        Double_t rdist2adapt,rdist2daptwithfac;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -211,17 +211,56 @@ namespace NBody
 
         /// \name Constructors/Destructors
         //@{
-        ///Creates tree from an NBody::Particle array
+        /// \brief Creates tree from an NBody::Particle array
+        /// \param p pointer to particle array 
+        /// \param numparts total number of particles in vector
+        /// \param bucket_size size of a leaf node in tree. Default 16
+        /// \param TreeType int for type of tree. Default is 0, physical 
+        /// \param KernType int for type of density kernel. Default is Epanchenkov kernel
+        /// \param KernRes int for resolution of the kernel (use interpolation to speed up kernel evaluation). Default 1000 
+        /// \param SplittingCriterion int for how tree decides to generate split nodes (0 spread, 1 entropy, 2 largest dispersion). Default = 0, use most spread dimension as criterion
+        /// \param Ansio int flag to determine if anisotropic distribution of particles around a given particle should be used in searches of the tree. Default is 0 (off)
+        /// \param ScaleSpace int flag whether to scale space by dispersions. Default is 0 (off)
+        /// \param Period pointer to period (can have multiple dimensions, each with own period). Default is nullptr
+        /// \param metric 2d pointer to metric used to calculate distances for a phase-space tree
+        /// \param iBuildInParallel flag indicating whether to build the tree using OpenMP task parallelism. Default is on
+        /// \param iKeepInputOrder flag whether to keep the input order. Use if particles are already in roughly a load balanced order and just need to initialise the tree without reordering particles. Default is off, allow reordering
+        /// \param Rdistadapt whether to build an adaptive tree where both number of particles and the size of a cell are used to determine whether to further split the tree. Default is -1, no distance calculation for splitting the tree. 
+        /// \param AdaptiveMedianFac factor of the node size for which we allow an approximative median split to vary by in search for optimal split. Default is 0
         KDTree(Particle *p, Int_t numparts,
-            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
+            Int_t bucket_size = 16, 
+            int TreeType=TPHYS, 
+            int KernType=KEPAN, 
+            int KernRes=1000,
+            int SplittingCriterion=KDTREE_SPLIT_SPREAD, 
+            int Aniso=0, 
+            int ScaleSpace=0,
+            Double_t *Period = NULL, 
+            Double_t **metric = NULL,
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
             Double_t AdaptiveMedianFac = 0.0
 
         );
+
+        /// Creates a tree from an input vector
+        KDTree(std::vector<Particle> &p,
+            Int_t bucket_size = 16, 
+            int TreeType=TPHYS, 
+            int KernType=KEPAN, 
+            int KernRes=1000,
+            int SplittingCriterion=KDTREE_SPLIT_SPREAD, 
+            int Aniso=0, 
+            int ScaleSpace=0,
+            Double_t *Period=NULL, 
+            Double_t **metric=NULL,
+            bool iBuildInParallel = true,
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0
+        );
+
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
