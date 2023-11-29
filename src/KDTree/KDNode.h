@@ -12,6 +12,7 @@
 #include <DistFunc.h>
 #include <FOFFunc.h>
 
+#include <chrono>
 #include <vector>
 
 #ifdef USEOPENMP
@@ -35,7 +36,6 @@ typedef unsigned int UInt_tree_t;
 
 namespace NBody
 {
-
 /*!
     \class NBody::Node
     \brief Base virtual class for a node used by \ref NBody::KDTree.
@@ -60,7 +60,7 @@ namespace NBody
         // stores the centre of the node
 	    Double_t center[6];
         // stores the maximum squared distance from the centre of the node to particle contained in a node
-	    Double_t farthest;
+	    Double_t farthest2, farthest;
         public:
         virtual ~Node() {};
 
@@ -78,8 +78,8 @@ namespace NBody
         virtual Int_t GetEnd(){return bucket_end;}
 	    ///Get Leaf node tag
 	    virtual bool GetLeaf(){return isleaf;}
-	    ///Get Farthest distance
-	    virtual Double_t GetFarthest(){return farthest;}
+	    ///Get farthest2 distance
+	    virtual Double_t GetFarthest2(){return farthest2;}
 	    ///Get Center
 	    virtual Double_t GetCenter(int i){return center[i];}
         //@}
@@ -89,7 +89,7 @@ namespace NBody
         /// set Id --- use with caution
         virtual void SetID(Int_tree_t id){nid=id;}
 	    virtual void SetLeaf(bool IsLeaf){isleaf = IsLeaf;}
-	    virtual void SetFarthest(Double_t x){farthest = x;}
+	    virtual void SetFarthest2(Double_t x){farthest2 = x; farthest = sqrt(x);}
 	    virtual void SetCenter(int i, Double_t x){center[i]=x;}
         //@}
 
@@ -246,76 +246,64 @@ namespace NBody
         ///see if node is within search radius and also note if all particles within node can be linked
         virtual int FlagNodeForFOFSearchBall(Double_t fdist2, Particle &p)
         {
+            Double_t x[numdim];
+            for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
+            return FlagNodeForFOFSearchBall(fdist2, x);
+        }
+
+        virtual int FlagNodeForFOFSearchBall(Double_t fdist2, Double_t x[])
+        {
             int inodeflagged = 0 ;
             Double_t maxr2 = 0, minr2 = 0;
-            bool inside = true;
-            if (farthest > 0)
+            int inside = 1;
+            if (farthest2 > 0)
             {
-                // if farthest from center defined then
+                // if farthest2 from center defined then
                 // get distance from particle to center
                 // instead of boundaries
-                Double_t x[numdim];
-                for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
                 for (auto j=0;j<numdim;j++)
                 {
                     auto dist = x[j]-center[j];
                     maxr2 += dist*dist;
-                    auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
-                    if (dista*distb<0)  inside = false;
+                    inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
                 }
                 auto maxr = sqrt(maxr2);
-                auto far = sqrt(farthest);
                 auto fdist = sqrt(fdist2);
-                // if particle outside node and node particle
-                // farthest from centre (assumed to be closed to particle)
-                // outside the search radius then don't explore node
-                if (!inside && (maxr - far > fdist)) inodeflagged = -1;
-                //otherwise check that most distant particle within search radius to just tag entire node and close it
-                //Could also implement to see closed node particle to particle is within search radius
-                //and most distant particle also within search radius to link
-                else inodeflagged = (maxr + far < fdist);
+                // if outside and particle farthest2 from centre outside the search radius then don't explore node
+                if (inside == 0  && (maxr - farthest > fdist)) inodeflagged = -1;
+                // otherwise check if farthest2 definitely in fdist
+                else inodeflagged = (maxr + farthest < fdist);
             }
             else
             {
-                // if farthest not defined then just look at node boundaries
-                // get distance from particle to farthest point enclosing node, whether particle is in node
+                // if farthest2 not defined then just look at node boundaries
+                // get distance from particle to farthest2 point enclosing node, whether particle is in node
                 // and minimum distance to node if particle outside if skipping.
                 // instead of boundaries
-                Double_t x[numdim];
-                for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
                 for (int j=0;j<numdim;j++)
                 {
                     auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
                     auto dista2 = dista*dista, distb2 = distb*distb;
-                    // if object is outside cell, calculate minimum distance to node edge/surface/vertex
-                    if (dista*distb<0)  {
-                        if (dista<0) minr2 += dista2;
-                        else minr2 += distb2;
-                        inside = false;
-                    }
                     maxr2 += std::max(dista2,distb2);;
                 }
                 inodeflagged = (maxr2<fdist2);
-                if (!inside && minr2 > fdist2) inodeflagged = -1;
             }
             return inodeflagged;
         }
 
-
         ///see if node within search radius and if all particles within node
         virtual int FlagNodeForSearchBallPos(Double_t fdist2, Particle &p)
         {
-            vector<Double_t> x(numdim);
+            Double_t x[numdim];
             for (unsigned short j=0; j<numdim;j++) x[j] = p.GetPhase(j);
-            int inodeflagged = FlagNodeForSearchBallPos(fdist2, x.data());
-            return inodeflagged;
+            return FlagNodeForSearchBallPos(fdist2, x);
         }
-        virtual int FlagNodeForSearchBallPos(Double_t fdist2, Double_t *x)
+        virtual int FlagNodeForSearchBallPos(Double_t fdist2, Double_t x[])
         {
             int inodeflagged = 0 ;
             Double_t maxr2 = 0, minr2 = 0;
-            bool inside = true;
-            if (farthest > 0)
+            int inside = 1;
+            if (farthest2 > 0)
             {
                 // get distance from particle to center
                 // instead of boundaries
@@ -323,32 +311,27 @@ namespace NBody
                 {
                     auto dist = x[j]-center[j];
                     maxr2 += dist*dist;
-                    Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
-                    if (dista*distb<0)  inside = false;
+                    inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
                 }
-                // if particle farthest from centre outside the search radius then don't explore node
-                if (!inside && (sqrt(maxr2) - sqrt(farthest) > sqrt(fdist2))) inodeflagged = -1;
-                else inodeflagged = (sqrt(maxr2) + sqrt(farthest) < sqrt(fdist2));
+                auto maxr = sqrt(maxr2);
+                auto fdist = sqrt(fdist2);
+                // if outside and particle farthest2 from centre outside the search radius then don't explore node
+                if (inside == 0 && (maxr - farthest > fdist)) inodeflagged = -1;
+                // otherwise check if farthest2 definitely in fdist
+                else inodeflagged = (maxr + farthest < fdist);
             }
             else
             {
-                // get distance from particle to farthest point enclosing node, whether particle is in node
+                // get distance from particle to farthest2 point enclosing node, whether particle is in node
                 // and minimum distance to node if particle outside if skipping.
                 // instead of boundaries
                 for (int j=0;j<numdim;j++)
                 {
                     Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
                     Double_t dista2 = dista*dista, distb2 = distb*distb;
-                    // if object is outside cell, calculate minimum distance to node edge/surface/vertex
-                    if (dista*distb<0)  {
-                        if (dista<0) minr2 += dista2;
-                        else minr2 += distb2;
-                        inside = false;
-                    }
                     maxr2 += std::max(dista2,distb2);
                 }
-                inodeflagged = (maxr2<fdist2);
-                if (!inside && minr2 > fdist2) inodeflagged = -1;
+                inodeflagged = (maxr2<=fdist2);
             }
             return inodeflagged;
         }
@@ -385,8 +368,8 @@ namespace NBody
             right = initial_right;
             numdim = ndim;
             isleaf = false;
-            farthest = -1;
-            // where is farthest and centre calculated?
+            farthest2 = -1;
+            // where is farthest2 and centre calculated?
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~SplitNode() { delete left; delete right; }
@@ -519,7 +502,7 @@ namespace NBody
             count = bucket_end-bucket_start;
             numdim = ndim;
             isleaf = true;
-            farthest = -1;
+            farthest2 = -1;
             for (int j=0;j<numdim;j++) {xbnd[j][0]=bnd[j][0];xbnd[j][1]=bnd[j][1];}
         }
         ~LeafNode() { }

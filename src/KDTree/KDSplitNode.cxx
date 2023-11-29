@@ -459,10 +459,10 @@ namespace NBody
         if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
-                Int_t id=bucket[i].GetID();
+                Int_t id = bucket[i].GetID();
                 Double_t dist2val = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
-                Group[id]=iGroup;
-                dist2[id]=dist2val;
+                Group[id] = iGroup;
+                dist2[id] = dist2val;
             }
             return;
         }
@@ -501,10 +501,10 @@ namespace NBody
         if (inodeflagged == 1) {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
-                Int_t id=bucket[i].GetID();
+                Int_t id = bucket[i].GetID();
                 Double_t dist2val = DistanceSqd(x,bucket[i].GetPosition(), dim);
-                Group[id]=iGroup;
-                dist2[id]=dist2val;
+                Group[id] = iGroup;
+                dist2[id] = dist2val;
             }
             return;
         }
@@ -544,7 +544,7 @@ namespace NBody
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
         if (inodeflagged == 1) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            for (auto i = bucket_start; i < bucket_end; i++) if (i != target) tagged[nt++]=i;
             return;
         }
         Double_t old_off = off[cut_dim];
@@ -616,7 +616,10 @@ namespace NBody
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
         if (inodeflagged == 1) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            UInt_t oldsize = tagged.size();
+            if (target >= bucket_start && target < bucket_end) tagged.resize(tagged.size() + count -1);
+            else tagged.resize(tagged.size() + count);
+            for (UInt_t i = bucket_start, j = oldsize; i < bucket_end; i++) if (i != target) tagged[j++] = i;
             return;
         }
         Double_t old_off = off[cut_dim];
@@ -650,7 +653,10 @@ namespace NBody
         int inodeflagged = FlagNodeForSearchBallPos(fdist2, x);
         if (inodeflagged == -1) return;
         if (inodeflagged == 1) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            // for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            UInt_t oldsize = tagged.size();
+            tagged.resize(tagged.size() + count);
+            for (UInt_t i = bucket_start, j = oldsize; i < bucket_end; i++)tagged[j++] = i;
             return;
         }
         Double_t old_off = off[cut_dim];
@@ -925,14 +931,36 @@ namespace NBody
         //if bucket already linked and particle already part of group, do nothing.
         if(BucketFlag[nid]&&Head[target]==Head[bucket_start]) return;
         //now check if either search distance from particle fully encloses node
-        //or if farthest initialized, then that particle is within linking length
+        //or if farthest2 initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length
         //from the center
         int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
         if (inodeflagged == -1) return;
+
+        // This bit of code was used to look at the change in the a tree search 
+        // when looking at the fraction of split nodes that are collapsed at
+        // splitnode level. 
+        /*
+        auto oldinodeflagged = inodeflagged;
+        auto start = nbody_now;
+        // to ignore checks if split nodes can be all tagged for testing, uncomment below
+        // inodeflagged = 0;
+        */
+
         // if node entirely enclosed, link and flag
         if (inodeflagged == 1) {
+            //???
+            nbody_counter[0] += 1;
+            nbody_counter[1] += count;
+
             Int_t id;
+            // Possible futher optimisations to test 
+            /*
+            auto head = Head[target];
+            auto tail = Tail[head];
+            Tail[head] = Tail[Head[bucket_end]];
+            Len[iGroup] += count;
+            */
             for (auto i = bucket_start; i < bucket_end; i++){
                 id=bucket[i].GetID();
                 if (Group[id]) continue;
@@ -942,10 +970,27 @@ namespace NBody
 
                 Next[Tail[Head[target]]]=Head[i];
                 Tail[Head[target]]=Tail[Head[i]];
-                Head[i]=Head[target];
+                Head[i] = Head[target];
 
                 if(iTail==nActive)iTail=0;
+
+                // possible further optimisations 
+                /*
+                id = bucket[i].GetID();
+                Group[id] = iGroup;
+                Fifo[iTail++]=i;
+                if (iTail == nActive) iTail=0;
+                auto cur_head = Head[i];
+                Next[tail] = cur_head;
+                tail = Tail[cur_head];
+                Head[i] = head;
+                */
             }
+            // code for testing 
+            /*
+            auto end = nbody_now;
+            nbody_total_time += nbody_get_time_taken(start, end);
+            */
             BucketFlag[nid]=1;
             return;
         }
@@ -976,6 +1021,13 @@ namespace NBody
         }
         // once left and right have been checked, see if they have been closed. If so, update.
         if(BucketFlag[left->GetID()]==1 && BucketFlag[right->GetID()]==1) BucketFlag[nid]=1;
+        // code for testing 
+        /*
+        if (oldinodeflagged == 1) {
+            auto end = nbody_now;
+            nbody_total_time += nbody_get_time_taken(start, end);
+        }
+        */
     }
 
     //key here is params which tell one how to search the tree

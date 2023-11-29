@@ -35,7 +35,11 @@ using namespace Swift;
 #endif
 namespace NBody
 {
-
+    //???
+    extern double nbody_total_time;
+    extern std::vector<int> nbody_counter;
+    #define nbody_now std::chrono::high_resolution_clock::now()
+    #define nbody_get_time_taken(start, end) (static_cast<std::chrono::duration<double>>(end - start)).count()
 
 /// \name Particle Memory Flags
 /// \brief These are define flags that alter the memory allocation of particles

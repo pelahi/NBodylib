@@ -10,6 +10,9 @@ using namespace Math;
 
 namespace NBody
 {
+    //???
+    double nbody_total_time;
+    std::vector<int> nbody_counter(10);
 
     int PIDCompare (const void *a, const void *b)
     {

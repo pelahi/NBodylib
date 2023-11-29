@@ -59,7 +59,6 @@
 
 namespace NBody
 {
-
     struct KDTreeOMPThreadPool{
         unsigned int nthreads;
         unsigned int nactivethreads;
@@ -226,7 +225,7 @@ namespace NBody
         /// \param iBuildInParallel flag indicating whether to build the tree using OpenMP task parallelism. Default is on
         /// \param iKeepInputOrder flag whether to keep the input order. Use if particles are already in roughly a load balanced order and just need to initialise the tree without reordering particles. Default is off, allow reordering
         /// \param Rdistadapt whether to build an adaptive tree where both number of particles and the size of a cell are used to determine whether to further split the tree. Default is -1, no distance calculation for splitting the tree. 
-        /// \param AdaptiveMedianFac factor of the node size for which we allow an approximative median split to vary by in search for optimal split. Default is 0
+        /// \param AdaptiveMedianFac factor of the node size for which we allow an approximative median split to vary by in search for optimal split [0,1.0). Default is 0
         KDTree(Particle *p, Int_t numparts,
             Int_t bucket_size = 16, 
             int TreeType=TPHYS, 
@@ -240,7 +239,8 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
 
         );
 
@@ -258,7 +258,8 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
         );
 
         ///Creates tree from NBody::System
@@ -268,7 +269,8 @@ namespace NBody
             bool iBuildInParallel = true,
             bool iKeepInputOrder = false,
             Double_t Rdistadapt = -1,
-            Double_t AdaptiveMedianFac = 0.0
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
         );
 
         ///resets particle order

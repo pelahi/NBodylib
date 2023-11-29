@@ -29,7 +29,7 @@ else()
 endif()
 
 project(NBodyLib VERSION ${NBODY_VERSION} LANGUAGES ${NBODY_LANGS})
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 #include cmake stuff
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)

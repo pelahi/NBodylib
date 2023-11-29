@@ -19,7 +19,6 @@
 
 namespace NBody
 {
-
     // -- Inline functions that get called often when building the tree.
 
     /// \name Find most spread dimension
@@ -325,7 +324,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 
     /// \name Determine the median coordinates in some space
     //@{
-    Double_t KDTree::MedianPos(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest, 
+    Double_t KDTree::MedianPos(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -336,15 +335,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         Particle *pval = NULL;
         //produced a balanced tree
         if (balanced){
-// cout<<__func__<<" "<<__LINE__<<" BEFORE ";
-// cout<<"["<<start<<","<<k<<","<<(end-start)/2<<","<<end<<"] ";
-// auto valmid = bucket[k].GetPosition(d);
-// int countleft = 0, countright = 0;
-// for (auto index=start;index<k;index++)countleft += (bucket[index].GetPosition(d)>valmid);
-// for (auto index=k+1;index<end;index++) countright += (bucket[index].GetPosition(d)<valmid);
-// cout<<" : "<<countleft<<" "<<countright<<endl;
-
-
             while (left < right)
             {
                 x = bucket[k].GetPosition(d);
@@ -367,14 +357,6 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
                 if (i >= k) right = i - 1;
                 if (i <= k) left = i + 1;
             }
-// cout<<__func__<<" "<<__LINE__<<" AFTER ";
-// cout<<"["<<start<<","<<k<<","<<(end-start)/2<<","<<end<<"] ";
-// valmid = bucket[k].GetPosition(d);
-// countleft = 0, countright = 0;
-// for (auto index=start;index<k;index++)countleft += (bucket[index].GetPosition(d)>valmid);
-// for (auto index=k+1;index<end;index++) countright += (bucket[index].GetPosition(d)<valmid);
-// cout<<" : "<<countleft<<" "<<countright<<endl;
-
             return bucket[k].GetPosition(d);
         }
         //requires that particle order is already balanced. Use with caution
@@ -385,7 +367,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    Double_t KDTree::MedianVel(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest, 
+    Double_t KDTree::MedianVel(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -428,7 +410,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
             //exit(9);
         }
     }
-    Double_t KDTree::MedianPhs(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest, 
+    Double_t KDTree::MedianPhs(int d, Int_t &k, Int_t start, Int_t end, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         Int_t left = start;
@@ -524,11 +506,11 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     //@{
     ///Determine whether to calculate inter-particle spacing and find maximum over just
     ///using the median as split index. 
-    bool KDTree::UseMedianOverMaxInterparticleSpacing(Double_t nodefarthest, Int_t nodesize, Int_t bufferwidth) 
+    bool KDTree::UseMedianOverMaxInterparticleSpacing(Double_t nodefarthest2, Int_t nodesize, Int_t bufferwidth) 
     {
         // if node is smaller than a * search distance, no need to adjust median splitting to maximum inter-particle
         // spacing splitting. 
-        if (nodefarthest < rdist2daptwithfac) return true;
+        if (nodefarthest2 < rdist2daptwithfac) return true;
         // if node contains too few particles in which to search for max interparticle spacing 
         // no need to adjust median splitting to maximum inter-particle spacing 
         else if (bufferwidth<minadaptivemedianregionsize) return true;
@@ -542,15 +524,15 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
     ///between particles. This search is limited to a buffer region around
     ///the median index
     Double_t KDTree::AdjustMedianToMaximalDistancePos(int d,
-        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
+        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
         Double_t splitvalue;
         // determine whether need to use Median over max interparcile spacing 
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
-            splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        if (UseMedianOverMaxInterparticleSpacing(farthest2, truesize, bufferwidth)) {
+            splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
             return splitvalue;
         }
 
@@ -558,7 +540,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
-        splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
@@ -623,20 +605,20 @@ default(shared)
         splitindex = x[maxi].orgindex;
         splitvalue = x[maxi].val;
         // once split index found move particles. Only necessary if sort of particles not done 
-        splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianPos(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         return splitvalue;
     }
 
     Double_t KDTree::AdjustMedianToMaximalDistanceVel(int d,
-        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
+        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
         Double_t splitvalue;
         // determine whether need to use Median over max interparcile spacing 
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
-            splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        if (UseMedianOverMaxInterparticleSpacing(farthest2, truesize, bufferwidth)) {
+            splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
             return splitvalue;
         }
 
@@ -644,7 +626,7 @@ default(shared)
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
-        splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
@@ -709,19 +691,19 @@ default(shared)
         splitindex = x[maxi].orgindex;
         splitvalue = x[maxi].val;
         // once split index found move particles. Only necessary if sort of particles not done 
-        splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianVel(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         return splitvalue;
     }
     Double_t KDTree::AdjustMedianToMaximalDistancePhs(int d,
-        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest, 
+        Int_t &splitindex, Int_t trueleft, Int_t trueright, Double_t farthest2, 
         KDTreeOMPThreadPool &otp, bool balanced)
     {
         UInt_tree_t truesize = trueright - trueleft;
         UInt_tree_t bufferwidth = truesize * adaptivemedianfac;
         Double_t splitvalue;
         // determine whether need to use Median over max interparcile spacing 
-        if (UseMedianOverMaxInterparticleSpacing(farthest, truesize, bufferwidth)) {
-            splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        if (UseMedianOverMaxInterparticleSpacing(farthest2, truesize, bufferwidth)) {
+            splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
             return splitvalue;
         }
 
@@ -729,7 +711,7 @@ default(shared)
         UInt_tree_t left = splitindex - bufferwidth/2;
         UInt_tree_t right = splitindex + bufferwidth/2;
         UInt_tree_t size = right - left;
-        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         //wonder if I should just sort particles (and whether to sort all particles)
         vector<KDTreeForSorting> x(size);
         for (auto i=0;i<size;i++) {
@@ -794,14 +776,14 @@ default(shared)
         splitindex = x[maxi].orgindex;
         splitvalue = x[maxi].val;
         // once split index found move particles. Only necessary if sort of particles not done 
-        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest, otp, balanced);
+        splitvalue = MedianPhs(d, splitindex, trueleft, trueright, farthest2, otp, balanced);
         return splitvalue;
     }
 
     ///Calculate center and largest sqaured distance for node
     vector<Double_t> KDTree::DetermineCentreAndSmallestSphere(
         UInt_tree_t localstart, UInt_tree_t localend,
-        Double_t &farthest,
+        Double_t &farthest2,
         KDTreeOMPThreadPool &otp
         )
     {
@@ -815,7 +797,7 @@ default(shared)
         if (nthreads <1) nthreads=1;
         UInt_tree_t delta = ceil((localend - localstart)/(double)nthreads);
         unordered_map<int, int> tidtoindex;
-        vector<UInt_tree_t> threadlocalstart, threadlocalend;
+        vector<UInt_tree_t> threadlocalstart(nthreads), threadlocalend(nthreads);
 #endif
         if (nthreads>1) {
 #ifdef USEOPENMP
@@ -891,7 +873,7 @@ default(shared)
                 maxr2 = std::max(maxr2, r2);
             }
         }
-        farthest = maxr2;
+        farthest2 = maxr2;
 
         return center;
     }
@@ -905,7 +887,7 @@ default(shared)
         Double_t maxr2;
         vector<Double_t> center = DetermineCentreAndSmallestSphere(localstart, localend, maxr2, otp);
         for(auto j=0;j<ND;j++) node->SetCenter(j, center[j]);
-        node->SetFarthest(maxr2);
+        node->SetFarthest2(maxr2);
     }
 
 
@@ -932,7 +914,7 @@ default(shared)
         if (nthreads <1) nthreads=1;
         UInt_tree_t delta = ceil((size)/(double)nthreads);
         unordered_map<int, int> tidtoindex;
-        vector<UInt_tree_t> threadlocalstart, threadlocalend;
+        vector<UInt_tree_t> threadlocalstart(nthreads), threadlocalend(nthreads);
 #endif
         if (nthreads>1) {
 #ifdef USEOPENMP
@@ -999,12 +981,12 @@ default(shared)
         }
         bool isleafflag;
         vector<Double_t> center;
-        Double_t localfarthest = 0, maxinterdist = 0;
+        Double_t localfarthest2 = 0, maxinterdist = 0;
         // if constructing adaptive tree where leaf nodes must be smaller than some size
-        // calculate the farthest distance to the centre of the node
+        // calculate the farthest2 distance to the centre of the node
         if (rdist2adapt > 0) {
-            center = DetermineCentreAndSmallestSphere(start, end, localfarthest, otp);
-            isleafflag = ((size <= b && localfarthest < rdist2adapt) || (size <= bmin));
+            center = DetermineCentreAndSmallestSphere(start, end, localfarthest2, otp);
+            isleafflag = ((size <= b && localfarthest2 < rdist2adapt) || (size <= bmin));
         }
         else {
             isleafflag = (size <= b);
@@ -1016,7 +998,7 @@ default(shared)
             Node * leaf = new LeafNode(id, start, end,  bnd, ND);
             if (rdist2adapt > 0)
             {
-                leaf->SetFarthest(localfarthest);
+                leaf->SetFarthest2(localfarthest2);
                 for (int j=0;j<ND;j++) leaf->SetCenter(j,center[j]);
             }
             return leaf;
@@ -1027,7 +1009,7 @@ default(shared)
             if (ikeepinputorder) irearrangeandbalance=false;
             if (splitdim == -1) splitdim = DetermineSplitDim(start, end, bnd, otp);
             Int_t splitindex = start + (size - 1) / 2;
-            Double_t splitvalue = (this->*medianfunc)(splitdim, splitindex, start, end, localfarthest, otp, irearrangeandbalance);
+            Double_t splitvalue = (this->*medianfunc)(splitdim, splitindex, start, end, localfarthest2, otp, irearrangeandbalance);
              //run the node construction in parallel
             if (ibuildinparallel && otp.nactivethreads > 1) {
                 //note that if OpenMP not defined then ibuildinparallel is false
@@ -1240,7 +1222,7 @@ default(shared)
         auto dist=0.0; 
         for (auto j=0;j<ND;j++) dist+=pow(node->GetBoundary(j,0) - node->GetBoundary(j,1), 2.0);
         cout<<" : "<<sqrt(dist);
-        cout<<" : "<<node->GetFarthest();
+        cout<<" : "<<node->GetFarthest2();
         cout<<endl;
 	    if(!node->GetLeaf()){
             WalkNode(((SplitNode*)node)->GetLeft());
@@ -1259,7 +1241,8 @@ default(shared)
       bool iBuildInParallel,
       bool iKeepInputOrder,
       Double_t Rdistadapt,
-      Double_t AdaptiveMedianFac
+      Double_t AdaptiveMedianFac, 
+      Int_t min_bucket_size
     )
     {
         iresetorder=true;
@@ -1281,7 +1264,7 @@ default(shared)
         numleafnodes=numnodes=0;
         bucket = p;
         b = bucket_size;
-        bmin = std::max(static_cast<Int_t>(1),b/4);
+        bmin = min_bucket_size;
         maxadaptivemedianregionsize = 8*b;
         treetype = ttype;
         kernfunctype = smfunctype;
@@ -1328,10 +1311,11 @@ default(shared)
       bool iBuildInParallel,
       bool iKeepInputOrder,
       Double_t Rdistadapt,
-      Double_t AdaptiveMedianFac
+      Double_t AdaptiveMedianFac,
+      Int_t min_bucket_size
     ) : KDTree::KDTree(p.data(), p.size(), bucket_size,
             ttype, smfunctype, smres, criterion, aniso, scale,
-            Period, m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac) {};
+            Period, m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac, min_bucket_size) {};
 
 
     KDTree::KDTree(System &s, Int_t bucket_size,
@@ -1340,10 +1324,11 @@ default(shared)
       bool iBuildInParallel,
       bool iKeepInputOrder,
       double Rdistadapt,
-      Double_t AdaptiveMedianFac
+      Double_t AdaptiveMedianFac,
+      Int_t min_bucket_size
     ) : KDTree(s.Parts(), s.GetNumParts(), bucket_size,
             ttype, smfunctype, smres, criterion, aniso, scale,
-            s.GetPeriod().GetCoord(), m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac)
+            s.GetPeriod().GetCoord(), m, iBuildInParallel, iKeepInputOrder, Rdistadapt, AdaptiveMedianFac, min_bucket_size)
     {
         // system always has a period but if they are all zero, just delete period 
         if ((s.GetPeriod()[0] == 0&&s.GetPeriod()[1] == 0&&s.GetPeriod()[2] == 0)) {

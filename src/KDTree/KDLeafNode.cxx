@@ -320,12 +320,12 @@ namespace NBody
             maxr2 += maxdist*maxdist;
         }
         if (maxr2<fdist2) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged[nt++]=i;
+            for (auto i = bucket_start; i < bucket_end; i++) if (i != target) tagged[nt++]=i;
         }
         else {
             for (auto i = bucket_start; i < bucket_end; i++)
             {
-                if (i!=target){
+                if (i != target){
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
                 if (dist2 < fdist2) tagged[nt++]=i;
                 }
@@ -367,7 +367,10 @@ namespace NBody
             maxr2 += maxdist*maxdist;
         }
         if (maxr2<fdist2) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            UInt_t oldsize = tagged.size();
+            if (target >= bucket_start && target < bucket_end) tagged.resize(tagged.size() + count -1);
+            else tagged.resize(tagged.size() + count);
+            for (UInt_t i = bucket_start, j = oldsize; i < bucket_end; i++) if (i != target) tagged[j++] = i;
         }
         else {
             for (auto i = bucket_start; i < bucket_end; i++)
@@ -388,7 +391,9 @@ namespace NBody
             maxr2 += maxdist*maxdist;
         }
         if (maxr2<fdist2) {
-            for (auto i = bucket_start; i < bucket_end; i++) tagged.push_back(i);
+            UInt_t oldsize = tagged.size();
+            tagged.resize(tagged.size() + count);
+            for (UInt_t i = bucket_start, j = oldsize; i < bucket_end; i++) tagged[j++] = i;
         }
         else {
             for (auto i = bucket_start; i < bucket_end; i++)
@@ -411,7 +416,6 @@ namespace NBody
         for (auto i = bucket_start; i < bucket_end; i++)
         {
             if (i!=target&&(Group[bucket[i].GetID()]>iGroup||Group[bucket[i].GetID()]==0)){
-//            if (i!=target&&Group[bucket[i].GetID()]!=iGroup){
             if (cmp(bucket[target],bucket[i],params))
             {
                 Double_t dist2 = DistanceSqd(bucket[target].GetPosition(),bucket[i].GetPosition(), dim);
@@ -527,7 +531,7 @@ namespace NBody
         //then BucketFlag[nid]=1
         int flag=1;
         //now check if either search distance from particle fully encloses node
-        //or if farthest initialized, then that particle is within linking length
+        //or if farthest2 initialized, then that particle is within linking length
         //of center and all other particles in the node are within this linking length
         //from the center
         int inodeflagged = FlagNodeForFOFSearchBall(fdist2, bucket[target]);
@@ -546,10 +550,9 @@ namespace NBody
                 Fifo[iTail++]=i;
                 Len[iGroup]++;
 
-                Next[Tail[Head[target]]]=Head[i];
-                Tail[Head[target]]=Tail[Head[i]];
-                Head[i]=Head[target];
-
+                Next[Tail[Head[target]]] = Head[i];
+                Tail[Head[target]] = Tail[Head[i]];
+                Head[i] = Head[target];
                 if(iTail==nActive)iTail=0;
             }
             BucketFlag[nid]=1;
