@@ -26,7 +26,22 @@ int tvel=NBody::KDTree::TVEL;
 int tphs=NBody::KDTree::TPHS;
 
 std::vector<Int_t> get_quants(Int_t N) {
-    std::vector<Int_t> quants = {static_cast<Int_t>(0), static_cast<Int_t>(N*0.25), static_cast<Int_t>(N*0.5), static_cast<Int_t>(N*0.75), static_cast<Int_t>(N-1)};
+    std::vector<Int_t> quants = {
+        static_cast<Int_t>(0), 
+        static_cast<Int_t>(N*0.01), 
+        static_cast<Int_t>(N*0.05), 
+        static_cast<Int_t>(N*0.1), 
+        static_cast<Int_t>(N*0.16), 
+        static_cast<Int_t>(N*0.25), 
+        static_cast<Int_t>(N*0.4), 
+        static_cast<Int_t>(N*0.5), 
+        static_cast<Int_t>(N*0.6), 
+        static_cast<Int_t>(N*0.75), 
+        static_cast<Int_t>(N*0.84), 
+        static_cast<Int_t>(N*0.9), 
+        static_cast<Int_t>(N*0.95), 
+        static_cast<Int_t>(N*0.99), 
+        static_cast<Int_t>(N-1)};
     return quants;
 }
 
@@ -38,11 +53,26 @@ std::map<std::string, std::tuple<int, int, double, double, double>> TreeTypes()
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Physical Rdist", {tpos, 0, 0.01, 0, 0.01}));
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Physical Rdist Adaptfac", {tpos, 0, 0.01, 0.1, 0.01}));
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Velocity", {tvel, 16, -1, 0, 0}));
-    treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Phase", {tphs, 16, -1, 0, 0}));
+//    treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Phase", {tphs, 16, -1, 0, 0}));
     return treetypes;
 }
 
-std::vector<NBody::Particle> generate_vector(std::size_t size, double fac = 0.5, int nsub = 10)
+void write_data(std::vector<NBody::Particle> &parts)
+{
+    std::string fname="parts.out";
+    std::cout<<"Writing data to "<<fname<<std::endl;
+    fstream f(fname, ios::binary | ios::out);
+    for (auto &p:parts) {
+        NBody::DoublePos_t x;
+        for (auto i=0;i<6;i++) {
+            x = p.GetPhase(i);
+            f.write((char*)&x, sizeof(NBody::DoublePos_t));
+        }
+    }
+    f.close();
+}
+
+std::vector<NBody::Particle> generate_vector(std::size_t size, double fac = 1.0, int nsub = 0)
 {
     double period = PERIOD;
     Int_t nend = size*fac;
@@ -84,7 +114,15 @@ default(none) shared(parts, period, nend)
     }
     }
 
-    if (nsub == 0) return parts;
+    if (nsub == 0) {
+        for (auto i=0;i<size;i++) {
+            parts[i].SetMass(1.0);
+            parts[i].SetID(i);
+            parts[i].SetPID(i);
+        }
+        write_data(parts);
+        return parts;
+    }
     // generate random positions for the subs
     unsigned int sub_seed = 4322;
     std::default_random_engine sub_generator(sub_seed);
@@ -129,7 +167,42 @@ default(none) shared(parts, period, nsub, sub_x, sub_v, disp, nend, ninsubs, siz
         }
     }
     }
-    for (auto i=0;i<size;i++) parts[i].SetID(i);
+    for (auto i=0;i<size;i++) {
+        parts[i].SetMass(1.0);
+        parts[i].SetID(i);
+        parts[i].SetPID(i);
+    }
+    end_time();
+    get_time_taken();
+    write_data(parts);
+    return parts;
+}
+
+std::vector<NBody::Particle> read_data(std::size_t size, std::string fname)
+{
+    double period = PERIOD;
+    std::vector<NBody::Particle> parts(size);
+
+    std::cout<<"Particle class requires "<<sizeof(NBody::Particle)<<" bytes "<<std::endl;
+    std::cout<<"Total number of particles "<<size<<std::endl;
+    std::cout<<"Total memory required is "<<size*sizeof(NBody::Particle)/1024./1024./1024.<<" GB "<<std::endl;
+    std::cout<<"Reading data from "<<fname<<std::endl;
+
+    start_time();
+    fstream f("parts.out", ios::binary | ios::in);
+    for (auto &p:parts) {
+        NBody::DoublePos_t x;
+        for (auto i=0;i<6;i++) {
+            f.read((char *)&x, sizeof(NBody::DoublePos_t));
+            p.SetPhase(i,x);
+        }
+    }
+    for (auto i=0;i<size;i++) {
+        parts[i].SetMass(1.0);
+        parts[i].SetID(i);
+        parts[i].SetPID(i);
+    }
+    f.close();
     end_time();
     get_time_taken();
     return parts;
@@ -267,7 +340,7 @@ void kdtree_test_ballsearch(NBody::KDTree *&tree,
 void kdtree_test_FOF(NBody::KDTree *&tree, 
     std::vector<NBody::Particle> &parts, 
     Int_t minnum = 20,
-    Double_t rdist = 0.1
+    Double_t rdist = 0.01
 )
 {
     auto N = parts.size();
@@ -298,16 +371,23 @@ int main(int argc, char *argv[])
 {
     std::cerr << "Usage: " << argv[0] << " num_particles \n";
     std::size_t size = 1000000;
-    if (argc == 2)
+    std::string fname;
+    if (argc >= 2)
     {
         size = atoi(argv[1]);
+    }
+    if (argc == 3)
+    {
+        fname = std::string(argv[2]);
     }
 #ifdef _OPENMP 
     std::cout<<"Running with OpenMP "<<_OPENMP<<std::endl;
     std::cout<<"Using "<<omp_get_max_threads()<<" threads and "<<omp_get_max_active_levels()<<" level "<<std::endl;
 #endif
     // generate vector 
-    auto parts = generate_vector(size);
+    std::vector<NBody::Particle> parts;
+    if (argc == 3) parts = read_data(size, fname);
+    else parts = generate_vector(size);
 
     std::cout<<std::endl;
     auto treetypes = TreeTypes();

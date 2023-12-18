@@ -949,9 +949,9 @@ namespace NBody
 
         // if node entirely enclosed, link and flag
         if (inodeflagged == 1) {
-            //???
-            nbody_counter[0] += 1;
-            nbody_counter[1] += count;
+            // //???
+            // nbody_counter[0] += 1;
+            // nbody_counter[1] += count;
 
             Int_t id;
             // Possible futher optimisations to test 

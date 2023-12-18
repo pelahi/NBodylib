@@ -361,6 +361,7 @@ namespace NBody
 
     void LeafNode::SearchBallPosTagged(Double_t rd, Double_t fdist2, Particle *bucket, vector<Int_t> &tagged, Double_t* off, UInt_tree_t target, int dim)
     {
+
         Double_t maxr2 = 0;
         for (int j=0;j<dim;j++){
             auto maxdist = std::max(std::abs(bucket[target].GetPosition(j)-xbnd[j][0]), std::abs(bucket[target].GetPosition(j)-xbnd[j][1]));
