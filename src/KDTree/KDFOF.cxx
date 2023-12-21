@@ -58,7 +58,6 @@ namespace NBody
         Int_t id,iid, maxlen=0;
 
         //initial arrays
-        //initial arrays
         for (Int_t i=0;i<numparts;i++) {
             pHead[i]=pTail[i]=i;
             pNext[i]=-1;
@@ -95,6 +94,7 @@ namespace NBody
                 splay(Fifo, iTail, iHead);
 
             }
+
             if(pLen[iGroup]<minnum){
                 Int_t ii=pHead[pGroupHead[iGroup]];
                 do {
@@ -103,8 +103,8 @@ namespace NBody
             pLen[iGroup--]=0;
             }
             if (maxlen<pLen[iGroup]){maxlen=pLen[iGroup];}
-        }
 
+        }
         for (Int_t i=0;i<numparts;i++) if(pGroup[bucket[i].GetID()]==-1)pGroup[bucket[i].GetID()]=0;
 
         //free memory for arrays that are not needed

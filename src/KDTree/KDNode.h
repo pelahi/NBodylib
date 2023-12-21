@@ -36,9 +36,6 @@ typedef unsigned int UInt_tree_t;
 
 namespace NBody
 {
-    // minimum size a node must be for it to be worthile checking
-    // if it should be searched. 
-    static const int KDTREE_NODE_CHECK_FLAG_MIN_SIZE=200;
 /*!
     \class NBody::Node
     \brief Base virtual class for a node used by \ref NBody::KDTree.
@@ -65,7 +62,7 @@ namespace NBody
         // stores the maximum squared distance from the centre of the node to particle contained in a node
 	    Double_t farthest2, farthest;
         // stores the maximum extent of a node;
-        Double_t maxextent = 0;
+        Double_t maxextent2 = 0;
         public:
         virtual ~Node() {};
 
@@ -248,119 +245,92 @@ namespace NBody
 
         /// \name Node opening/closing criteria
         //@{
+        /// \brief see if particle inside node 
+        virtual int __checkinsidenode(int index)
+        {
+            return static_cast<int>(index>=bucket_start && index<bucket_end);
+        }
+        /// \brief check if position inside node
+        virtual int __checkinsidenode(Double_t x[])
+        {
+            int inside = 1;
+            for (auto j=0;j<numdim;j++) inside *= (x[j]>=xbnd[j][0]) * (x[j]<=xbnd[j][1]);
+            return inside;
+        }
+        // check if nodes farthest particle within search window
+        virtual int __checkfarthest(Double_t fdist2, Double_t x[], int inside) 
+        {
+            int flag = 0;
+            Double_t maxr2 = 0;
+            for (auto j=0;j<numdim;j++)
+            {
+                auto dist = x[j]-center[j];
+                maxr2 += dist*dist;
+                inside *= (x[j]>=xbnd[j][0]) * (x[j]<=xbnd[j][1]);
+            }
+            auto maxr = sqrt(maxr2);
+            auto fdist = sqrt(fdist2);
+            // if outside and particle farthest2 from centre outside the search radius then don't explore node
+            if (inside == 0  && (maxr - farthest > fdist)) flag = -1;
+            // otherwise check if farthest2 definitely in fdist
+            else flag = (maxr + farthest < fdist);
+            return flag; 
+        }
+        /// \brief check if nodes boundaries within search window 
+        virtual int __checkboundaries(Double_t fdist2, Double_t x[])
+        {
+            // get distance to most distant edge 
+            Double_t maxr2 = 0;
+            for (int j=0;j<numdim;j++)
+            {
+                auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
+                auto dista2 = dista*dista, distb2 = distb*distb;
+                maxr2 += std::max(dista2,distb2);
+            }
+            return static_cast<int>(maxr2<fdist2);
+        }
+
         ///see if node is within search radius and also note if all particles within node can be linked
         virtual int FlagNodeForFOFSearchBall(Double_t fdist2, Particle &p)
         {
-            if (count < KDTREE_NODE_CHECK_FLAG_MIN_SIZE) return 0;
-            Double_t x[numdim];
-            for (int j=0;j<numdim;j++) x[j] = p.GetPhase(j);
-            return FlagNodeForFOFSearchBall(fdist2, x);
+            if (maxextent2 > fdist2) return 0;
+            int inodeflagged = 0;
+            DoublePos_t x[numdim];
+            for (auto j=0;j<numdim;j++) x[j] = p.GetPhase(j);
+            if (farthest2 > 0) inodeflagged = __checkfarthest(fdist2, x, __checkinsidenode(x));
+            else inodeflagged = __checkboundaries(fdist2, x);           
+            return inodeflagged;
         }
 
         virtual int FlagNodeForFOFSearchBall(Double_t fdist2, Double_t x[])
         {
-            if (count < KDTREE_NODE_CHECK_FLAG_MIN_SIZE) return 0;
-            int inodeflagged = 0 ;
-            Double_t maxr2 = 0, minr2 = 0;
-            int inside = 1;
-            // if a node is larger than distance of interest, return 0 
-            // that is node not fully linked 
-            if (farthest2 > 0)
-            {
-                // if farthest2 from center defined then
-                // get distance from particle to center
-                // instead of boundaries
-                for (auto j=0;j<numdim;j++)
-                {
-                    auto dist = x[j]-center[j];
-                    maxr2 += dist*dist;
-                    inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
-                }
-                auto maxr = sqrt(maxr2);
-                auto fdist = sqrt(fdist2);
-                // if outside and particle farthest2 from centre outside the search radius then don't explore node
-                if (inside == 0  && (maxr - farthest > fdist)) inodeflagged = -1;
-                // otherwise check if farthest2 definitely in fdist
-                else inodeflagged = (maxr + farthest < fdist);
-            }
-            else
-            {
-                // if farthest2 not defined then just look at node boundaries
-                // get distance from particle to farthest2 point enclosing node, whether particle is in node
-                // and minimum distance to node if particle outside if skipping.
-                // instead of boundaries
-                for (int j=0;j<numdim;j++)
-                {
-                    auto dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
-                    auto dista2 = dista*dista, distb2 = distb*distb;
-                    // inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
-                    maxr2 += std::max(dista2,distb2);
-                }
-                // // if not inside and closest boundary is still farther than search distance, 
-                // // do not need to explore
-                // if (inside == 0  && minr2 > fdist2) inodeflagged = -1;
-                // // otherwise check if maximum distance within distance 
-                // else inodeflagged = (maxr2<fdist2);
-                inodeflagged = (maxr2<fdist2);
-            }
+            if (maxextent2 > fdist2) return 0;
+            int inodeflagged = 0;
+            if (farthest2 > 0) inodeflagged = __checkfarthest(fdist2, x, __checkinsidenode(x));
+            else inodeflagged = __checkboundaries(fdist2, x);
             return inodeflagged;
         }
 
         ///see if node within search radius and if all particles within node
         virtual int FlagNodeForSearchBallPos(Double_t fdist2, Particle &p)
         {
-            if (count < KDTREE_NODE_CHECK_FLAG_MIN_SIZE) return 0;
-            Double_t x[numdim];
-            for (unsigned short j=0; j<numdim;j++) x[j] = p.GetPhase(j);
-            return FlagNodeForSearchBallPos(fdist2, x);
+            if (maxextent2 > fdist2) return 0;
+            int inodeflagged = 0;
+            DoublePos_t x[numdim];
+            for (auto j=0;j<numdim;j++) x[j] = p.GetPhase(j);
+            if (farthest2 > 0) inodeflagged = __checkfarthest(fdist2, x, __checkinsidenode(x));
+            else inodeflagged = __checkboundaries(fdist2, x);
+            return inodeflagged;
         }
         virtual int FlagNodeForSearchBallPos(Double_t fdist2, Double_t x[])
         {
-            if (count < KDTREE_NODE_CHECK_FLAG_MIN_SIZE) return 0;
-            int inodeflagged = 0 ;
-            Double_t maxr2 = 0, minr2 = 0;
-            int inside = 1;
-            if (farthest2 > 0)
-            {
-                // get distance from particle to center
-                // instead of boundaries
-                for (auto j=0;j<numdim;j++)
-                {
-                    auto dist = x[j]-center[j];
-                    maxr2 += dist*dist;
-                    inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
-                }
-                auto maxr = sqrt(maxr2);
-                auto fdist = sqrt(fdist2);
-                // if outside and particle farthest2 from centre outside the search radius then don't explore node
-                if (inside == 0 && (maxr - farthest > fdist)) inodeflagged = -1;
-                // otherwise check if farthest2 definitely in fdist
-                else inodeflagged = (maxr + farthest < fdist);
-            }
-            else
-            {
-                // get distance from particle to farthest2 point enclosing node, whether particle is in node
-                // and minimum distance to node if particle outside if skipping.
-                // instead of boundaries
-                for (int j=0;j<numdim;j++)
-                {
-                    Double_t dista = x[j]-xbnd[j][0], distb = xbnd[j][1]-x[j];
-                    Double_t dista2 = dista*dista, distb2 = distb*distb;
-                    // inside *= (x[j]>=xbnd[j][0])*(x[j]<=xbnd[j][1]);
-                    maxr2 += std::max(dista2,distb2);
-                    // minr2 += (dista<0)*dista2 + (distb>0)*distb2;
-                }
-                // // if not inside and closest boundary is still farther than search distance, 
-                // // do not need to explore
-                // if (inside == 0  && minr2 > fdist2) inodeflagged = -1;
-                // // otherwise check if maximum distance within distance 
-                // else inodeflagged = (maxr2<fdist2);
-                inodeflagged = (maxr2<fdist2);
-            }
+            if (maxextent2 > fdist2) return 0;
+            int inodeflagged = 0;
+            if (farthest2 > 0) inodeflagged = __checkfarthest(fdist2, x, __checkinsidenode(x));
+            else inodeflagged = __checkboundaries(fdist2, x);
             return inodeflagged;
         }
         //@}
-
     };
 
 /*!
@@ -397,8 +367,9 @@ namespace NBody
             for (int j=0;j<numdim;j++) {
                 xbnd[j][0]=bnd[j][0];
                 xbnd[j][1]=bnd[j][1];
-                maxextent = std::max(maxextent,xbnd[j][1]-xbnd[j][0]);
+                maxextent2 = std::max(maxextent2, xbnd[j][1]-xbnd[j][0]);
             }
+            maxextent2 = maxextent2 * maxextent2;
         }
         ~SplitNode() { delete left; delete right; }
 
@@ -534,8 +505,9 @@ namespace NBody
             for (int j=0;j<numdim;j++) {
                 xbnd[j][0]=bnd[j][0];
                 xbnd[j][1]=bnd[j][1];
-                maxextent = std::max(maxextent,xbnd[j][1]-xbnd[j][0]);
+                maxextent2 = std::max(maxextent2, xbnd[j][1]-xbnd[j][0]);
             }
+            maxextent2 = maxextent2 * maxextent2;
         }
         ~LeafNode() { }
 
