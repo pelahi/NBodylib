@@ -53,7 +53,7 @@ std::map<std::string, std::tuple<int, int, double, double, double>> TreeTypes()
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Physical Rdist", {tpos, 0, 0.01, 0, 0.01}));
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Physical Rdist Adaptfac", {tpos, 0, 0.01, 0.1, 0.01}));
     treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Velocity", {tvel, 16, -1, 0, 0}));
-//    treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Phase", {tphs, 16, -1, 0, 0}));
+    treetypes.insert(std::pair<std::string, std::tuple<int, int, double, double, double>>("Phase", {tphs, 16, -1, 0, 0}));
     return treetypes;
 }
 
@@ -72,7 +72,7 @@ void write_data(std::vector<NBody::Particle> &parts)
     f.close();
 }
 
-std::vector<NBody::Particle> generate_vector(std::size_t size, double fac = 1.0, int nsub = 0)
+std::vector<NBody::Particle> generate_vector(std::size_t size, double fac = 0.1, int nsub = 100)
 {
     double period = PERIOD;
     Int_t nend = size*fac;
@@ -249,6 +249,20 @@ NBody::KDTree * build_kdtree(std::vector<NBody::Particle> &parts,
     return tree;
 }
 
+void processing_time_report(std::vector<double> &times, double sum, double totaltime)
+{
+    auto quants = get_quants(times.size());
+    std::sort(times.begin(), times.end());
+    std::cout<<"Processing times per particle statistics:";
+    for (auto &x:quants) std::cout<<times[x]<<" ";std::cout<<std::endl;
+    std::cout<<"Total time "<<sum<<", walltime "<<totaltime<<std::endl;
+    #ifdef _OPENMP 
+    auto ompeff = sum/totaltime/static_cast<double>(omp_get_max_threads());
+    std::cout<<"OMP efficiency "<<ompeff<<std::endl;
+    #endif
+
+}
+
 void kdtree_test_NN(NBody::KDTree *&tree, 
     std::vector<NBody::Particle> &parts, 
     int num_nn = 16
@@ -260,7 +274,7 @@ void kdtree_test_NN(NBody::KDTree *&tree,
     std::vector<double> times(N);
     auto quants = get_quants(N);
     double sum = 0;
-
+    auto start = std::chrono::high_resolution_clock::now();
 #if defined(_OPENMP)
 #pragma omp parallel default(shared)
 #endif
@@ -285,10 +299,8 @@ void kdtree_test_NN(NBody::KDTree *&tree,
             rdistave[i] /= static_cast<double>(num_nn);
         }
     }
-    std::sort(times.begin(), times.end());
-    std::cout<<"Processing times per particle statistics:";
-    for (auto &x:quants) std::cout<<times[x]<<" ";
-    std::cout<<" total "<<sum<<std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    processing_time_report(times, sum, static_cast<std::chrono::duration<double>>(end - start).count());
     std::sort(rdistave.begin(), rdistave.end());
     std::cout<<"NN dist^2 stats: ";
     for (auto &x:quants) std::cout<<rdistave[x]<<" ";
@@ -308,6 +320,7 @@ void kdtree_test_ballsearch(NBody::KDTree *&tree,
     auto quants = get_quants(N);
     double sum = 0;
 
+    auto start = std::chrono::high_resolution_clock::now();
 #if defined(_OPENMP)
 #pragma omp parallel default(shared)
 #endif
@@ -326,10 +339,8 @@ void kdtree_test_ballsearch(NBody::KDTree *&tree,
             ninr2[i] = neighbours.size();
         }
     }
-    std::sort(times.begin(), times.end());
-    std::cout<<"Processing times per particle statistics: ";
-    for (auto &x:quants) std::cout<<times[x]<<" ";
-    std::cout<<" total "<<sum<<std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    processing_time_report(times, sum, static_cast<std::chrono::duration<double>>(end - start).count());
 
     std::sort(ninr2.begin(), ninr2.end());
     std::cout<<"Number fo neighbours within dist^2 stats: ";
@@ -340,7 +351,7 @@ void kdtree_test_ballsearch(NBody::KDTree *&tree,
 void kdtree_test_FOF(NBody::KDTree *&tree, 
     std::vector<NBody::Particle> &parts, 
     Int_t minnum = 20,
-    Double_t rdist = 0.01
+    Double_t rdist = 1.0
 )
 {
     auto N = parts.size();
@@ -398,11 +409,7 @@ int main(int argc, char *argv[])
         auto tree = build_kdtree(parts, bsize, ttype, rdist2, adaptfac, bfac);
         kdtree_test_NN(tree, parts);
         kdtree_test_ballsearch(tree, parts);
-        // NBody::nbody_total_time = 0;
-        // for (auto &x:NBody::nbody_counter) x = 0;
         kdtree_test_FOF(tree, parts);
-        // std::cout<<NBody::nbody_total_time<<std::endl;
-        // for (auto &x:NBody::nbody_counter) std::cout<<x<<" ";std::cout<<std::endl;
         delete tree;
         std::cout<<std::endl;
     }
