@@ -1037,7 +1037,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    for(int js_i=0; js_i<ND; js_i++){
 			    left->SetCenter(js_center[js_i], js_i);
 			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+			    if(js_i>=3) js_cenVel[js_i-3] = js_center[js_i];
 		    }
 
 		    //Left - Largest Distance
@@ -1064,7 +1064,7 @@ reduction(+:disp) num_threads(nthreads) if (nthreads>1)
 		    for(int js_i=0; js_i<ND; js_i++){
 			    right->SetCenter(js_center[js_i], js_i);
 			    js_cenPos[js_i] = js_center[js_i];
-			    if(ND==6) js_cenVel[js_i-3] = js_center[js_i];
+			    if(js_i>=3) js_cenVel[js_i-3] = js_center[js_i];
 		    }
 
 		    //Right - largest distance
