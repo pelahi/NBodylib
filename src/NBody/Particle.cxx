@@ -10,6 +10,9 @@ using namespace Math;
 
 namespace NBody
 {
+    //???
+    double nbody_total_time;
+    std::vector<int> nbody_counter(10);
 
     int PIDCompare (const void *a, const void *b)
     {
@@ -81,37 +84,37 @@ namespace NBody
     {
         Int_t aa = a.GetPID();
         Int_t bb = b.GetPID();
-        return (aa > bb);
+        return (aa < bb);
     }
     bool IDCompareVec(const Particle&a, const Particle &b)
     {
         Int_t aa = a.GetID();
         Int_t bb = b.GetID();
-        return (aa > bb);
+        return (aa < bb);
     }
     bool RadCompareVec(const Particle&a, const Particle &b)
     {
         Double_t aa = a.Radius();
         Double_t bb = b.Radius();
-        return (aa > bb);
+        return (aa < bb);
     }
     bool TypeCompareVec(const Particle&a, const Particle &b)
     {
         int aa = a.GetType();
         int bb = b.GetType();
-        return (aa > bb);
+        return (aa < bb);
     }
     bool DenCompareVec(const Particle&a, const Particle &b)
     {
         Double_t aa = a.GetDensity();
         Double_t bb = b.GetDensity();
-        return (aa > bb);
+        return (aa < bb);
     }
     bool PotCompareVec(const Particle&a, const Particle &b)
     {
         Double_t aa = a.GetPotential();
         Double_t bb = b.GetPotential();
-        return (aa > bb);
+        return (aa < bb);
     }
     /*-----------------------
         Particle functions
@@ -147,7 +150,7 @@ namespace NBody
         zmet=0;
         sfr=0;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         entropy = 0;
         temperature = 0;
 #endif
@@ -191,7 +194,7 @@ namespace NBody
         zmet=0;
         sfr=0;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
         entropy=0;
         temperature=0;
 #endif
@@ -246,7 +249,7 @@ namespace NBody
             zmet=p.zmet;
             sfr=p.sfr;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
             entropy=p.entropy;
             temperature=p.temperature;
 #endif
@@ -338,7 +341,7 @@ namespace NBody
             zmet=p.zmet;
             sfr=p.sfr;
 #endif
-#if (defined(GASON) && defined(GASEXTRA)) || (defined(GASON) && defined(SWIFTINTERFACE))
+#if (defined(GASON)) || (defined(GASON) && defined(SWIFTINTERFACE))
             entropy=p.entropy;
             temperature=p.temperature;
 #endif

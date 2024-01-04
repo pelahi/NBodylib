@@ -43,6 +43,7 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 #include <algorithm>
 
@@ -58,12 +59,24 @@
 
 namespace NBody
 {
-
     struct KDTreeOMPThreadPool{
         unsigned int nthreads;
         unsigned int nactivethreads;
         vector<unsigned int> activethreadids;
     };
+
+    struct KDTreeForSorting
+    {
+        Double_t val;
+        Int_t orgindex;
+        KDTreeForSorting() = default;
+        KDTreeForSorting(const KDTreeForSorting &x) = default;
+        KDTreeForSorting(KDTreeForSorting &&x) = default;
+        ~KDTreeForSorting() = default;
+        KDTreeForSorting& operator=(const KDTreeForSorting &x) = default;
+        KDTreeForSorting& operator=(KDTreeForSorting &&x) = default;
+    };
+
 
     class KDTree
     {
@@ -84,6 +97,12 @@ namespace NBody
         const static int KSPH=0,KGAUSS=1,KEPAN=2,KTH=3;
         //@}
 
+        /// \name Public variables that specify type of spliting criterion
+        /// 0 is standard spread, 1 is entropy, 2 is dispersion, 3 is max interparticle spacing;
+        //@{
+        const static int KDTREE_SPLIT_ENTROPY=1, KDTREE_SPLIT_DISPERSION = 2, KDTREE_SPLIT_MAXINTERPARTICLESPACING =3, KDTREE_SPLIT_SPREAD=0;
+        //@}
+
         protected:
 
         private:
@@ -99,9 +118,17 @@ namespace NBody
         ///number of nodes and leafnodes
         Int_t numnodes,numleafnodes;
         ///bucket or leaf node size
-        Int_t b;
+        Int_t b, bmin;
+        ///factor of the node size for which we allow an approximative median
+        ///split to vary by in search for optimal split
+        Double_t adaptivemedianfac;
+        ///minimum size of region for which an adaptive median is searched for.
+        int minadaptivemedianregionsize = 10;
+        int maxadaptivemedianregionsize;
         ///max number of dimensions of tree
         const static int MAXND=6;
+        ///max squared distance size of a leaf node for building adaptive trees
+        Double_t rdist2adapt,rdist2daptwithfac;
 
         ///for an arbitrary tree spanning some space one would have offsets in the dimensional space to use
         ///something like \code int startdim,enddim; \endcode \n
@@ -114,7 +141,7 @@ namespace NBody
 
         ///0 if using most spread dimension as criterion, 1 if use entropy along with entropy array, 2 if using largest dispersion
         int splittingcriterion;
-        Double_t *nientropy[MAXND];
+        //Double_t *nientropy[MAXND];
 
         ///kernel construction
         ///resolution in kernel array and type
@@ -150,7 +177,7 @@ namespace NBody
         Double_t(NBody::KDTree::*dispfunc)(int , Int_t, Int_t, Double_t, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*spreadfunc)(int , Int_t , Int_t , Double_t *, KDTreeOMPThreadPool &);
         Double_t(NBody::KDTree::*entropyfunc)(int , Int_t , Int_t , Double_t , Double_t, Double_t, Double_t *, KDTreeOMPThreadPool &);
-        Double_t(NBody::KDTree::*medianfunc)(int , Int_t , Int_t, Int_t, KDTreeOMPThreadPool &, bool);
+        Double_t(NBody::KDTree::*medianfunc)(int , Int_t &, Int_t, Int_t, Double_t, KDTreeOMPThreadPool &, bool);
         //@}
 
         /// \name Private arrays used to build tree
@@ -183,21 +210,69 @@ namespace NBody
 
         /// \name Constructors/Destructors
         //@{
-        ///Creates tree from an NBody::Particle array
+        /// \brief Creates tree from an NBody::Particle array
+        /// \param p pointer to particle array 
+        /// \param numparts total number of particles in vector
+        /// \param bucket_size size of a leaf node in tree. Default 16
+        /// \param TreeType int for type of tree. Default is 0, physical 
+        /// \param KernType int for type of density kernel. Default is Epanchenkov kernel
+        /// \param KernRes int for resolution of the kernel (use interpolation to speed up kernel evaluation). Default 1000 
+        /// \param SplittingCriterion int for how tree decides to generate split nodes (0 spread, 1 entropy, 2 largest dispersion). Default = 0, use most spread dimension as criterion
+        /// \param Ansio int flag to determine if anisotropic distribution of particles around a given particle should be used in searches of the tree. Default is 0 (off)
+        /// \param ScaleSpace int flag whether to scale space by dispersions. Default is 0 (off)
+        /// \param Period pointer to period (can have multiple dimensions, each with own period). Default is nullptr
+        /// \param metric 2d pointer to metric used to calculate distances for a phase-space tree
+        /// \param iBuildInParallel flag indicating whether to build the tree using OpenMP task parallelism. Default is on
+        /// \param iKeepInputOrder flag whether to keep the input order. Use if particles are already in roughly a load balanced order and just need to initialise the tree without reordering particles. Default is off, allow reordering
+        /// \param Rdistadapt whether to build an adaptive tree where both number of particles and the size of a cell are used to determine whether to further split the tree. Default is -1, no distance calculation for splitting the tree. 
+        /// \param AdaptiveMedianFac factor of the node size for which we allow an approximative median split to vary by in search for optimal split [0,1.0). Default is 0
         KDTree(Particle *p, Int_t numparts,
-            Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
-            int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0,
-            Double_t *Period=NULL, Double_t **metric=NULL,
+            Int_t bucket_size = 16, 
+            int TreeType=TPHYS, 
+            int KernType=KEPAN, 
+            int KernRes=1000,
+            int SplittingCriterion=KDTREE_SPLIT_SPREAD, 
+            int Aniso=0, 
+            int ScaleSpace=0,
+            Double_t *Period = NULL, 
+            Double_t **metric = NULL,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
+
         );
+
+        /// Creates a tree from an input vector
+        KDTree(std::vector<Particle> &p,
+            Int_t bucket_size = 16, 
+            int TreeType=TPHYS, 
+            int KernType=KEPAN, 
+            int KernRes=1000,
+            int SplittingCriterion=KDTREE_SPLIT_SPREAD, 
+            int Aniso=0, 
+            int ScaleSpace=0,
+            Double_t *Period=NULL, 
+            Double_t **metric=NULL,
+            bool iBuildInParallel = true,
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
+        );
+
         ///Creates tree from NBody::System
         KDTree(System &s,
             Int_t bucket_size = 16, int TreeType=TPHYS, int KernType=KEPAN, int KernRes=1000,
             int SplittingCriterion=0, int Aniso=0, int ScaleSpace=0, Double_t **metric=NULL,
             bool iBuildInParallel = true,
-            bool iKeepInputOrder = false
+            bool iKeepInputOrder = false,
+            Double_t Rdistadapt = -1,
+            Double_t AdaptiveMedianFac = 0.0,
+            Int_t min_bucket_size = 16
         );
+
         ///resets particle order
         ~KDTree();
         //@}
@@ -507,6 +582,11 @@ namespace NBody
         /// Determine the split dimension
         inline int DetermineSplitDim(Int_t start, Int_t end, Double_t bnd[6][2],
                 KDTreeOMPThreadPool &otp);
+        /// splay function for FOF searches. change first in, first out array to a last in, first out
+        /// The last particle found in a particle FOF search is likely to be
+        /// the most distant and hence using this as a starting point for the next
+        /// search will improve the performance.  
+        inline void splay(Int_tree_t *&Fifo, Int_t &iTail, Int_t &iHead);
         //@}
 
         /// \name Rearrange and balance the tree
@@ -514,13 +594,23 @@ namespace NBody
         /// the k'th particle's are lower in index, and vice versa. This function permanently alters
         /// the NBody::System, but it keeps track of the changes.
         //@{
-        inline Double_t MedianPos(int d, Int_t k, Int_t start, Int_t end,
+        Double_t MedianPos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with velocities
-        inline Double_t MedianVel(int d, Int_t k, Int_t start, Int_t end,
+        Double_t MedianVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest, 
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with full phase-space
-        inline Double_t MedianPhs(int d, Int_t k, Int_t start, Int_t end,
+        Double_t MedianPhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
+            KDTreeOMPThreadPool &, bool balanced=true);
+        bool UseMedianOverMaxInterparticleSpacing(Double_t nodefarthest, Int_t nodesize, Int_t bufferwidth);
+        /// allow for an approximative binary tree where the split
+        /// is adjust from the median to the point of largest separation
+        /// between adjacent particles
+        Double_t AdjustMedianToMaximalDistancePos(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
+            KDTreeOMPThreadPool &, bool balanced=true);
+        Double_t AdjustMedianToMaximalDistanceVel(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
+            KDTreeOMPThreadPool &, bool balanced=true);
+        Double_t AdjustMedianToMaximalDistancePhs(int splitdim, Int_t &splitindex, Int_t start, Int_t end, Double_t farthest,
             KDTreeOMPThreadPool &, bool balanced=true);
         /// same as above but with possibly a subset of dimensions of full phase space
         /// NOTE Dim DOES NOT DO ANYTHING SPECIAL YET
@@ -551,6 +641,19 @@ namespace NBody
         KDTreeOMPThreadPool OMPInitThreadPool();
         vector<KDTreeOMPThreadPool> OMPSplitThreadPool(KDTreeOMPThreadPool &);
         //@}
+
+        /// \name Adaptive Tree related functions
+        //@{
+        /// for calculating the centre and distance to furtherts in a bucket
+        vector<Double_t> DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+            Double_t &farthest, KDTreeOMPThreadPool &);
+        void DetermineCentreAndSmallestSphere(UInt_tree_t localstart, UInt_tree_t localend,
+            Node *&node, KDTreeOMPThreadPool &);
+        Double_t DetermineMaxInterParticleSpacing(UInt_tree_t localstart, UInt_tree_t localend,
+            int splitdim,
+            KDTreeOMPThreadPool &otp);
+        //@}
+
     };
 
 }

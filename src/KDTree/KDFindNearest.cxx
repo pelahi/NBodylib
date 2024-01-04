@@ -109,56 +109,13 @@ namespace NBody
         //otherwise take 1./sr0[j]/sr0[j] as smetric
         for (int j=0;j<ND;j++) smetric[j]=1.0/(sr0[j]*sr0[j]);
     }
-    /*
-    //original Enbid like code
-    inline void KDTree::CalculateMetricSpacing(const Double_t *x, const Double_t *v, int treetype, Double_t *smetric){
-        Double_t xyz[6];
-        for (int i=0;i<3;i++) {xyz[i]=x[i];xyz[i+3]=v[i];}
-        //search radius 0, 1, search factor, and search boundary
-        Double_t sr0[ND],sr1[ND],sf=1.2,sx[ND][2];
-        //leaf node pointer
-        LeafNode *lp;
-        Double_t temp1,temp2,temp3,temp4,kvol,volcheck=0.,vsmooth=0.;
-
-        lp=(LeafNode*)FindLeafNode(xyz);
-        for (int j=0;j<ND;j++) {
-            sr1[j]=sf*0.25*(lp->GetBoundary(j,1)-lp->GetBoundary(j,0));
-        }
-        while (volcheck<1.0){
-            for (int j=0;j<ND;j++) {
-                sr1[j]*=2.;
-                sx[j][0]=xyz[j]-sr1[j];
-                sx[j][1]=xyz[j]+sr1[j];
-            }
-            lp=(LeafNode*)FindLeafNode(sx);
-            kvol=1.0;
-            for(int j=0; j<ND; j++)
-            {
-                temp1=sx[j][0];             temp2=sx[j][1];
-                temp3=lp->GetBoundary(j,0); temp4=lp->GetBoundary(j,1);
-                if(temp3>temp1) temp1=temp3;
-                if(temp4<temp2) temp2=temp4;
-                if (temp2<=temp1) break;//go back to start of while loop, this really should not happen
-                else kvol*=(temp2-temp1)/(temp4-temp3);
-            }
-            if (temp2>temp1){
-                for(int j=0; j<ND; j++) sr0[j]=(lp->GetBoundary(j,1)-lp->GetBoundary(j,0));
-                volcheck+=kvol;//see if break out of loop
-                vsmooth+=1.0;
-                if(volcheck>1.) for(int j=0; j<ND; j++) sr0[j]/=vsmooth;
-            }
-        }
-        //if cubic cells then have to get for physical and velocity volume then take vol^(1/3) and take dist^2
-        //otherwise take 1./sr0[j]/sr0[j] as smetric
-        for (int j=0;j<ND;j++) smetric[j]=1.0/(sr0[j]*sr0[j]);
-    }
-    */
     /// Calculate the distribution of mass in the full phase-space.
     /// to ensure good statistics must use ~10 times the number of nearest neighbours used to get initial metric estimate, nsmooth here is 64 (but 128 is also okay)
     inline void KDTree::CalculateMetricTensor(Int_t target, int treetype, Double_t *smetric, Double_t *metric, GMatrix &gmetric){
         CalculateMetricTensor(bucket[target].GetPosition(), bucket[target].GetVelocity(),treetype,smetric,metric,gmetric);
     }
-    inline void KDTree::CalculateMetricTensor(const Real_t *x, const Real_t *v, int treetype, Double_t *smetric, Double_t *metric, GMatrix &gmetric){
+    inline void KDTree::CalculateMetricTensor(const Real_t *x, const Real_t *v, int treetype, Double_t *smetric, Double_t *metric, GMatrix &gmetric)
+    {
         Double_t xyz[6];
         int nsmooth=64;
         PriorityQueue *pq=new PriorityQueue(nsmooth);
@@ -211,7 +168,8 @@ namespace NBody
             for (int j=0;j<ND;j++)
                 gmetric(i,j)=eigvec(i,j);
     }
-    inline void KDTree::CalculateMetricTensor(const Double_t *x, const Double_t *v, int treetype, Double_t *smetric, Double_t *metric, GMatrix &gmetric){
+    inline void KDTree::CalculateMetricTensor(const Double_t *x, const Double_t *v, int treetype, Double_t *smetric, Double_t *metric, GMatrix &gmetric)
+    {
         Double_t xyz[6];
         int nsmooth=64;
         PriorityQueue *pq=new PriorityQueue(nsmooth);
@@ -753,7 +711,7 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             //if (bucket[tt].GetPosition(k)<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
@@ -768,7 +726,7 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (x[k]<(sp->GetLeft())->GetBoundary(k,1)) np=sp->GetLeft();
@@ -781,7 +739,7 @@ namespace NBody
         Node* np=root;
         SplitNode *sp;
         int k;
-        while(np->GetCount()>b){
+        while(!np->GetLeaf()){
             sp=(SplitNode *)np;
             k=sp->GetCutDim();
             if (search[k][0]<((SplitNode *)(sp->GetLeft()))->GetCutValue()) np=sp->GetLeft();

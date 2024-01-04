@@ -523,10 +523,10 @@ namespace NBody
 
     //Sorting Functions
     void System::SortByID(){
-        qsort(particle, numparts, sizeof(Particle), IDCompare);
+        std::sort(particle, particle + numparts, IDCompareVec);
     }
     void System::SortByRadius(){
-        qsort(particle, numparts, sizeof(Particle), RadCompare);
+        std::sort(particle, particle + numparts, RadCompareVec);
     }
 /*
     // Sort particles in system by radius

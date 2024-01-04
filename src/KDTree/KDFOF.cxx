@@ -9,6 +9,23 @@
 namespace NBody
 {
 
+    /*! Change the order of Fifo based on the splay operation
+    converting the First in, first out array to a last in, first out
+    The last particle found in a particle FOF search is likely to be
+    the most distant and hence using this as a starting point for the next
+    search will improve the performance.  
+    */ 
+    inline void KDTree::splay(Int_tree_t *&Fifo, Int_t &iTail, Int_t &iHead){
+        if(iHead==iTail) return;
+        Int_tree_t Fifodum;
+        Int_tree_t iTail2 = iTail - 1;
+        if(iTail2 == -1) iTail2 = numparts-1;
+        Fifodum = Fifo[iTail2]; 
+        Fifo[iTail2] = Fifo[iHead]; 
+        Fifo[iHead] = Fifodum;
+    }
+
+
     Int_t* KDTree::FOF(Double_t fdist, Int_t &numgroup, Int_t minnum, int order,
         Int_tree_t *pHead, Int_tree_t *pNext, Int_tree_t *pTail, Int_tree_t *pLen,
         int ipcheckflag, FOFcheckfunc check, Double_t *params)
@@ -37,10 +54,9 @@ namespace NBody
         if (pLen==NULL)     {pLen=new Int_tree_t[numparts];ipl=true;}
         if (pTail==NULL)    {pTail=new Int_tree_t[numparts];ipt=true;}
 
-        Int_t iGroup=0,iHead=0,iTail=0,id,iid;
-        Int_t maxlen=0;
+        Int_t iGroup=0, iHead=0, iTail=0;
+        Int_t id,iid, maxlen=0;
 
-        //initial arrays
         //initial arrays
         for (Int_t i=0;i<numparts;i++) {
             pHead[i]=pTail[i]=i;
@@ -72,10 +88,13 @@ namespace NBody
                 //within a distance fdist2, marks all particles using their IDS and pGroup array
                 //adjusts the Fifo array, iTail and pLen.
                 //first set offset to zero when beginning node search
-                for (int j = 0; j < 3; j++) off[j] = 0.0;
+                for (int j = 0; j < 6; j++) off[j] = 0.0;
                 if (period==NULL) root->FOFSearchBall(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,iid);
                 else root->FOFSearchBallPeriodic(0.0,fdist2,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
+                splay(Fifo, iTail, iHead);
+
             }
+
             if(pLen[iGroup]<minnum){
                 Int_t ii=pHead[pGroupHead[iGroup]];
                 do {
@@ -84,8 +103,8 @@ namespace NBody
             pLen[iGroup--]=0;
             }
             if (maxlen<pLen[iGroup]){maxlen=pLen[iGroup];}
-        }
 
+        }
         for (Int_t i=0;i<numparts;i++) if(pGroup[bucket[i].GetID()]==-1)pGroup[bucket[i].GetID()]=0;
 
         //free memory for arrays that are not needed
@@ -183,6 +202,8 @@ namespace NBody
                 for (int j = 0; j < 6; j++) off[j] = 0.0;
                 if (period==NULL) root->FOFSearchCriterion(0.0,cmp,params,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,iid);
                 else root->FOFSearchCriterionPeriodic(0.0,cmp,params,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
+                // can improve search efficiency by using splay.
+                splay(Fifo, iTail, iHead);
             }
 
             //make sure group big enough
@@ -294,6 +315,7 @@ namespace NBody
                     for (int j = 0; j < 6; j++) off[j] = 0.0;
                     if (period==NULL) root->FOFSearchCriterionSetBasisForLinks(0.0,cmp,check,params,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,iid);
                     else root->FOFSearchCriterionSetBasisForLinksPeriodic(0.0,cmp,check,params,iGroup,numparts,bucket,pGroup,pLen,pHead,pTail,pNext,pBucketFlag, Fifo,iTail,off,period,iid);
+                    splay(Fifo, iTail, iHead);
                 }
             }
 

@@ -31,74 +31,90 @@ sudo: false
 # and upload it to coveralls
 matrix:
  include:
-  - compiler: gcc
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev]
-    env: COMPILER=g++-5
-  - compiler: gcc
+      packages: [g++-8, libgsl0-dev]
+    env: COMPILER=g++-8
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5
-  - compiler: gcc
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8
+  - compiler: g++-9
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-6, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-6
-  - compiler: gcc
+      packages: [g++-9, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-9
+  - compiler: g++-10
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-7
-  - compiler: gcc
+      packages: [g++-10, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-10
+  - compiler: clang-9
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 USEGAS=1 USESTARS=1
-  - compiler: gcc
+      packages: [clang-9, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=clang-9
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 USEGAS=1 USESTARS=1 USEBH=1
-  - compiler: gcc
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEGAS=1 USESTARS=1
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 USEEXTRADM=1
-  - compiler: gcc
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEGAS=1 USESTARS=1 USEBH=1
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 USESWIFT=1
-  - compiler: gcc
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USEEXTRADM=1
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 NOMASS=1
-  - compiler: gcc
-    dist: bionic
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 USESWIFT=1
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 GSL22=1
-  - compiler: gcc
-    dist: bionic
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 NOMASS=1
+  - compiler: g++-8
+    dist: focal
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libgsl0-dev, libopenmpi-dev]
-    env: COMPILER=g++-5 GSL22=1 USESWIFT=1
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 GSL22=1
+  - compiler: g++-8
+    dist: focal
+    addons:
+     apt:
+      sources: ubuntu-toolchain-r-test
+      packages: [g++-8, libgsl0-dev, libopenmpi-dev]
+    env: COMPILER=g++-8 GSL22=1 USESWIFT=1
 
 # We "source" it because it exports variables
 before_install:
