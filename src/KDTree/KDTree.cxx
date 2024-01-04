@@ -14,6 +14,7 @@
 */
 
 #include <KDTree.h>
+#include <omp_utils.h>
 #include <random>
 #define XSORT
 
@@ -1365,13 +1366,7 @@ default(shared)
         KDTreeOMPThreadPool ompthreadpool;
 #ifdef USEOPENMP
         if (ibuildinparallel) {
-            int nthreads;
-            #pragma omp parallel
-            #pragma omp single
-            {
-                nthreads = omp_get_num_threads();
-            }
-            ompthreadpool.nthreads = nthreads;
+            ompthreadpool.nthreads = get_available_threads();
         }
         else {
             ompthreadpool.nthreads = 1;
